@@ -48,6 +48,7 @@
                 <button class="nav-button" data-panel="theories-panel">Theories</button>
                 <button class="nav-button" data-panel="paradigms-panel">Paradigms</button>
                 <button class="nav-button" data-panel="transcendence-panel">Transcendence</button>
+                <button class="nav-button" data-panel="statistics-panel">Statistics</button>
                 <button class="nav-button" data-panel="settings-panel">Settings</button>
             </nav>
             <footer>
@@ -62,7 +63,7 @@
                 <div id="noosphere-graph"></div>
             </div>
 
-            <div id="base-refinement-panel" class="panel">
+            <div id="base-refinement-panel" class="panel"> <!-- Consistent panel ID -->
                 <h2>Base Cognitive Enhancements</h2>
                 <div id="base-upgrades-list" class="upgrades-grid"></div>
                 <h2>Fleeting Thought Generation</h2>
@@ -73,9 +74,9 @@
                 <h2>Synthesis Forge</h2>
                 <div id="forge-interface">
                     <div class="forge-slots">
-                        <select id="forge-slot-1" class="forge-select"><option value="">Select Input...</option></select>
+                        <select id="forge-slot-1" class="forge-select" aria-label="First synthesis input"><option value="">Select Input...</option></select>
                         <span class="plus-icon" aria-hidden="true">+</span>
-                        <select id="forge-slot-2" class="forge-select"><option value="">Select Input...</option></select>
+                        <select id="forge-slot-2" class="forge-select" aria-label="Second synthesis input"><option value="">Select Input...</option></select>
                     </div>
                     <button id="combine-button" class="action-button">Synthesize</button>
                     <div id="combination-result" role="status" aria-live="polite"></div>
@@ -85,30 +86,30 @@
             </div>
 
             <div id="concepts-panel" class="panel">
-                <h2>Concept Generation Tools</h2> <!-- MOVED UP -->
+                <h2>Concept Generation Tools</h2>
                 <div id="concept-generators-list" class="upgrades-grid auto-crafter-section"></div>
-                <h2>Discovered Concepts</h2> <!-- MOVED DOWN -->
+                <h2>Discovered Concepts</h2>
                 <div id="concepts-list" class="idea-list-panel"></div>
             </div>
 
             <div id="insights-panel" class="panel">
-                <h2>Insight Auto-Crafters</h2> <!-- MOVED UP -->
+                <h2>Insight Auto-Crafters</h2>
                 <div id="insight-crafters-list" class="upgrades-grid auto-crafter-section"></div>
-                <h2>Discovered Insights</h2> <!-- MOVED DOWN -->
+                <h2>Discovered Insights</h2>
                 <div id="insights-list" class="idea-list-panel"></div>
             </div>
 
             <div id="theories-panel" class="panel">
-                <h2>Theory Auto-Crafters</h2> <!-- MOVED UP -->
+                <h2>Theory Auto-Crafters</h2>
                 <div id="theory-crafters-list" class="upgrades-grid auto-crafter-section"></div>
-                <h2>Discovered Theories</h2> <!-- MOVED DOWN -->
+                <h2>Discovered Theories</h2>
                 <div id="theories-list" class="idea-list-panel"></div>
             </div>
 
             <div id="paradigms-panel" class="panel">
-                <h2>Paradigm Auto-Crafters</h2> <!-- MOVED UP -->
+                <h2>Paradigm Auto-Crafters</h2>
                 <div id="paradigm-crafters-list" class="upgrades-grid auto-crafter-section"></div>
-                <h2>Discovered Paradigms</h2> <!-- MOVED DOWN -->
+                <h2>Discovered Paradigms</h2>
                 <div id="paradigms-list" class="idea-list-panel"></div>
             </div>
 
@@ -116,6 +117,21 @@
                 <h2>Transcendence</h2>
                 <p>Reach higher states of understanding. Reset your current intellectual construct for profound, permanent Wisdom.</p>
                 <button id="transcend-button" class="action-button" disabled>Not Yet Wise Enough</button>
+            </div>
+
+            <div id="statistics-panel" class="panel">
+                <h2>Game Statistics</h2>
+                <div id="stats-list" class="stats-container">
+                    <div class="stat-item"><span class="stat-label">Play Time:</span> <span id="stat-play-time" class="stat-value">0s</span></div>
+                    <div class="stat-item"><span class="stat-label">Total Clicks:</span> <span id="stat-total-clicks" class="stat-value">0</span></div>
+                    <div class="stat-item"><span class="stat-label">Fleeting Thoughts Sparked:</span> <span id="stat-ft-sparked" class="stat-value">0</span></div>
+                    <div class="stat-item"><span class="stat-label">Fleeting Thoughts Generated (Passive):</span> <span id="stat-ft-passive" class="stat-value">0</span></div>
+                    <div class="stat-item"><span class="stat-label">Total Lifetime FT:</span> <span id="stat-lifetime-ft" class="stat-value">0</span></div>
+                    <div class="stat-item"><span class="stat-label">Ideas Synthesized:</span> <span id="stat-ideas-synthesized" class="stat-value">0</span></div>
+                    <div class="stat-item"><span class="stat-label">Auto-Crafter Productions:</span> <span id="stat-autocrafts" class="stat-value">0</span></div>
+                    <div class="stat-item"><span class="stat-label">Times Transcended:</span> <span id="stat-transcendences" class="stat-value">0</span></div>
+                    <div class="stat-item"><span class="stat-label">Game Saves:</span> <span id="stat-game-saves" class="stat-value">0</span></div>
+                </div>
             </div>
 
             <div id="settings-panel" class="panel">
