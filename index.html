@@ -10,35 +10,20 @@
 </head>
 <body>
     <div id="game-container">
-        <!-- Left Panel: Resources, Core Actions, Navigation -->
+        <!-- Left Panel -->
         <aside id="left-panel">
-            <header>
-                <h1>The Idea Engine</h1>
-            </header>
+            <header><h1>The Idea Engine</h1></header>
             <section id="resources-display">
                 <h2>Resources</h2>
-                <div class="resource-item">
-                    <span class="resource-label">Fleeting Thoughts (FT):</span>
-                    <span id="ft-count" class="resource-value">0</span>
-                </div>
-                 <div class="resource-item">
-                    <span class="resource-label">FT/sec:</span>
-                    <span id="ft-per-sec-count" class="resource-value">0</span>
-                </div>
-                <div class="resource-item">
-                    <span class="resource-label">Wisdom Shards (WS):</span>
-                    <span id="ws-count" class="resource-value">0</span>
-                </div>
+                <div class="resource-item"><span class="resource-label">Fleeting Thoughts (FT):</span><span id="ft-count" class="resource-value">0</span></div>
+                <div class="resource-item"><span class="resource-label">FT/sec:</span><span id="ft-per-sec-count" class="resource-value">0</span></div>
+                <div class="resource-item"><span class="resource-label">Wisdom Shards (WS):</span><span id="ws-count" class="resource-value">0</span></div>
                 <div id="active-concepts-summary"></div>
             </section>
-
             <section id="core-actions">
-                <button id="spark-button" class="action-button">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M12 2.25c.41 0 .75.34.75.75v2.25a.75.75 0 0 1-1.5 0V3c0-.41.34-.75.75-.75zM12 18.75c-.41 0-.75-.34-.75-.75v-2.25a.75.75 0 0 1 1.5 0V18c0 .41-.34.75-.75-.75zM5.066 6.043a.75.75 0 0 1 .953-.421l1.949.898a.75.75 0 1 1-.842 1.834l-1.95-.898a.75.75 0 0 1-.108-1.413zm11.917 10.073a.75.75 0 0 1 .953-.421l1.949.898a.75.75 0 0 1-.842 1.834l-1.95-.898a.75.75 0 0 1-.108-1.413zM2.25 12a.75.75 0 0 1 .75-.75h2.25a.75.75 0 0 1 0 1.5H3a.75.75 0 0 1-.75-.75zm18.75 0a.75.75 0 0 1 .75-.75h2.25a.75.75 0 0 1 0 1.5H21a.75.75 0 0 1-.75-.75zm-4.023-5.536a.75.75 0 0 1-.421-.953l.898-1.949a.75.75 0 1 1 1.834.842l-.898 1.95a.75.75 0 0 1-1.413.108zm-10.073 11.917a.75.75 0 0 1-.421-.953l.898-1.949a.75.75 0 1 1 1.834.842l-.898 1.95a.75.75 0 0 1-1.413.108zM12 6.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM1.5 12a10.5 10.5 0 1 1 21 0 10.5 10.5 0 0 1-21 0z"/></svg>
-                    Spark Fleeting Thought
-                </button>
+                <button id="spark-button" class="action-button"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M12 2.25c.41 0 .75.34.75.75v2.25a.75.75 0 0 1-1.5 0V3c0-.41.34-.75.75-.75zM12 18.75c-.41 0-.75-.34-.75-.75v-2.25a.75.75 0 0 1 1.5 0V18c0 .41-.34.75-.75.75zM5.066 6.043a.75.75 0 0 1 .953-.421l1.949.898a.75.75 0 1 1-.842 1.834l-1.95-.898a.75.75 0 0 1-.108-1.413zm11.917 10.073a.75.75 0 0 1 .953-.421l1.949.898a.75.75 0 0 1-.842 1.834l-1.95-.898a.75.75 0 0 1-.108-1.413zM2.25 12a.75.75 0 0 1 .75-.75h2.25a.75.75 0 0 1 0 1.5H3a.75.75 0 0 1-.75-.75zm18.75 0a.75.75 0 0 1 .75-.75h2.25a.75.75 0 0 1 0 1.5H21a.75.75 0 0 1-.75-.75zm-4.023-5.536a.75.75 0 0 1-.421-.953l.898-1.949a.75.75 0 1 1 1.834.842l-.898 1.95a.75.75 0 0 1-1.413.108zm-10.073 11.917a.75.75 0 0 1-.421-.953l.898-1.949a.75.75 0 1 1 1.834.842l-.898 1.95a.75.75 0 0 1-1.413.108zM12 6.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM1.5 12a10.5 10.5 0 1 1 21 0 10.5 10.5 0 0 1-21 0z"/></svg>Spark Fleeting Thought</button>
+                <button id="buy-mode-button" class="action-button secondary-action">Buy/Synth Mode: x1</button> <!-- NEW -->
             </section>
-
             <nav id="main-nav">
                 <button class="nav-button active" data-panel="noosphere-panel">Noosphere</button>
                 <button class="nav-button" data-panel="base-refinement-panel">Base Refinement</button>
@@ -48,83 +33,73 @@
                 <button class="nav-button" data-panel="theories-panel">Theories</button>
                 <button class="nav-button" data-panel="paradigms-panel">Paradigms</button>
                 <button class="nav-button" data-panel="transcendence-panel">Transcendence</button>
-                <button class="nav-button" data-panel="statistics-panel">Statistics</button>
-                <button class="nav-button" data-panel="settings-panel">Settings</button>
+                <button class="nav-button" data-panel="statistics-panel">Statistics</button> <!-- NEW -->
+                <button class="nav-button" data-panel="settings-panel">Save Management</button> <!-- RENAMED -->
             </nav>
             <footer>
-                <button id="save-button">Save</button>
-                <button id="load-button">Load</button>
-                <button id="reset-button">Reset Game</button>
+                <button id="save-button">Save</button> <button id="load-button">Load</button> <button id="reset-button">Reset Game</button>
             </footer>
         </aside>
 
+        <!-- Center Panel -->
         <main id="center-panel">
-            <div id="noosphere-panel" class="panel active">
-                <div id="noosphere-graph"></div>
-            </div>
-
-            <div id="base-refinement-panel" class="panel"> <!-- Consistent panel ID -->
+            <div id="noosphere-panel" class="panel active"><div id="noosphere-graph"></div></div>
+            <div id="base-refinement-panel" class="panel">
                 <h2>Base Cognitive Enhancements</h2>
                 <div id="base-upgrades-list" class="upgrades-grid"></div>
                 <h2>Fleeting Thought Generation</h2>
                 <div id="ft-generators-list" class="upgrades-grid"></div>
             </div>
-
             <div id="synthesis-panel" class="panel">
                 <h2>Synthesis Forge</h2>
                 <div id="forge-interface">
                     <div class="forge-slots">
-                        <select id="forge-slot-1" class="forge-select" aria-label="First synthesis input"><option value="">Select Input...</option></select>
+                        <select id="forge-slot-1" aria-label="First synthesis input"><option value="">Select...</option></select>
                         <span class="plus-icon" aria-hidden="true">+</span>
-                        <select id="forge-slot-2" class="forge-select" aria-label="Second synthesis input"><option value="">Select Input...</option></select>
+                        <select id="forge-slot-2" aria-label="Second synthesis input"><option value="">Select...</option></select>
                     </div>
                     <button id="combine-button" class="action-button">Synthesize</button>
                     <div id="combination-result" role="status" aria-live="polite"></div>
-                    <h3>Discovered Recipes: (Click to load into forge)</h3>
+                    <h3>Discovered Recipes: (Click to load)</h3>
                     <ul id="discovered-recipes-list"></ul>
                 </div>
             </div>
-
             <div id="concepts-panel" class="panel">
                 <h2>Concept Generation Tools</h2>
                 <div id="concept-generators-list" class="upgrades-grid auto-crafter-section"></div>
                 <h2>Discovered Concepts</h2>
                 <div id="concepts-list" class="idea-list-panel"></div>
             </div>
-
             <div id="insights-panel" class="panel">
                 <h2>Insight Auto-Crafters</h2>
                 <div id="insight-crafters-list" class="upgrades-grid auto-crafter-section"></div>
                 <h2>Discovered Insights</h2>
                 <div id="insights-list" class="idea-list-panel"></div>
             </div>
-
             <div id="theories-panel" class="panel">
                 <h2>Theory Auto-Crafters</h2>
                 <div id="theory-crafters-list" class="upgrades-grid auto-crafter-section"></div>
                 <h2>Discovered Theories</h2>
                 <div id="theories-list" class="idea-list-panel"></div>
             </div>
-
             <div id="paradigms-panel" class="panel">
                 <h2>Paradigm Auto-Crafters</h2>
                 <div id="paradigm-crafters-list" class="upgrades-grid auto-crafter-section"></div>
                 <h2>Discovered Paradigms</h2>
                 <div id="paradigms-list" class="idea-list-panel"></div>
             </div>
-
             <div id="transcendence-panel" class="panel">
                 <h2>Transcendence</h2>
                 <p>Reach higher states of understanding. Reset your current intellectual construct for profound, permanent Wisdom.</p>
-                <button id="transcend-button" class="action-button" disabled>Not Yet Wise Enough</button>
+                <button id="transcend-button" class="action-button" disabled>Discover a Paradigm</button>
             </div>
-
+            <!-- NEW Statistics Panel -->
             <div id="statistics-panel" class="panel">
                 <h2>Game Statistics</h2>
                 <div id="stats-list" class="stats-container">
                     <div class="stat-item"><span class="stat-label">Play Time:</span> <span id="stat-play-time" class="stat-value">0s</span></div>
                     <div class="stat-item"><span class="stat-label">Total Clicks:</span> <span id="stat-total-clicks" class="stat-value">0</span></div>
-                    <div class="stat-item"><span class="stat-label">Fleeting Thoughts Sparked:</span> <span id="stat-ft-sparked" class="stat-value">0</span></div>
+                    <div class="stat-item"><span class="stat-label">Fleeting Thoughts Sparked (Manual):</span> <span id="stat-ft-sparked" class="stat-value">0</span></div>
                     <div class="stat-item"><span class="stat-label">Fleeting Thoughts Generated (Passive):</span> <span id="stat-ft-passive" class="stat-value">0</span></div>
                     <div class="stat-item"><span class="stat-label">Total Lifetime FT:</span> <span id="stat-lifetime-ft" class="stat-value">0</span></div>
                     <div class="stat-item"><span class="stat-label">Ideas Synthesized:</span> <span id="stat-ideas-synthesized" class="stat-value">0</span></div>
@@ -133,34 +108,27 @@
                     <div class="stat-item"><span class="stat-label">Game Saves:</span> <span id="stat-game-saves" class="stat-value">0</span></div>
                 </div>
             </div>
-
+            <!-- MODIFIED Settings Panel -->
             <div id="settings-panel" class="panel">
-                <h2>Settings</h2>
+                <h2>Save Management</h2>
                 <section aria-labelledby="save-management-heading">
-                    <h3 id="save-management-heading">Game Save Management</h3>
-                    <button id="export-save-button" class="action-button settings-button">Export Save Data</button>
+                    <h3 id="save-management-heading" class="visually-hidden">Game Save Management</h3>
+                    <button id="export-save-button" class="action-button settings-button">Export Save to Clipboard</button>
                     <textarea id="import-save-area" aria-label="Paste save data here" placeholder="Paste save data here..." class="settings-textarea"></textarea>
                     <button id="import-save-button" class="action-button settings-button">Import Save Data</button>
                 </section>
-                <hr class="settings-hr">
-                <section aria-labelledby="other-settings-heading">
-                    <h3 id="other-settings-heading">Other Settings</h3>
-                    <p>Future settings (e.g., volume, graphics detail) can be added here.</p>
-                </section>
             </div>
         </main>
-
+        <!-- Right Panel -->
         <aside id="right-panel">
             <div id="details-view">
-                <h2>Selected Idea</h2>
-                <div id="selected-idea-name" role="heading" aria-level="3">Nothing Selected</div>
-                <div id="selected-idea-description">Click a node in the Noosphere or an item in your lists.</div>
-                <div id="selected-idea-attributes"></div>
+                <!-- Content will be managed by UI.js (Tutorial or Selected Idea) -->
             </div>
-             <div id="tooltip-container" role="tooltip" aria-hidden="true"></div>
+            <div id="tooltip-container" role="tooltip" aria-hidden="true"></div>
         </aside>
     </div>
 
+    <!-- Scripts -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/config/ideasData.js"></script>
