@@ -144,7 +144,7 @@ function loadGame() {
             }
             if (offlineGains.ftGained > 0.1 || Object.keys(offlineGains.ideasGained || {}).length > 0) {
                 const secondsOfflineForNotification = timeOffline / 1000;
-                let offlineSummary = `Offline gains (${Utils.formatTime(secondsOfflineForNotification)}): +${Utils.formatNumber(offlineGains.ftGained)} FT. `;
+                let offlineSummary = `Offline gains (${utils.formatTime(secondsOfflineForNotification)}): +${Utils.formatNumber(offlineGains.ftGained)} FT. `;
                 Object.entries(offlineGains.ideasGained || {}).forEach(([id, count]) => { offlineSummary += `+${Utils.formatNumber(count)} ${IDEAS_DATA[id]?.name || id}. `; });
                 if (typeof UI !== 'undefined') UI.showNotification(offlineSummary, 'success');
             }
