@@ -6,6 +6,19 @@ const Utils = {
      * @param {number | string} num - The number or numeric string to format.
      * @returns {string} The formatted number string, or '0' for invalid inputs.
      */
+    function formatTime(seconds) {
+          const h = Math.floor(seconds / 3600);
+          const m = Math.floor((seconds % 3600) / 60);
+          const s = seconds % 60;
+
+          const parts = [];
+          if (h) parts.push(`${h}h`);
+          if (m) parts.push(`${m}m`);
+          if (s || parts.length === 0) parts.push(`${s}s`);
+
+          return parts.join(' ');
+    },
+
     formatNumber(num) {
         const n = parseFloat(num);
 
