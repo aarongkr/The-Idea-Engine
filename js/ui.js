@@ -72,6 +72,7 @@ const UI = {
         this.elements.ftCount.textContent = Utils.formatNumber(gameState.resources.fleeting_thought);
         this.elements.wsCount.textContent = Utils.formatNumber(gameState.resources.wisdom_shards);
         let totalFtPerSec = 0;
+        // Calculate FT/sec from base generators
         Object.entries(gameState.generators).forEach(([genId, genState]) => {
             const genData = GENERATORS_DATA[genId];
             if (genData && genState.level > 0 && genData.output?.fleeting_thought) {
@@ -80,13 +81,22 @@ const UI = {
                 totalFtPerSec += (baseOutput * currentLevel) * levelBonus;
             }
         });
+        // Calculate FT/sec from ideas
         Object.entries(gameState.ideas).forEach(([ideaId, count]) => {
             const ideaData = IDEAS_DATA[ideaId];
             if (ideaData?.attributes?.ft_bonus_per_sec && GameLogic._isValidNumber(count) && count > 0) {
                 totalFtPerSec += ideaData.attributes.ft_bonus_per_sec * count;
             }
         });
-        this.elements.ftPerSecCount.textContent = Utils.formatNumber(totalFtPerSec) + "/sec";
+        // Apply global multiplier for display
+        let globalMultiplier = 1;
+        const methodicalApproachLevel = gameState.generators.methodical_approach?.level || 0;
+        if (methodicalApproachLevel > 0) {
+            globalMultiplier += methodicalApproachLevel * GENERATORS_DATA.methodical_approach.effect.global_ft_multiplier_bonus;
+        }
+        this.elements.ftPerSecCount.textContent = Utils.formatNumber(totalFtPerSec * globalMultiplier) + "/sec";
+
+        // Update tier summary
         let tierSummaryHTML = '<h3>Idea Tiers</h3><ul class="compact-list">';
         const tierCounts = { 1: 0, 2: 0, 3: 0, 4: 0 };
         const totalPerTier = { 1: 0, 2: 0, 3: 0, 4: 0 };
@@ -107,49 +117,52 @@ const UI = {
         this.elements.activeConceptsSummary.innerHTML = tierSummaryHTML;
     },
 
-    /**
-     * Renders a generic upgrade card, now correctly displaying cost for fixed multipliers.
-     */
     renderUpgradeCard(container, itemData, currentLevel, buttonClass, buttonDataAttribute) {
         const isMaxLevel = currentLevel >= (itemData.maxLevel || Infinity);
         
-        const purchaseDetails = GameLogic.calculateMultiBuy(itemData.baseCost, itemData.costScale, currentLevel, gameState.purchaseMultiplier, itemData.maxLevel);
+        // ** MODIFIED LOGIC: Always calculate cost for the selected multiplier amount first **
+        const costForMultiplier = GameLogic.calculateMultiBuy(itemData.baseCost, itemData.costScale, currentLevel, gameState.purchaseMultiplier === 'Max' ? 1 : gameState.purchaseMultiplier, itemData.maxLevel);
         
         let canAfford = false;
         let costToDisplay = {};
         let levelsToBuyText = "0";
 
         if (isMaxLevel) {
-            costToDisplay = {}; // No cost if maxed out
             canAfford = false;
         } else if (gameState.purchaseMultiplier === 'Max') {
-            canAfford = purchaseDetails.affordableLevels > 0;
-            // For 'Max', we need a separate calculation to get the cost of only the affordable levels
-            const affordableDetails = GameLogic.calculateMultiBuy(itemData.baseCost, itemData.costScale, currentLevel, purchaseDetails.affordableLevels, itemData.maxLevel);
-            costToDisplay = affordableDetails.totalCost;
-            levelsToBuyText = purchaseDetails.affordableLevels.toString();
-        } else {
-            // For x1, x10, x100, the cost is for the full amount, and affordability depends on that.
-            canAfford = purchaseDetails.affordableLevels >= purchaseDetails.levelsToBuy;
-            costToDisplay = purchaseDetails.totalCost;
-            levelsToBuyText = purchaseDetails.levelsToBuy.toString();
+            const maxAffordableDetails = GameLogic.calculateMultiBuy(itemData.baseCost, itemData.costScale, currentLevel, 'Max', itemData.maxLevel);
+            canAfford = maxAffordableDetails.affordableLevels > 0;
+            costToDisplay = maxAffordableDetails.totalCost;
+            levelsToBuyText = maxAffordableDetails.affordableLevels.toString();
+        } else { // For x1, x10, x100
+            const exactPurchaseDetails = GameLogic.calculateMultiBuy(itemData.baseCost, itemData.costScale, currentLevel, gameState.purchaseMultiplier, itemData.maxLevel);
+            canAfford = exactPurchaseDetails.affordableLevels >= exactPurchaseDetails.levelsToBuy;
+            costToDisplay = exactPurchaseDetails.totalCost; // Always show the cost for the full multiplier
+            levelsToBuyText = gameState.purchaseMultiplier.toString();
         }
         
         let costString = isMaxLevel ? "N/A" : Object.entries(costToDisplay).map(([res, val]) => `${Utils.formatNumber(val)} ${IDEAS_DATA[res]?.name || Utils.capitalizeFirst(res.replace(/_/g, ' '))}`).join(', ');
         
-        let buttonText;
-        if (isMaxLevel) {
-            buttonText = "Max Level";
-        } else {
-            const amount = (gameState.purchaseMultiplier === 'Max') ? levelsToBuyText : gameState.purchaseMultiplier;
-            buttonText = currentLevel === 0 ? `Build +${amount}` : `Upgrade +${amount}`;
+        let buttonText = isMaxLevel ? "Max Level" : `${currentLevel === 0 ? 'Build' : 'Upgrade'} +${levelsToBuyText}`;
+        if (gameState.purchaseMultiplier !== 'Max') {
+            buttonText = currentLevel === 0 ? `Build x${levelsToBuyText}` : `Upgrade x${levelsToBuyText}`;
         }
 
         const card = document.createElement('div');
         card.className = 'upgrade-card';
 
+        // Display effect/output string
         let outputString = "Effect: ";
-        if (itemData.output) {
+        if (itemData.effect?.ft_per_click) {
+            const effectData = itemData.effect; const scale = itemData.outputScale || 1;
+            const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel-1);
+            const totalBonus = (effectData.ft_per_click * displayLevel) * (scale**scalePower);
+            const prefix = currentLevel === 0 ? " (Lvl 1)" : "";
+            outputString = `Effect: +${totalBonus.toFixed(2)} FT per click${prefix}`;
+        } else if (itemData.effect?.global_ft_multiplier_bonus) {
+             const totalBonus = currentLevel * itemData.effect.global_ft_multiplier_bonus * 100;
+             outputString = `Effect: +${totalBonus.toFixed(0)}% to all FT generation`;
+        } else if (itemData.output) {
             const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = itemData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : "";
             if (GameLogic._isValidNumber(itemData.output.fleeting_thought)) { const ftOutputValue = (itemData.output.fleeting_thought * (outputScale**scalePower) * displayLevel); outputString += `${ftOutputValue.toFixed(2)} FT/sec${prefix}<br>`; }
             Object.entries(itemData.output).forEach(([outRes, outVal]) => { if (outRes !== 'fleeting_thought' && GameLogic._isValidNumber(outVal)) { const rate = outVal * (outputScale**scalePower) * displayLevel * 100; outputString += `${rate.toFixed(2)}% chance/sec for ${IDEAS_DATA[outRes]?.name || outRes}${prefix}<br>`; } });
@@ -159,7 +172,7 @@ const UI = {
             const outputVal = (itemData.outputAmount || 0) * (outputScale ** scalePower) * displayLevel;
             outputString = `Crafts: ${outputVal.toFixed(4)} ${targetIdea.name}/sec${prefix}`;
         }
-        outputString = outputString.replace(/<br>$/, '');
+        outputString = outputString.replace(/<br>$/, '').trim();
         
         card.innerHTML = `<h3>${itemData.icon || ''} ${itemData.name} (Lvl ${currentLevel}${isMaxLevel ? ' - MAX' : ''})</h3> <p>${itemData.description || ''}</p> <p class="cost">Cost: ${costString}</p> <p class="output">${outputString || 'Effect: N/A'}</p> <button class="action-button ${buttonClass}" ${buttonDataAttribute}="${itemData.id}" ${!canAfford || isMaxLevel ? 'disabled' : ''}>${buttonText}</button>`;
         container.appendChild(card);
