@@ -113,34 +113,27 @@ const UI = {
     },
 
     /**
-     * Renders a generic upgrade card, now correctly displaying cost for fixed and max multipliers.
+     * Renders a generic upgrade card with intelligent formatting for output and costs.
      */
     renderUpgradeCard(container, itemData, currentLevel, buttonClass, buttonDataAttribute) {
         const isMaxLevel = currentLevel >= (itemData.maxLevel || Infinity);
-        
+        const purchaseDetails = GameLogic.calculateMultiBuy(itemData.baseCost, itemData.costScale, currentLevel, gameState.purchaseMultiplier, itemData.maxLevel);
         let canAfford = false;
         let costToDisplay = {};
         let levelsToBuyText = "0";
-
         if (isMaxLevel) {
-            // No cost or action if already at max level
+            // No action if maxed
         } else if (gameState.purchaseMultiplier === 'Max') {
-            const maxAffordableDetails = GameLogic.calculateMultiBuy(itemData.baseCost, itemData.costScale, currentLevel, 'Max', itemData.maxLevel);
-            canAfford = maxAffordableDetails.affordableLevels > 0;
-            levelsToBuyText = maxAffordableDetails.affordableLevels.toString();
-            // ** THE FIX IS HERE **
-            // For 'Max', we calculate the cost for *only the affordable levels* to display it correctly.
-            const costOfAffordable = GameLogic.calculateMultiBuy(itemData.baseCost, itemData.costScale, currentLevel, maxAffordableDetails.affordableLevels, itemData.maxLevel);
+            canAfford = purchaseDetails.affordableLevels > 0;
+            levelsToBuyText = purchaseDetails.affordableLevels.toString();
+            const costOfAffordable = GameLogic.calculateMultiBuy(itemData.baseCost, itemData.costScale, currentLevel, purchaseDetails.affordableLevels, itemData.maxLevel);
             costToDisplay = costOfAffordable.totalCost;
-        } else { // For x1, x10, x100
-            const exactPurchaseDetails = GameLogic.calculateMultiBuy(itemData.baseCost, itemData.costScale, currentLevel, gameState.purchaseMultiplier, itemData.maxLevel);
-            canAfford = exactPurchaseDetails.affordableLevels >= exactPurchaseDetails.levelsToBuy;
-            costToDisplay = exactPurchaseDetails.totalCost; // Display the cost for the full multiplier amount
-            levelsToBuyText = exactPurchaseDetails.levelsToBuy.toString(); // The number of levels in the multiplier (e.g. 10, 100)
+        } else {
+            canAfford = purchaseDetails.affordableLevels >= purchaseDetails.levelsToBuy;
+            costToDisplay = purchaseDetails.totalCost;
+            levelsToBuyText = purchaseDetails.levelsToBuy.toString();
         }
-        
         let costString = isMaxLevel ? "N/A" : Object.entries(costToDisplay).map(([res, val]) => `${Utils.formatNumber(val)} ${IDEAS_DATA[res]?.name || Utils.capitalizeFirst(res.replace(/_/g, ' '))}`).join(', ');
-        
         let buttonText;
         if (isMaxLevel) {
             buttonText = "Max Level";
@@ -152,29 +145,48 @@ const UI = {
         const card = document.createElement('div');
         card.className = 'upgrade-card';
 
-        // Display effect/output string
+        // --- MODIFIED: Output String Generation Logic ---
         let outputString = "Effect: ";
         if (itemData.effect?.ft_per_click) {
             const effectData = itemData.effect; const scale = itemData.outputScale || 1;
-            const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel-1);
-            const totalBonus = (effectData.ft_per_click * displayLevel) * (scale**scalePower);
+            const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1);
+            const totalBonus = (effectData.ft_per_click * displayLevel) * (scale ** scalePower);
             const prefix = currentLevel === 0 ? " (Lvl 1)" : "";
             outputString = `Effect: +${totalBonus.toFixed(2)} FT per click${prefix}`;
         } else if (itemData.effect?.global_ft_multiplier_bonus) {
-             const totalBonus = currentLevel * itemData.effect.global_ft_multiplier_bonus * 100;
-             outputString = `Effect: +${totalBonus.toFixed(0)}% to all FT generation`;
-        } else if (itemData.output) {
-            const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = itemData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : "";
-            if (GameLogic._isValidNumber(itemData.output.fleeting_thought)) { const ftOutputValue = (itemData.output.fleeting_thought * (outputScale**scalePower) * displayLevel); outputString += `${ftOutputValue.toFixed(2)} FT/sec${prefix}<br>`; }
-            Object.entries(itemData.output).forEach(([outRes, outVal]) => { if (outRes !== 'fleeting_thought' && GameLogic._isValidNumber(outVal)) { const rate = outVal * (outputScale**scalePower) * displayLevel * 100; outputString += `${rate.toFixed(2)}% chance/sec for ${IDEAS_DATA[outRes]?.name || outRes}${prefix}<br>`; } });
-        } else if (itemData.targetIdeaId) {
+            const totalBonus = currentLevel * itemData.effect.global_ft_multiplier_bonus * 100;
+            outputString = `Effect: +${totalBonus.toFixed(0)}% to all FT generation`;
+        } else if (itemData.output) { // For base generators with chance-based output
+            Object.entries(itemData.output).forEach(([outRes, outVal]) => {
+                if (outRes === 'fleeting_thought') {
+                    const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = itemData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : "";
+                    const ftOutputValue = (outVal * (outputScale ** scalePower) * displayLevel);
+                    outputString += `${ftOutputValue.toFixed(2)} FT/sec${prefix}<br>`;
+                } else if (GameLogic._isValidNumber(outVal)) {
+                    const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = itemData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : "";
+                    const itemsPerSecond = outVal * (outputScale ** scalePower) * displayLevel;
+                    if (itemsPerSecond < 1) {
+                        const secondsPerItem = 1 / itemsPerSecond;
+                        outputString += `1 ${IDEAS_DATA[outRes]?.name || outRes} / ${secondsPerItem.toFixed(2)}s${prefix}<br>`;
+                    } else {
+                        outputString += `${itemsPerSecond.toFixed(2)} ${IDEAS_DATA[outRes]?.name || outRes}/sec${prefix}<br>`;
+                    }
+                }
+            });
+        } else if (itemData.targetIdeaId) { // For Auto-Crafters
             const targetIdea = IDEAS_DATA[itemData.targetIdeaId];
             const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = itemData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : "";
-            const outputVal = (itemData.outputAmount || 0) * (outputScale ** scalePower) * displayLevel;
-            outputString = `Crafts: ${outputVal.toFixed(4)} ${targetIdea.name}/sec${prefix}`;
+            const craftsPerSecond = (itemData.outputAmount || 0) * (outputScale ** scalePower) * displayLevel;
+            if (craftsPerSecond > 0 && craftsPerSecond < 1) {
+                const secondsPerCraft = 1 / craftsPerSecond;
+                outputString = `Crafts: 1 ${targetIdea.name} / ${secondsPerCraft.toFixed(2)}s${prefix}`;
+            } else {
+                outputString = `Crafts: ${craftsPerSecond.toFixed(3)} ${targetIdea.name}/sec${prefix}`;
+            }
         }
         outputString = outputString.replace(/<br>$/, '').trim();
-        
+        // --- END MODIFICATION ---
+
         card.innerHTML = `<h3>${itemData.icon || ''} ${itemData.name} (Lvl ${currentLevel}${isMaxLevel ? ' - MAX' : ''})</h3> <p>${itemData.description || ''}</p> <p class="cost">Cost: ${costString}</p> <p class="output">${outputString || 'Effect: N/A'}</p> <button class="action-button ${buttonClass}" ${buttonDataAttribute}="${itemData.id}" ${!canAfford || isMaxLevel ? 'disabled' : ''}>${buttonText}</button>`;
         container.appendChild(card);
     },
