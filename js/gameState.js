@@ -13,9 +13,9 @@ let gameState = {
     noosphereState: { nodes: [], edges: [] },
     discoveredIdeas: new Set(),
     transcendenceCount: 0,
-    tutorialCompleted: false,
-    purchaseMultiplier: 1, // Tracks buy amount (1, 10, 100, 'Max')
-    gameVersion: "0.1.2" // Bump version for new state property
+    tutorialCompleted: false, // NEW: Tracks if the tutorial has been finished
+    purchaseMultiplier: 1,    // NEW: Tracks buy amount (1, 10, 100, 'Max')
+    gameVersion: "0.1.2"      // Bump version for new state properties
 };
 
 /**
@@ -33,8 +33,8 @@ function initializeGameState(isNewGame = false) {
         gameState.unlockedRecipes = [];
         gameState.discoveredIdeas = new Set(['fleeting_thought']);
         gameState.transcendenceCount = 0;
-        gameState.tutorialCompleted = false;
-        gameState.purchaseMultiplier = 1; // Default to 1 on new game
+        gameState.tutorialCompleted = false; // Default to false for new games
+        gameState.purchaseMultiplier = 1;    // Default to 1 on new game
         gameState.gameVersion = "0.1.2";
         gameState.noosphereState = { nodes: [], edges: [] };
         console.log("Initializing NEW game state.");
@@ -72,8 +72,9 @@ function initializeGameState(isNewGame = false) {
 
     gameState.transcendenceCount = Number(gameState.transcendenceCount) || 0;
     gameState.lastUpdate = Number(gameState.lastUpdate) || Date.now();
-    gameState.tutorialCompleted = gameState.tutorialCompleted === true;
+    gameState.tutorialCompleted = gameState.tutorialCompleted === true; // Ensure it's a boolean
 
+    // Sanitize purchase multiplier
     const validMultipliers = [1, 10, 100, 'Max'];
     if (!validMultipliers.includes(gameState.purchaseMultiplier)) {
         gameState.purchaseMultiplier = 1;
@@ -83,11 +84,12 @@ function initializeGameState(isNewGame = false) {
 }
 
 /**
- * Saves the current gameState to localStorage.
+ * Saves the current gameState to localStorage, converting the Set to an Array.
  */
 function saveGame() {
     try {
         gameState.lastUpdate = Date.now();
+        // Convert Set to Array before saving, as JSON doesn't support Sets
         const savableGameState = { ...gameState, discoveredIdeas: Array.from(gameState.discoveredIdeas) };
         localStorage.setItem('ideaEngineSave', JSON.stringify(savableGameState));
         if (typeof UI !== 'undefined' && UI.showNotification) {
@@ -100,6 +102,7 @@ function saveGame() {
  * Loads gameState from localStorage, sanitizes it, and calculates offline progress.
  */
 function loadGame() {
+    // ... (This function remains identical to the previous version you provided) ...
     const savedGame = localStorage.getItem('ideaEngineSave');
     let loadedState = null; let timeOffline = 0;
     if (savedGame) {
@@ -128,13 +131,15 @@ function loadGame() {
 
 /**
  * Confirms and resets the game state to default values.
- * @param {boolean} isError - If true, displays a message indicating a save error prompted the reset.
  */
 function resetGameConfirm(isError = false) {
     const message = isError ? "Error with save data. Would you like to reset the game to its initial state? This cannot be undone." : "Are you sure you want to reset all progress? This cannot be undone.";
     if (confirm(message)) {
-        localStorage.removeItem('ideaEngineSave'); initializeGameState(true); saveGame();
-        if (typeof GameLogic !== 'undefined') GameLogic.lastTick = Date.now(); gameState.lastUIRefresh = 0;
+        localStorage.removeItem('ideaEngineSave');
+        initializeGameState(true);
+        saveGame();
+        if (typeof GameLogic !== 'undefined') GameLogic.lastTick = Date.now();
+        gameState.lastUIRefresh = 0;
         if (typeof Noosphere !== 'undefined') Noosphere.renderFromGameState();
         if (typeof UI !== 'undefined') UI.updateAllUI();
         if (typeof UI !== 'undefined') UI.switchPanel('noosphere-panel', document.querySelector('.nav-button[data-panel="noosphere-panel"]'));
