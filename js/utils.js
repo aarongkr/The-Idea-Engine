@@ -10,6 +10,19 @@ const Utils = {
      * @param {number | string} num - The number to format.
      * @returns {string} The formatted number string.
      */
+    formatTime(seconds) {
+          const h = Math.floor(seconds / 3600);
+          const m = Math.floor((seconds % 3600) / 60);
+          const s = seconds % 60;
+
+          const parts = [];
+          if (h) parts.push(`${h}h`);
+          if (m) parts.push(`${m}m`);
+          if (s || parts.length === 0) parts.push(`${s}s`);
+
+          return parts.join(' ');
+    },
+
     formatNumber(num) {
         const n = parseFloat(num);
 
@@ -83,18 +96,5 @@ const Utils = {
     capitalizeFirst(str) {
         if (typeof str !== 'string' || str.length === 0) return '';
         return str.charAt(0).toUpperCase() + str.slice(1);
-    },
-
-    formatTime(seconds) {
-          const h = Math.floor(seconds / 3600);
-          const m = Math.floor((seconds % 3600) / 60);
-          const s = seconds % 60;
-
-          const parts = [];
-          if (h) parts.push(`${h}h`);
-          if (m) parts.push(`${m}m`);
-          if (s || parts.length === 0) parts.push(`${s}s`);
-
-          return parts.join(' ');
     }
 };
