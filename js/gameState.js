@@ -13,18 +13,16 @@ let gameState = {
     noosphereState: { nodes: [], edges: [] },
     discoveredIdeas: new Set(),
     transcendenceCount: 0,
-    tutorialCompleted: false, // NEW: Tracks if the tutorial has been finished
-    purchaseMultiplier: 1,    // NEW: Tracks buy amount (1, 10, 100, 'Max')
-    gameVersion: "0.1.2"      // Bump version for new state properties
+    tutorialCompleted: false,
+    purchaseMultiplier: 1,
+    gameVersion: "0.1.3" // Version bump for new generator types
 };
 
 /**
  * Initializes or sanitizes the global gameState object.
- * @param {boolean} isNewGame - True if starting a fresh game.
  */
 function initializeGameState(isNewGame = false) {
     if (isNewGame) {
-        // Reset properties for a new game
         gameState.lastUpdate = Date.now();
         gameState.resources = { fleeting_thought: 0, wisdom_shards: 0 };
         gameState.ideas = {};
@@ -33,14 +31,13 @@ function initializeGameState(isNewGame = false) {
         gameState.unlockedRecipes = [];
         gameState.discoveredIdeas = new Set(['fleeting_thought']);
         gameState.transcendenceCount = 0;
-        gameState.tutorialCompleted = false; // Default to false for new games
-        gameState.purchaseMultiplier = 1;    // Default to 1 on new game
-        gameState.gameVersion = "0.1.2";
+        gameState.tutorialCompleted = false;
+        gameState.purchaseMultiplier = 1;
+        gameState.gameVersion = "0.1.3";
         gameState.noosphereState = { nodes: [], edges: [] };
-        console.log("Initializing NEW game state.");
     }
 
-    // --- Sanitize Core Properties ---
+    // Sanitize Core Properties
     if (typeof gameState.resources !== 'object' || gameState.resources === null) gameState.resources = { fleeting_thought: 0, wisdom_shards: 0 };
     gameState.resources.fleeting_thought = Number(gameState.resources.fleeting_thought) || 0;
     gameState.resources.wisdom_shards = Number(gameState.resources.wisdom_shards) || 0;
@@ -50,6 +47,7 @@ function initializeGameState(isNewGame = false) {
 
     const sanitizedGenerators = {};
     if (typeof gameState.generators !== 'object' || gameState.generators === null) gameState.generators = {};
+    // This loop now correctly initializes ALL generators defined in GENERATORS_DATA
     Object.keys(GENERATORS_DATA).forEach(id => {
         const loadedGenData = gameState.generators[id]; let level = 0;
         if (loadedGenData && typeof loadedGenData === 'object') { const loadedLevel = loadedGenData.level ?? loadedGenData.Level; level = Number(loadedLevel) || 0; }
@@ -72,24 +70,21 @@ function initializeGameState(isNewGame = false) {
 
     gameState.transcendenceCount = Number(gameState.transcendenceCount) || 0;
     gameState.lastUpdate = Number(gameState.lastUpdate) || Date.now();
-    gameState.tutorialCompleted = gameState.tutorialCompleted === true; // Ensure it's a boolean
+    gameState.tutorialCompleted = gameState.tutorialCompleted === true;
 
-    // Sanitize purchase multiplier
     const validMultipliers = [1, 10, 100, 'Max'];
     if (!validMultipliers.includes(gameState.purchaseMultiplier)) {
         gameState.purchaseMultiplier = 1;
     }
-
-    gameState.gameVersion = gameState.gameVersion || "0.1.2";
+    gameState.gameVersion = gameState.gameVersion || "0.1.3";
 }
 
 /**
- * Saves the current gameState to localStorage, converting the Set to an Array.
+ * Saves the current gameState to localStorage.
  */
 function saveGame() {
     try {
         gameState.lastUpdate = Date.now();
-        // Convert Set to Array before saving, as JSON doesn't support Sets
         const savableGameState = { ...gameState, discoveredIdeas: Array.from(gameState.discoveredIdeas) };
         localStorage.setItem('ideaEngineSave', JSON.stringify(savableGameState));
         if (typeof UI !== 'undefined' && UI.showNotification) {
@@ -102,7 +97,6 @@ function saveGame() {
  * Loads gameState from localStorage, sanitizes it, and calculates offline progress.
  */
 function loadGame() {
-    // ... (This function remains identical to the previous version you provided) ...
     const savedGame = localStorage.getItem('ideaEngineSave');
     let loadedState = null; let timeOffline = 0;
     if (savedGame) {
@@ -118,7 +112,7 @@ function loadGame() {
             if (offlineGains.ideasGained) { Object.entries(offlineGains.ideasGained).forEach(([ideaId, count]) => { if (GameLogic._isValidNumber(count) && count > 0) { if(!GameLogic._isValidNumber(gameState.ideas[ideaId])) gameState.ideas[ideaId] = 0; gameState.ideas[ideaId] += count; gameState.discoveredIdeas.add(ideaId); } }); }
             if (offlineGains.ftGained > 0.1 || Object.keys(offlineGains.ideasGained || {}).length > 0) {
                  const secondsOfflineForNotification = timeOffline / 1000;
-                 let offlineSummary = `Offline gains (${Math.floor(secondsOfflineForNotification / 60)} min): +${Utils.formatNumber(offlineGains.ftGained)} FT. `;
+                 let offlineSummary = `Offline gains (${Utils.formatTime(Math.floor(secondsOfflineForNotification))}): +${Utils.formatNumber(offlineGains.ftGained)} FT. `;
                  Object.entries(offlineGains.ideasGained || {}).forEach(([id, count]) => { offlineSummary += `+${Utils.formatNumber(count)} ${IDEAS_DATA[id]?.name || id}. `; });
                  if (typeof UI !== 'undefined' && UI.showNotification) { UI.showNotification(offlineSummary, 'success'); }
             }
@@ -135,11 +129,8 @@ function loadGame() {
 function resetGameConfirm(isError = false) {
     const message = isError ? "Error with save data. Would you like to reset the game to its initial state? This cannot be undone." : "Are you sure you want to reset all progress? This cannot be undone.";
     if (confirm(message)) {
-        localStorage.removeItem('ideaEngineSave');
-        initializeGameState(true);
-        saveGame();
-        if (typeof GameLogic !== 'undefined') GameLogic.lastTick = Date.now();
-        gameState.lastUIRefresh = 0;
+        localStorage.removeItem('ideaEngineSave'); initializeGameState(true); saveGame();
+        if (typeof GameLogic !== 'undefined') GameLogic.lastTick = Date.now(); gameState.lastUIRefresh = 0;
         if (typeof Noosphere !== 'undefined') Noosphere.renderFromGameState();
         if (typeof UI !== 'undefined') UI.updateAllUI();
         if (typeof UI !== 'undefined') UI.switchPanel('noosphere-panel', document.querySelector('.nav-button[data-panel="noosphere-panel"]'));
