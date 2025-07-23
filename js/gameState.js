@@ -14,7 +14,7 @@ let gameState = {
     discoveredIdeas: new Set(),
     transcendenceCount: 0,
     tutorialCompleted: false,
-    purchaseMultiplier: 1, // New: Tracks buy amount (1, 10, 100, 'Max')
+    purchaseMultiplier: 1, // Tracks buy amount (1, 10, 100, 'Max')
     gameVersion: "0.1.2" // Bump version for new state property
 };
 
@@ -41,12 +41,13 @@ function initializeGameState(isNewGame = false) {
     }
 
     // --- Sanitize Core Properties ---
-    // (Existing sanitization for resources, ideas, generators, crafters, etc. is correct)
     if (typeof gameState.resources !== 'object' || gameState.resources === null) gameState.resources = { fleeting_thought: 0, wisdom_shards: 0 };
     gameState.resources.fleeting_thought = Number(gameState.resources.fleeting_thought) || 0;
     gameState.resources.wisdom_shards = Number(gameState.resources.wisdom_shards) || 0;
+
     if (typeof gameState.ideas !== 'object' || gameState.ideas === null) gameState.ideas = {};
     Object.keys(IDEAS_DATA).forEach(id => { if (IDEAS_DATA[id].tier > 0) gameState.ideas[id] = Number(gameState.ideas[id]) || 0; });
+
     const sanitizedGenerators = {};
     if (typeof gameState.generators !== 'object' || gameState.generators === null) gameState.generators = {};
     Object.keys(GENERATORS_DATA).forEach(id => {
@@ -55,6 +56,7 @@ function initializeGameState(isNewGame = false) {
         sanitizedGenerators[id] = { level: level };
     });
     gameState.generators = sanitizedGenerators;
+
     const sanitizedCrafters = {};
     if (typeof gameState.crafters !== 'object' || gameState.crafters === null) gameState.crafters = {};
     Object.keys(CRAFTERS_DATA).forEach(id => {
@@ -63,24 +65,26 @@ function initializeGameState(isNewGame = false) {
         sanitizedCrafters[id] = { level: level };
     });
     gameState.crafters = sanitizedCrafters;
+
     if (!Array.isArray(gameState.unlockedRecipes)) gameState.unlockedRecipes = [];
     if (!(gameState.discoveredIdeas instanceof Set)) { gameState.discoveredIdeas = new Set(Array.isArray(gameState.discoveredIdeas) ? gameState.discoveredIdeas : []); }
     gameState.discoveredIdeas.add('fleeting_thought');
+
     gameState.transcendenceCount = Number(gameState.transcendenceCount) || 0;
     gameState.lastUpdate = Number(gameState.lastUpdate) || Date.now();
     gameState.tutorialCompleted = gameState.tutorialCompleted === true;
-    
-    // Sanitize the new purchase multiplier
+
     const validMultipliers = [1, 10, 100, 'Max'];
     if (!validMultipliers.includes(gameState.purchaseMultiplier)) {
-        gameState.purchaseMultiplier = 1; // Default to 1 if loaded value is invalid
+        gameState.purchaseMultiplier = 1;
     }
-    
+
     gameState.gameVersion = gameState.gameVersion || "0.1.2";
 }
 
-
-// (saveGame, loadGame, resetGameConfirm functions remain unchanged from the previous version)
+/**
+ * Saves the current gameState to localStorage.
+ */
 function saveGame() {
     try {
         gameState.lastUpdate = Date.now();
@@ -91,6 +95,10 @@ function saveGame() {
         }
     } catch (e) { console.error('Failed to save game:', e); if (typeof UI !== 'undefined' && UI.showNotification) { UI.showNotification('Error saving game.', 'error'); } }
 }
+
+/**
+ * Loads gameState from localStorage, sanitizes it, and calculates offline progress.
+ */
 function loadGame() {
     const savedGame = localStorage.getItem('ideaEngineSave');
     let loadedState = null; let timeOffline = 0;
@@ -117,6 +125,11 @@ function loadGame() {
     if (typeof GameLogic !== 'undefined') { GameLogic.lastTick = Date.now(); }
     if (loadedState) { console.log('Game Loaded and Initialized!'); } else if (!savedGame) { console.log('No save found, starting new game.'); }
 }
+
+/**
+ * Confirms and resets the game state to default values.
+ * @param {boolean} isError - If true, displays a message indicating a save error prompted the reset.
+ */
 function resetGameConfirm(isError = false) {
     const message = isError ? "Error with save data. Would you like to reset the game to its initial state? This cannot be undone." : "Are you sure you want to reset all progress? This cannot be undone.";
     if (confirm(message)) {
