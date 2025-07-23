@@ -26,26 +26,25 @@ const GameLogic = {
         const delta = Math.max(0, (now - this.lastTick) / 1000);
         this.lastTick = now;
 
+        // Check for tutorial step completion before other logic
+        if (typeof Tutorial !== 'undefined' && Tutorial.isActive) {
+            Tutorial.checkCompletion();
+        }
+
         if (!GameLogic._isValidNumber(gameState.resources.fleeting_thought)) {
              gameState.resources.fleeting_thought = 0;
         }
 
         // --- FT Generation ---
         let ftPerSecondThisTick = 0;
-
-        // From Base Generators
         Object.values(gameState.generators).forEach(gen => {
-            const genData = GENERATORS_DATA[Object.keys(GENERATORS_DATA).find(key => GENERATORS_DATA[key].id === gen.id)]; // Find genData by id if needed, though direct access is better
+            const genData = GENERATORS_DATA[Object.keys(GENERATORS_DATA).find(key => GENERATORS_DATA[key].id === gen.id)];
             if (genData && gen.level > 0 && genData.output?.fleeting_thought) {
-                const currentLevel = gen.level;
-                const baseOutput = genData.output.fleeting_thought;
-                const scale = genData.outputScale || 1;
+                const currentLevel = gen.level; const baseOutput = genData.output.fleeting_thought; const scale = genData.outputScale || 1;
                 const levelBonus = Math.pow(scale, Math.max(0, currentLevel - 1));
                 ftPerSecondThisTick += (baseOutput * currentLevel) * levelBonus;
             }
         });
-
-        // From owned Ideas
         Object.entries(gameState.ideas).forEach(([ideaId, count]) => {
             const ideaData = IDEAS_DATA[ideaId];
             if (ideaData?.attributes?.ft_bonus_per_sec && GameLogic._isValidNumber(count) && count > 0) {
@@ -79,17 +78,13 @@ const GameLogic = {
             if (crafterData && GameLogic._isValidNumber(currentLevel) && currentLevel > 0) {
                 const targetIdeaData = IDEAS_DATA[crafterData.targetIdeaId];
                 if (!targetIdeaData?.recipe) return;
-
                 const outputScale = crafterData.outputScale || 1;
                 const baseOutputAmount = crafterData.outputAmount || 0;
                 if (!GameLogic._isValidNumber(baseOutputAmount)) return;
-
                 const levelBonus = Math.pow(outputScale, Math.max(0, currentLevel - 1));
                 const craftsPerSecond = (baseOutputAmount * currentLevel) * levelBonus;
                 const potentialCraftsThisTick = craftsPerSecond * delta;
-                
                 let craftsAttempted = Math.floor(potentialCraftsThisTick) + (Math.random() < (potentialCraftsThisTick % 1) ? 1 : 0);
-
                 for (let i = 0; i < craftsAttempted; i++) {
                     let canAffordIngredients = targetIdeaData.recipe.every(ingId => (gameState.ideas[ingId] || 0) >= 1);
                     if (canAffordIngredients) {
@@ -101,7 +96,6 @@ const GameLogic = {
                 }
             }
         });
-
 
         // --- UI Update Throttle ---
         if (now - (gameState.lastUIRefresh || 0) > 200) {
@@ -283,7 +277,7 @@ const GameLogic = {
         const newBaseGameState = {
             lastUpdate: Date.now(), resources: { fleeting_thought: 0, wisdom_shards: currentWS + wsGained }, ideas: {},
             generators: {}, crafters: {}, unlockedRecipes: [], noosphereState: { nodes: [], edges: [] },
-            discoveredIdeas: new Set(['fleeting_thought']), transcendenceCount: currentTranscendCount + 1,
+            discoveredIdeas: new Set(['fleeting_thought']), transcendenceCount: currentTranscendCount + 1, tutorialCompleted: true, // Mark tutorial as done after first transcend
             gameVersion: gameState.gameVersion
         };
         Object.keys(gameState).forEach(key => delete gameState[key]);
