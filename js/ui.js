@@ -59,8 +59,7 @@ const UI = {
         const currentIndex = multipliers.indexOf(gameState.purchaseMultiplier);
         const nextIndex = (currentIndex + 1) % multipliers.length;
         gameState.purchaseMultiplier = multipliers[nextIndex];
-        // Immediately re-render all components that use the multiplier
-        this.updateAllUI();
+        this.updateAllUI(); // A full update ensures all costs and buttons are refreshed
     },
 
     /**
@@ -140,40 +139,52 @@ const UI = {
     renderUpgradeCard(container, itemData, currentLevel, buttonClass, buttonDataAttribute) {
         const isMaxLevel = currentLevel >= (itemData.maxLevel || Infinity);
         
-        // Calculate the cost for the exact multiplier amount, not just max affordable
-        const purchaseDetails = GameLogic.calculateMultiBuy(itemData.baseCost, itemData.costScale, currentLevel, gameState.purchaseMultiplier, itemData.maxLevel);
-        
-        let canAfford = false;
-        let costToDisplay = {};
-        let levelsToBuyText = "0";
+        // *** CORE FIX IS HERE ***
+        // 1. Calculate the cost and affordability for the exact multiplier selected by the player.
+        const purchaseDetails = GameLogic.calculateMultiBuy(
+            itemData.baseCost,
+            itemData.costScale,
+            currentLevel,
+            gameState.purchaseMultiplier,
+            itemData.maxLevel
+        );
+
+        let costToDisplay, levelsToBuyText, canAfford;
 
         if (gameState.purchaseMultiplier === 'Max') {
-            canAfford = purchaseDetails.levelsToBuy > 0;
+            // For 'Max', the calculated values are exactly what we want to show.
             costToDisplay = purchaseDetails.totalCost;
-            levelsToBuyText = purchaseDetails.levelsToBuy.toString();
+            levelsToBuyText = purchaseDetails.levelsToBuy;
+            canAfford = purchaseDetails.levelsToBuy > 0; // Can afford if we can buy at least one level.
         } else {
-            // For x1, x10, x100, we need the cost for that specific amount
-            const exactCostDetails = GameLogic.calculateMultiBuy(itemData.baseCost, itemData.costScale, currentLevel, gameState.purchaseMultiplier, itemData.maxLevel);
-            canAfford = exactCostDetails.canAffordExact;
+            // For x1, x10, x100, we *always* calculate the cost for that specific amount,
+            // even if we can't afford it. This ensures the correct price is always displayed.
+            const exactCostDetails = GameLogic.calculateMultiBuy(
+                itemData.baseCost,
+                itemData.costScale,
+                currentLevel,
+                gameState.purchaseMultiplier,
+                itemData.maxLevel
+            );
             costToDisplay = exactCostDetails.totalCost;
-            levelsToBuyText = gameState.purchaseMultiplier.toString();
-            // If we can't afford the exact amount, show the cost for a single purchase for context
-            if (!canAfford && !isMaxLevel) {
-                 const singlePurchase = GameLogic.calculateMultiBuy(itemData.baseCost, itemData.costScale, currentLevel, 1, itemData.maxLevel);
-                 costToDisplay = singlePurchase.totalCost;
-            }
+            levelsToBuyText = gameState.purchaseMultiplier; // Always show the selected multiplier
+            canAfford = exactCostDetails.canAffordExact; // The button is only enabled if the EXACT amount is affordable.
         }
-        
-        let costString = isMaxLevel ? "N/A" : Object.entries(costToDisplay).map(([res, val]) => `${Utils.formatNumber(val)} ${IDEAS_DATA[res]?.name || Utils.capitalizeFirst(res.replace(/_/g, ' '))}`).join(', ');
+
+        let costString = isMaxLevel ? "N/A" : Object.entries(costToDisplay)
+            .map(([res, val]) => `${Utils.formatNumber(val)} ${IDEAS_DATA[res]?.name || Utils.capitalizeFirst(res.replace(/_/g, ' '))}`)
+            .join(', ');
         
         let buttonText;
         if (isMaxLevel) {
             buttonText = "Max Level";
-        } else if (gameState.purchaseMultiplier === 'Max') {
-            buttonText = currentLevel === 0 ? `Build +${levelsToBuyText}` : `Upgrade +${levelsToBuyText}`;
         } else {
-             buttonText = currentLevel === 0 ? `Build x${levelsToBuyText}` : `Upgrade x${levelsToBuyText}`;
+            buttonText = (currentLevel === 0 ? `Build ` : `Upgrade `) + `+${levelsToBuyText}`;
+            if(gameState.purchaseMultiplier !== 'Max') {
+                 buttonText = (currentLevel === 0 ? `Build ` : `Upgrade `) + `x${levelsToBuyText}`;
+            }
         }
+        // *** END CORE FIX ***
 
         const card = document.createElement('div');
         card.className = 'upgrade-card';
