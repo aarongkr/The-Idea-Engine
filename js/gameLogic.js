@@ -26,7 +26,9 @@ const GameLogic = {
              gameState.resources.fleeting_thought = 0;
         }
 
+        // --- FT Generation ---
         let ftPerSecondThisTick = 0;
+        // From Base Generators
         Object.entries(gameState.generators).forEach(([genId, genState]) => {
             const genData = GENERATORS_DATA[genId];
             if (genData && genState.level > 0 && genData.output?.fleeting_thought) {
@@ -35,14 +37,27 @@ const GameLogic = {
                 ftPerSecondThisTick += (baseOutput * currentLevel) * levelBonus;
             }
         });
+        // From owned Ideas
         Object.entries(gameState.ideas).forEach(([ideaId, count]) => {
             const ideaData = IDEAS_DATA[ideaId];
             if (ideaData?.attributes?.ft_bonus_per_sec && GameLogic._isValidNumber(count) && count > 0) {
                 ftPerSecondThisTick += ideaData.attributes.ft_bonus_per_sec * count;
             }
         });
-        gameState.resources.fleeting_thought += ftPerSecondThisTick * delta;
+        
+        // ** NEW: Apply Global FT Multiplier **
+        let globalMultiplier = 1;
+        const methodicalApproachLevel = gameState.generators.methodical_approach?.level || 0;
+        if (methodicalApproachLevel > 0) {
+            const methodicalApproachData = GENERATORS_DATA.methodical_approach;
+            globalMultiplier += methodicalApproachLevel * methodicalApproachData.effect.global_ft_multiplier_bonus;
+        }
 
+        // Apply total FT gain for this tick
+        gameState.resources.fleeting_thought += (ftPerSecondThisTick * globalMultiplier) * delta;
+
+
+        // --- Concept Generation ---
         Object.entries(gameState.generators).forEach(([genId, genState]) => {
             const genData = GENERATORS_DATA[genId];
             if (genData && genState.level > 0 && genData.output) {
@@ -59,6 +74,7 @@ const GameLogic = {
             }
         });
 
+        // --- Auto-Crafter Logic ---
         Object.entries(gameState.crafters).forEach(([crafterId, crafterState]) => {
             const crafterData = CRAFTERS_DATA[crafterId];
             const currentLevel = crafterState?.level;
@@ -84,6 +100,7 @@ const GameLogic = {
             }
         });
 
+        // --- UI Update Throttle ---
         if (now - (gameState.lastUIRefresh || 0) > 200 && (typeof Tutorial === 'undefined' || !Tutorial.isActive)) {
             if (typeof UI !== 'undefined' && UI.updateAllUI) {
                  UI.updateAllUI();
@@ -96,14 +113,37 @@ const GameLogic = {
         const offlineGains = { ftGained: 0, ideasGained: {} };
         if (!GameLogic._isValidNumber(timeOfflineMs) || timeOfflineMs <= 1000) return offlineGains;
         const secondsOffline = timeOfflineMs / 1000;
+        
+        // Calculate base ft/sec before applying multiplier
+        let baseFtPerSec = 0;
+        Object.entries(gameState.generators).forEach(([genId, genState]) => {
+            const genData = GENERATORS_DATA[genId];
+            if (genData && genState.level > 0 && genData.output?.fleeting_thought) {
+                const currentLevel = genState.level; const baseOutput = genData.output.fleeting_thought; const scale = genData.outputScale || 1;
+                const levelBonus = Math.pow(scale, Math.max(0, currentLevel - 1));
+                baseFtPerSec += (baseOutput * currentLevel) * levelBonus;
+            }
+        });
+        Object.entries(gameState.ideas).forEach(([ideaId, count]) => {
+            const ideaData = IDEAS_DATA[ideaId];
+            if (ideaData?.attributes?.ft_bonus_per_sec && GameLogic._isValidNumber(count) && count > 0) {
+                baseFtPerSec += ideaData.attributes.ft_bonus_per_sec * count;
+            }
+        });
+
+        // ** NEW: Apply Global FT Multiplier to offline gains **
+        let globalMultiplier = 1;
+        const methodicalApproachLevel = gameState.generators.methodical_approach?.level || 0;
+        if (methodicalApproachLevel > 0) {
+            const methodicalApproachData = GENERATORS_DATA.methodical_approach;
+            globalMultiplier += methodicalApproachLevel * methodicalApproachData.effect.global_ft_multiplier_bonus;
+        }
+        offlineGains.ftGained = baseFtPerSec * globalMultiplier * secondsOffline;
+        
+        // Concept and Crafter generation (remains the same)
         Object.entries(gameState.generators).forEach(([genId, genState]) => {
             const genData = GENERATORS_DATA[genId];
             if (genData && genState.level > 0 && genData.output) {
-                if (genData.output.fleeting_thought) {
-                    const currentLevel = genState.level; const baseOutput = genData.output.fleeting_thought; const scale = genData.outputScale || 1;
-                    const levelBonus = Math.pow(scale, Math.max(0, currentLevel - 1));
-                    offlineGains.ftGained += (baseOutput * currentLevel) * levelBonus * secondsOffline;
-                }
                  Object.entries(genData.output).forEach(([outputIdeaId, baseChance]) => {
                     if (outputIdeaId !== 'fleeting_thought' && GameLogic._isValidNumber(baseChance)) {
                         const currentLevel = genState.level; const scale = genData.outputScale || 1;
@@ -113,12 +153,6 @@ const GameLogic = {
                         if (numGenerated > 0) offlineGains.ideasGained[outputIdeaId] = (offlineGains.ideasGained[outputIdeaId] || 0) + numGenerated;
                     }
                 });
-            }
-        });
-        Object.entries(gameState.ideas).forEach(([ideaId, count]) => {
-            const ideaData = IDEAS_DATA[ideaId];
-            if (ideaData?.attributes?.ft_bonus_per_sec && GameLogic._isValidNumber(count) && count > 0) {
-                offlineGains.ftGained += ideaData.attributes.ft_bonus_per_sec * count * secondsOffline;
             }
         });
         Object.entries(gameState.crafters).forEach(([crafterId, crafterState]) => {
@@ -137,57 +171,54 @@ const GameLogic = {
         return offlineGains;
     },
 
+    /**
+     * Handles the manual click action, now with a bonus from the 'Focused Intent' upgrade.
+     */
     sparkFleetingThought() {
         if (!GameLogic._isValidNumber(gameState.resources.fleeting_thought)) gameState.resources.fleeting_thought = 0;
+        
         let wisdomShardsBonus = 0;
         if (GameLogic._isValidNumber(gameState.resources.wisdom_shards)) wisdomShardsBonus = gameState.resources.wisdom_shards * 0.1;
-        gameState.resources.fleeting_thought += (1 + wisdomShardsBonus);
+        
+        // ** NEW: Add bonus from 'Focused Intent' generator **
+        let clickBonus = 0;
+        const focusedIntentLevel = gameState.generators.focused_intent?.level || 0;
+        if (focusedIntentLevel > 0) {
+            const focusedIntentData = GENERATORS_DATA.focused_intent;
+            const baseBonus = focusedIntentData.effect.ft_per_click;
+            const scale = focusedIntentData.outputScale || 1;
+            const levelBonus = Math.pow(scale, Math.max(0, focusedIntentLevel - 1));
+            // The bonus is additive per level and also scales
+            clickBonus = (baseBonus * focusedIntentLevel) * levelBonus;
+        }
+
+        const ftGained = 1 + wisdomShardsBonus + clickBonus;
+        gameState.resources.fleeting_thought += ftGained;
+        
         if (typeof UI !== 'undefined') UI.updateResourceDisplay();
     },
 
-    /**
-     * Calculates the total cost for a specific number of upgrades and how many of those are affordable.
-     * @param {object} baseCost - The base cost object of the item.
-     * @param {number} costScale - The scaling factor for the cost.
-     * @param {number} currentLevel - The current level of the item.
-     * @param {number|string} multiplier - The number of levels to attempt to buy (1, 10, 100, or 'Max').
-     * @param {number} maxLevel - The maximum level of the item.
-     * @returns {{levelsToBuy: number, totalCost: object, affordableLevels: number}} - The result of the calculation.
-     */
     calculateMultiBuy(baseCost, costScale, currentLevel, multiplier, maxLevel) {
-        const result = {
-            levelsToBuy: 0,     // The number of levels requested to buy
-            totalCost: {},        // The total cost for 'levelsToBuy'
-            affordableLevels: 0 // The number of levels the player can actually afford
-        };
-        for (const res in baseCost) {
-            result.totalCost[res] = 0;
-        }
-
+        const result = { levelsToBuy: 0, totalCost: {}, affordableLevels: 0 };
+        for (const res in baseCost) { result.totalCost[res] = 0; }
         const maxPossibleBuy = maxLevel - currentLevel;
         if (maxPossibleBuy <= 0) return result;
-
         result.levelsToBuy = (multiplier === 'Max') ? maxPossibleBuy : Math.min(multiplier, maxPossibleBuy);
-        
         let tempOwnedResources = {};
         Object.keys(gameState.resources).forEach(key => tempOwnedResources[key] = gameState.resources[key]);
         Object.keys(gameState.ideas).forEach(key => tempOwnedResources[key] = gameState.ideas[key]);
-        
         for (let i = 0; i < result.levelsToBuy; i++) {
             const levelToBuy = currentLevel + i;
             let levelCost = {};
             let canAffordThisLevel = true;
-
             for (const res in baseCost) {
                 const calculatedCost = Math.floor(baseCost[res] * Math.pow(costScale, levelToBuy));
                 levelCost[res] = calculatedCost;
-                result.totalCost[res] += calculatedCost; // Tally total cost regardless of affordability
-
+                result.totalCost[res] += calculatedCost;
                 if ((tempOwnedResources[res] || 0) < levelCost[res]) {
                     canAffordThisLevel = false;
                 }
             }
-
             if (canAffordThisLevel) {
                 for (const res in levelCost) {
                     tempOwnedResources[res] -= levelCost[res];
@@ -195,7 +226,6 @@ const GameLogic = {
                 result.affordableLevels++;
             }
         }
-        
         return result;
     },
 
@@ -203,18 +233,10 @@ const GameLogic = {
         const genData = GENERATORS_DATA[generatorId]; if (!genData) return;
         const currentLevel = gameState.generators[generatorId]?.level || 0;
         if (currentLevel >= (genData.maxLevel || Infinity)) { if (typeof UI !== 'undefined') UI.showNotification("Already at max level!", "info"); return; }
-        
         const purchaseDetails = GameLogic.calculateMultiBuy(genData.baseCost, genData.costScale, currentLevel, gameState.purchaseMultiplier, genData.maxLevel);
-        
         const levelsToBuy = (gameState.purchaseMultiplier === 'Max') ? purchaseDetails.affordableLevels : purchaseDetails.levelsToBuy;
-        
-        if (purchaseDetails.affordableLevels < levelsToBuy) {
-            if (typeof UI !== 'undefined') UI.showNotification(`Not enough resources to buy x${gameState.purchaseMultiplier}!`, "error");
-            return;
-        }
-
+        if (purchaseDetails.affordableLevels < levelsToBuy) { if (typeof UI !== 'undefined') UI.showNotification(`Not enough resources to buy x${gameState.purchaseMultiplier}!`, "error"); return; }
         if (levelsToBuy > 0) {
-            // Recalculate cost just for the levels we are actually buying to be safe
             const finalPurchase = GameLogic.calculateMultiBuy(genData.baseCost, genData.costScale, currentLevel, levelsToBuy, genData.maxLevel);
             for (const res in finalPurchase.totalCost) { if (gameState.resources[res] !== undefined) gameState.resources[res] -= finalPurchase.totalCost[res]; else if (gameState.ideas[res] !== undefined) gameState.ideas[res] -= finalPurchase.totalCost[res];}
             gameState.generators[generatorId].level += levelsToBuy;
@@ -226,16 +248,9 @@ const GameLogic = {
         const crafterData = CRAFTERS_DATA[crafterId]; if (!crafterData) return;
         const currentLevel = gameState.crafters[crafterId]?.level || 0;
         if (currentLevel >= (crafterData.maxLevel || Infinity)) { if (typeof UI !== 'undefined') UI.showNotification("Crafter already at max level!", "info"); return; }
-        
         const purchaseDetails = GameLogic.calculateMultiBuy(crafterData.baseCost, crafterData.costScale, currentLevel, gameState.purchaseMultiplier, crafterData.maxLevel);
-        
         const levelsToBuy = (gameState.purchaseMultiplier === 'Max') ? purchaseDetails.affordableLevels : purchaseDetails.levelsToBuy;
-
-        if (purchaseDetails.affordableLevels < levelsToBuy) {
-            if (typeof UI !== 'undefined') UI.showNotification(`Not enough resources for this crafter!`, "error");
-            return;
-        }
-
+        if (purchaseDetails.affordableLevels < levelsToBuy) { if (typeof UI !== 'undefined') UI.showNotification(`Not enough resources for this crafter!`, "error"); return; }
         if (levelsToBuy > 0) {
             const finalPurchase = GameLogic.calculateMultiBuy(crafterData.baseCost, crafterData.costScale, currentLevel, levelsToBuy, crafterData.maxLevel);
             for (const res in finalPurchase.totalCost) { if (gameState.resources[res] !== undefined) gameState.resources[res] -= finalPurchase.totalCost[res]; else if (gameState.ideas[res] !== undefined) gameState.ideas[res] -= finalPurchase.totalCost[res];}
