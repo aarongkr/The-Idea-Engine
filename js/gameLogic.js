@@ -11,6 +11,7 @@ const GameLogic = {
     },
 
     tick() {
+        // ... (This function remains identical to the previous version you provided) ...
         const now = Date.now();
         if (!GameLogic._isValidNumber(this.lastTick) || this.lastTick <= 0 || this.lastTick > now) {
              this.lastTick = now - 100;
@@ -92,7 +93,7 @@ const GameLogic = {
         }
     },
 
-    calculateOfflineProgress(timeOfflineMs) {
+    calculateOfflineProgress(timeOfflineMs) { /* ... same as before ... */
         const offlineGains = { ftGained: 0, ideasGained: {} };
         if (!GameLogic._isValidNumber(timeOfflineMs) || timeOfflineMs <= 1000) return offlineGains;
         const secondsOffline = timeOfflineMs / 1000;
@@ -137,7 +138,7 @@ const GameLogic = {
         return offlineGains;
     },
 
-    sparkFleetingThought() {
+    sparkFleetingThought() { /* ... same as before ... */
         if (!GameLogic._isValidNumber(gameState.resources.fleeting_thought)) gameState.resources.fleeting_thought = 0;
         let wisdomShardsBonus = 0;
         if (GameLogic._isValidNumber(gameState.resources.wisdom_shards)) wisdomShardsBonus = gameState.resources.wisdom_shards * 0.1;
@@ -145,22 +146,37 @@ const GameLogic = {
         if (typeof UI !== 'undefined') UI.updateResourceDisplay();
     },
 
+    /**
+     * NEW, ACCURATE multi-buy calculation function.
+     * Calculates the cumulative cost to buy a certain number of levels and how many can be afforded.
+     * @returns {{
+     *   levelsToBuy: number,       // How many levels the player can actually afford
+     *   totalCost: object,         // The cumulative cost for the affordable levels
+     *   nextLevelCost: object,     // The cost for just the next single level
+     *   requestedLevelsCost: object // The cumulative cost for the full requested multiplier (e.g., cost for all 10 levels)
+     * }}
+     */
     calculateMultiBuy(baseCost, costScale, currentLevel, multiplier, maxLevel) {
-        const affordableLevels = {
+        const result = {
             levelsToBuy: 0,
-            totalCost: {}
+            totalCost: {},
+            nextLevelCost: {},
+            requestedLevelsCost: {}
         };
         for (const res in baseCost) {
-            affordableLevels.totalCost[res] = 0;
+            result.totalCost[res] = 0;
+            result.requestedLevelsCost[res] = 0;
         }
-
-        const limit = (multiplier === 'Max') ? (maxLevel - currentLevel) : Math.min(multiplier, maxLevel - currentLevel);
-        if (limit <= 0) return affordableLevels;
 
         let tempOwnedResources = {};
         Object.keys(gameState.resources).forEach(key => tempOwnedResources[key] = gameState.resources[key]);
         Object.keys(gameState.ideas).forEach(key => tempOwnedResources[key] = gameState.ideas[key]);
-        
+
+        const maxPossibleToBuy = maxLevel - currentLevel;
+        if (maxPossibleToBuy <= 0) return result;
+
+        const limit = (multiplier === 'Max') ? maxPossibleToBuy : Math.min(multiplier, maxPossibleToBuy);
+
         for (let i = 0; i < limit; i++) {
             const levelToBuy = currentLevel + i;
             let levelCost = {};
@@ -169,51 +185,75 @@ const GameLogic = {
             for (const res in baseCost) {
                 const calculatedCost = Math.floor(baseCost[res] * Math.pow(costScale, levelToBuy));
                 levelCost[res] = calculatedCost;
+                result.requestedLevelsCost[res] += calculatedCost; // Add to total requested cost
+                if (i === 0) result.nextLevelCost[res] = calculatedCost; // Store cost of first level in loop
+
                 if ((tempOwnedResources[res] || 0) < calculatedCost) {
                     canAffordThisLevel = false;
-                    break;
                 }
             }
 
             if (canAffordThisLevel) {
                 for (const res in levelCost) {
                     tempOwnedResources[res] -= levelCost[res];
-                    affordableLevels.totalCost[res] += levelCost[res];
+                    result.totalCost[res] += levelCost[res];
                 }
-                affordableLevels.levelsToBuy++;
-            } else {
-                break;
+                result.levelsToBuy++;
             }
         }
-        return affordableLevels;
+        return result;
     },
 
+    /**
+     * Generic item purchase function.
+     * @param {string} itemId - The ID of the generator or crafter.
+     * @param {object} itemData - The data object from GENERATORS_DATA or CRAFTERS_DATA.
+     * @param {object} stateObject - The gameState object to modify (e.g., gameState.generators).
+     */
+    buyItem(itemId, itemData, stateObject) {
+        if (!itemData) {
+            console.error(`Data for item ${itemId} not found.`);
+            return;
+        }
+        const currentLevel = stateObject[itemId]?.level || 0;
+        if (currentLevel >= (itemData.maxLevel || Infinity)) {
+            if (typeof UI !== 'undefined') UI.showNotification("Already at max level!", "info");
+            return;
+        }
+
+        // Use the 'Max' setting from calculateMultiBuy to determine how many can actually be bought
+        const purchaseMultiplier = (gameState.purchaseMultiplier === 'Max') ? 'Max' : parseInt(gameState.purchaseMultiplier, 10);
+        const purchaseDetails = GameLogic.calculateMultiBuy(itemData.baseCost, itemData.costScale, currentLevel, purchaseMultiplier, itemData.maxLevel);
+
+        if (purchaseDetails.levelsToBuy > 0) {
+            // Spend resources
+            for (const res in purchaseDetails.totalCost) {
+                if (gameState.resources[res] !== undefined) gameState.resources[res] -= purchaseDetails.totalCost[res];
+                else if (gameState.ideas[res] !== undefined) gameState.ideas[res] -= purchaseDetails.totalCost[res];
+            }
+            // Increase level
+            if (!stateObject[itemId]) stateObject[itemId] = { level: 0 };
+            stateObject[itemId].level += purchaseDetails.levelsToBuy;
+
+            // UI Feedback
+            if (typeof UI !== 'undefined') {
+                UI.updateAllUI();
+                UI.showNotification(`${itemData.name} upgraded by +${purchaseDetails.levelsToBuy} to Lvl ${stateObject[itemId].level}!`, 'success');
+            }
+        } else {
+            if (typeof UI !== 'undefined') UI.showNotification("Not enough resources!", "error");
+        }
+    },
+
+    // Old functions are now wrappers for the generic buyItem
     buyGenerator(generatorId) {
-        const genData = GENERATORS_DATA[generatorId]; if (!genData) return;
-        const currentLevel = gameState.generators[generatorId]?.level || 0;
-        if (currentLevel >= (genData.maxLevel || Infinity)) { if (typeof UI !== 'undefined') UI.showNotification("Already at max level!", "info"); return; }
-        const purchaseDetails = GameLogic.calculateMultiBuy(genData.baseCost, genData.costScale, currentLevel, gameState.purchaseMultiplier, genData.maxLevel);
-        if (purchaseDetails.levelsToBuy > 0) {
-            for (const res in purchaseDetails.totalCost) { if (gameState.resources[res] !== undefined) gameState.resources[res] -= purchaseDetails.totalCost[res]; else if (gameState.ideas[res] !== undefined) gameState.ideas[res] -= purchaseDetails.totalCost[res];}
-            gameState.generators[generatorId].level += purchaseDetails.levelsToBuy;
-            if (typeof UI !== 'undefined') { UI.updateAllUI(); UI.showNotification(`${genData.name} upgraded by +${purchaseDetails.levelsToBuy} to Lvl ${gameState.generators[generatorId].level}!`, 'success');}
-        } else { if (typeof UI !== 'undefined') UI.showNotification("Not enough resources!", "error");}
+        GameLogic.buyItem(generatorId, GENERATORS_DATA[generatorId], gameState.generators);
     },
-
     buyAutoCrafter(crafterId) {
-        const crafterData = CRAFTERS_DATA[crafterId]; if (!crafterData) return;
-        const currentLevel = gameState.crafters[crafterId]?.level || 0;
-        if (currentLevel >= (crafterData.maxLevel || Infinity)) { if (typeof UI !== 'undefined') UI.showNotification("Crafter already at max level!", "info"); return; }
-        const purchaseDetails = GameLogic.calculateMultiBuy(crafterData.baseCost, crafterData.costScale, currentLevel, gameState.purchaseMultiplier, crafterData.maxLevel);
-        if (purchaseDetails.levelsToBuy > 0) {
-            for (const res in purchaseDetails.totalCost) { if (gameState.resources[res] !== undefined) gameState.resources[res] -= purchaseDetails.totalCost[res]; else if (gameState.ideas[res] !== undefined) gameState.ideas[res] -= purchaseDetails.totalCost[res];}
-            if (!gameState.crafters[crafterId]) gameState.crafters[crafterId] = { level: 0 };
-            gameState.crafters[crafterId].level += purchaseDetails.levelsToBuy;
-            if (typeof UI !== 'undefined') { UI.updateAllUI(); UI.showNotification(`${crafterData.name} upgraded by +${purchaseDetails.levelsToBuy} to Lvl ${gameState.crafters[crafterId].level}!`, 'success');}
-        } else { if (typeof UI !== 'undefined') UI.showNotification("Not enough resources for this crafter!", "error");}
+        GameLogic.buyItem(crafterId, CRAFTERS_DATA[crafterId], gameState.crafters);
     },
 
-    attemptCombination() {
+    attemptCombination() { /* ... same as before ... */
         if (!UI?.elements) return; const inputId1 = UI.elements.forgeSlot1.value; const inputId2 = UI.elements.forgeSlot2.value;
         if (!inputId1 || !inputId2) { UI.elements.combinationResult.textContent = "Please select two ideas to combine."; UI.elements.combinationResult.className = 'error'; return;}
         const idea1Data = IDEAS_DATA[inputId1]; const idea2Data = IDEAS_DATA[inputId2];
@@ -234,7 +274,7 @@ const GameLogic = {
         } else { UI.elements.combinationResult.textContent = "These ideas don't seem to form a new synthesis... yet."; UI.elements.combinationResult.className = 'info';}
     },
 
-    gainIdea(ideaId, amount = 1, fromBatch = false) {
+    gainIdea(ideaId, amount = 1, fromBatch = false) { /* ... same as before ... */
         if (!IDEAS_DATA[ideaId] || ideaId === 'fleeting_thought' || !GameLogic._isValidNumber(amount) || amount <= 0) return;
         const wasFirstDiscovery = !gameState.discoveredIdeas.has(ideaId);
         let currentCount = gameState.ideas[ideaId] || 0;
@@ -256,12 +296,12 @@ const GameLogic = {
         }
     },
 
-     calculateWisdomShardsOnTranscend() {
+     calculateWisdomShardsOnTranscend() { /* ... same as before ... */
         let totalConceptualMass = 0; Object.entries(gameState.ideas).forEach(([id, count]) => { const ideaData = IDEAS_DATA[id]; if (ideaData?.tier > 0 && GameLogic._isValidNumber(count) && count > 0) { const ideaWorth = (ideaData.tier * 10); if(GameLogic._isValidNumber(ideaWorth)){ totalConceptualMass += ideaWorth * count;}}});
         return Math.floor(Math.sqrt(Math.max(0, totalConceptualMass) / 1000)) + (Number(gameState.transcendenceCount) || 0);
     },
 
-     transcend() {
+     transcend() { /* ... same as before, ensure crafters are reset ... */
         const anyParadigmOwned = Array.from(gameState.discoveredIdeas).some(id => IDEAS_DATA[id]?.tier === 4 && (gameState.ideas[id] || 0) > 0);
         if (!anyParadigmOwned) { if (typeof UI !== 'undefined') UI.showNotification("A Paradigm is required to Transcend.", "error"); return;}
         const wsGained = GameLogic.calculateWisdomShardsOnTranscend(); if (!GameLogic._isValidNumber(wsGained)) { if (typeof UI !== 'undefined') UI.showNotification("Error calculating Wisdom Shards.", "error"); return;}
@@ -273,7 +313,7 @@ const GameLogic = {
         const newBaseGameState = {
             lastUpdate: Date.now(), resources: { fleeting_thought: 0, wisdom_shards: currentWS + wsGained }, ideas: {},
             generators: {}, crafters: {}, unlockedRecipes: [], noosphereState: { nodes: [], edges: [] },
-            discoveredIdeas: new Set(['fleeting_thought']), transcendenceCount: currentTranscendCount + 1, tutorialCompleted: true,
+            discoveredIdeas: new Set(['fleeting_thought']), transcendenceCount: currentTranscendCount + 1, tutorialCompleted: true, purchaseMultiplier: gameState.purchaseMultiplier, // Preserve multiplier
             gameVersion: gameState.gameVersion
         };
         Object.keys(gameState).forEach(key => delete gameState[key]);
