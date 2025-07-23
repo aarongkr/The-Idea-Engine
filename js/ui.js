@@ -38,7 +38,6 @@ const UI = {
         this.elements.navButtons.forEach(button => {
             button.addEventListener('click', () => this.switchPanel(button.dataset.panel, button));
         });
-
         this.elements.generatorsList.addEventListener('click', this.handleBuyGeneratorClick);
         this.elements.insightCraftersList.addEventListener('click', this.handleBuyAutoCrafterClick);
         this.elements.theoryCraftersList.addEventListener('click', this.handleBuyAutoCrafterClick);
@@ -57,7 +56,6 @@ const UI = {
         const targetPanel = document.getElementById(panelId);
         if (targetPanel) targetPanel.classList.add('active');
         if (clickedButton) clickedButton.classList.add('active');
-
         if (panelId === 'noosphere-panel' && typeof Noosphere !== 'undefined' && Noosphere.network) {
              setTimeout(() => { if(Noosphere.network) { Noosphere.network.redraw(); Noosphere.network.fit();}}, 50);
         }
@@ -72,11 +70,9 @@ const UI = {
 
         let totalFtPerSec = 0;
         Object.values(gameState.generators).forEach(gen => {
-            const genData = GENERATORS_DATA[Object.keys(GENERATORS_DATA).find(key => GENERATORS_DATA[key].id === gen.id)];
+            const genData = Object.values(GENERATORS_DATA).find(g => g.id === gen.id); // Find data by id
             if (genData && gen.level > 0 && genData.output?.fleeting_thought) {
-                const currentLevel = gen.level;
-                const baseOutput = genData.output.fleeting_thought;
-                const scale = genData.outputScale || 1;
+                const currentLevel = gen.level; const baseOutput = genData.output.fleeting_thought; const scale = genData.outputScale || 1;
                 const levelBonus = Math.pow(scale, Math.max(0, currentLevel - 1));
                 totalFtPerSec += (baseOutput * currentLevel) * levelBonus;
             }
@@ -127,13 +123,23 @@ const UI = {
                 });
             }
             if (!unlocked) return;
-            
+
             const currentLevel = gameState.generators[genData.id]?.level || 0; let cost = {}; let canAfford = true;
             for (const res in genData.baseCost) { const base = genData.baseCost[res]; const scale = genData.costScale || 1; if(!GameLogic._isValidNumber(base) || !GameLogic._isValidNumber(scale)) continue; cost[res] = Math.floor(base * Math.pow(scale, currentLevel)); const currentResource = gameState.resources[res] ?? gameState.ideas[res] ?? 0; if (!GameLogic._isValidNumber(currentResource) || !GameLogic._isValidNumber(cost[res]) || currentResource < cost[res]) canAfford = false; }
             const isMaxLevel = currentLevel >= (genData.maxLevel || Infinity); const card = document.createElement('div'); card.className = 'upgrade-card';
             let costString = Object.entries(cost).map(([res, val]) =>`${Utils.formatNumber(val)} ${IDEAS_DATA[res]?.name || Utils.capitalizeFirst(res.replace(/_/g, ' '))}`).join(', '); if (isMaxLevel) costString = 'N/A';
             let outputString = "Effect: "; if (genData.output && typeof genData.output === 'object') { const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = genData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : ""; if (GameLogic._isValidNumber(genData.output.fleeting_thought) && GameLogic._isValidNumber(outputScale)) { const ftOutputValue = (genData.output.fleeting_thought * (outputScale**scalePower) * displayLevel); outputString += `${ftOutputValue.toFixed(2)} FT/sec${prefix}<br>`; } Object.entries(genData.output).forEach(([outRes, outVal]) => { if (outRes !== 'fleeting_thought' && GameLogic._isValidNumber(outVal) && GameLogic._isValidNumber(outputScale)) { const ratePerLevel = outVal * (outputScale**scalePower) * displayLevel * 100; outputString += `${ratePerLevel.toFixed(2)}% chance/sec for ${IDEAS_DATA[outRes]?.name || outRes}${prefix}<br>`; } }); } else { outputString = "Effect: (None defined)"; } outputString = outputString.replace(/<br>$/, '');
-            card.innerHTML = `<button class="action-button buy-generator" data-generator-id="${genData.id}" ${!canAfford || isMaxLevel ? 'disabled' : ''}>${isMaxLevel ? 'Max Level' : (currentLevel === 0 ? 'Build' : 'Upgrade')}</button>`;
+            
+            // *** THIS IS THE CORRECTED LINE ***
+            card.innerHTML = `
+                <h3>${genData.icon || ''} ${genData.name} (Lvl ${currentLevel}${isMaxLevel ? ' - MAX' : ''})</h3>
+                <p>${genData.description || ''}</p>
+                <p class="cost">Cost: ${costString}</p>
+                <p class="output">${outputString || 'Effect: N/A'}</p>
+                <button class="action-button buy-generator" data-generator-id="${genData.id}" ${!canAfford || isMaxLevel ? 'disabled' : ''}>
+                    ${isMaxLevel ? 'Max Level' : (currentLevel === 0 ? 'Build' : 'Upgrade')}
+                </button>
+            `;
             this.elements.generatorsList.appendChild(card);
         });
     },
@@ -174,7 +180,17 @@ const UI = {
             const isMaxLevel = currentLevel >= (crafterData.maxLevel || Infinity); const card = document.createElement('div'); card.className = 'upgrade-card';
             let costString = Object.entries(cost).map(([res, val]) => `${Utils.formatNumber(val)} ${IDEAS_DATA[res]?.name || Utils.capitalizeFirst(res.replace(/_/g, ' '))}`).join(', '); if (isMaxLevel) costString = 'N/A';
             const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = crafterData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : ""; let outputVal = 0; if(GameLogic._isValidNumber(crafterData.outputAmount) && GameLogic._isValidNumber(outputScale)){ outputVal = crafterData.outputAmount * (outputScale ** scalePower) * displayLevel;} const outputString = `Crafts: ${outputVal.toFixed(4)} ${targetIdea.name}/sec${prefix}`;
-            card.innerHTML = `<button class="action-button buy-autocrafter" data-crafter-id="${crafterData.id}" ${!canAfford || isMaxLevel ? 'disabled' : ''}> ${isMaxLevel ? 'Max Level' : (currentLevel === 0 ? 'Build' : 'Upgrade')} </button>`;
+            
+            // *** THIS IS THE SECOND CORRECTED LINE ***
+            card.innerHTML = `
+                <h3>${crafterData.name} (Lvl ${currentLevel}${isMaxLevel ? ' - MAX' : ''})</h3>
+                <p>${crafterData.description || `Automates crafting of ${targetIdea.name}.`}</p>
+                <p class="cost">Cost: ${costString}</p>
+                <p class="output">${outputString}</p>
+                <button class="action-button buy-autocrafter" data-crafter-id="${crafterData.id}" ${!canAfford || isMaxLevel ? 'disabled' : ''}>
+                    ${isMaxLevel ? 'Max Level' : (currentLevel === 0 ? 'Build' : 'Upgrade')}
+                </button>
+            `;
             listElement.appendChild(card);
         });
         if (!foundAnyCrafters) listElement.innerHTML = `<p class="text-muted">Discover an idea of this tier to unlock its auto-crafter.</p>`;
@@ -197,19 +213,17 @@ const UI = {
     },
 
     /**
-     * Populates the dropdown selectors in the Synthesis Forge, including theories.
+     * Populates the dropdown selectors in the Synthesis Forge.
      */
     populateForgeSelectors() {
-        const currentSelection1 = this.elements.forgeSlot1.value;
-        const currentSelection2 = this.elements.forgeSlot2.value;
+        const currentSelection1 = this.elements.forgeSlot1.value; const currentSelection2 = this.elements.forgeSlot2.value;
         const optionsHTML = ['<option value="">Select...</option>'];
         const sortedForgeableIdeas = Array.from(gameState.discoveredIdeas)
             .map(id => IDEAS_DATA[id])
             .filter(ideaData => ideaData && (ideaData.tier >= 1 && ideaData.tier <= 3) && GameLogic._isValidNumber(gameState.ideas[ideaData.id]) && gameState.ideas[ideaData.id] > 0)
             .sort((a,b) => { if (a.tier !== b.tier) return (a.tier||0)-(b.tier||0); return (a.name||'').localeCompare(b.name||''); });
         sortedForgeableIdeas.forEach(ideaData => { optionsHTML.push(`<option value="${ideaData.id}">${ideaData.name} (${Utils.formatNumber(gameState.ideas[ideaData.id])})</option>`); });
-        this.elements.forgeSlot1.innerHTML = optionsHTML.join('');
-        this.elements.forgeSlot2.innerHTML = optionsHTML.join('');
+        this.elements.forgeSlot1.innerHTML = optionsHTML.join(''); this.elements.forgeSlot2.innerHTML = optionsHTML.join('');
         if (sortedForgeableIdeas.find(i=>i.id===currentSelection1)) this.elements.forgeSlot1.value = currentSelection1;
         if (sortedForgeableIdeas.find(i=>i.id===currentSelection2)) this.elements.forgeSlot2.value = currentSelection2;
     },
@@ -218,16 +232,13 @@ const UI = {
      * Updates the list of discovered combination recipes.
      */
     updateDiscoveredRecipes() {
-        this.elements.discoveredRecipesList.innerHTML = '';
-        if (!Array.isArray(gameState.unlockedRecipes)) return;
+        this.elements.discoveredRecipesList.innerHTML = ''; if (!Array.isArray(gameState.unlockedRecipes)) return;
         gameState.unlockedRecipes.forEach(recipeOutputId => {
             const outputData = IDEAS_DATA[recipeOutputId];
             if(outputData?.recipe) {
                 const inputNames = outputData.recipe.map(inputId => IDEAS_DATA[inputId]?.name || `(Unknown)`).join(' + ');
-                const li = document.createElement('li');
-                li.textContent = `${inputNames} = ${outputData.name || '(Unknown)'}`;
-                li.dataset.input1 = outputData.recipe[0];
-                li.dataset.input2 = outputData.recipe[1];
+                const li = document.createElement('li'); li.textContent = `${inputNames} = ${outputData.name || '(Unknown)'}`;
+                li.dataset.input1 = outputData.recipe[0]; li.dataset.input2 = outputData.recipe[1];
                 this.elements.discoveredRecipesList.appendChild(li);
             }
         });
@@ -303,14 +314,12 @@ const UI = {
     },
 
     /**
-     * Updates the state and text of the Transcend button, now requiring a paradigm.
+     * Updates the state and text of the Transcend button.
      */
      updateTranscendButton() {
          let canTranscend = false;
          let wsToGain = 0;
-         
          const anyParadigmOwned = Array.from(gameState.discoveredIdeas).some(id => IDEAS_DATA[id]?.tier === 4 && (gameState.ideas[id] || 0) > 0);
-
          if (anyParadigmOwned) {
              if (typeof GameLogic !== 'undefined' && GameLogic.calculateWisdomShardsOnTranscend) {
                   canTranscend = true;
