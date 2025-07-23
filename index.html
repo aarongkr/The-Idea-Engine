@@ -5,10 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Idea Engine</title>
     <link rel="stylesheet" href="style.css">
+    <!-- External library for graph visualization -->
     <link href="https://unpkg.com/vis-network/styles/vis-network.min.css" rel="stylesheet" type="text/css" />
+    <!-- Custom fonts for UI theming -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- The Tutorial Overlay -->
     <div id="tutorial-overlay" class="hidden">
         <div id="tutorial-box">
             <p id="tutorial-text">Welcome to The Idea Engine!</p>
@@ -47,8 +50,7 @@
                     <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 2.25c.41 0 .75.34.75.75v2.25a.75.75 0 0 1-1.5 0V3c0-.41.34-.75.75-.75zM12 18.75c-.41 0-.75-.34-.75-.75v-2.25a.75.75 0 0 1 1.5 0V18c0 .41-.34.75-.75.75zM5.066 6.043a.75.75 0 0 1 .953-.421l1.949.898a.75.75 0 1 1-.842 1.834l-1.95-.898a.75.75 0 0 1-.108-1.413zm11.917 10.073a.75.75 0 0 1 .953-.421l1.949.898a.75.75 0 0 1-.842 1.834l-1.95-.898a.75.75 0 0 1-.108-1.413zM2.25 12a.75.75 0 0 1 .75-.75h2.25a.75.75 0 0 1 0 1.5H3a.75.75 0 0 1-.75-.75zm18.75 0a.75.75 0 0 1 .75-.75h2.25a.75.75 0 0 1 0 1.5H21a.75.75 0 0 1-.75-.75zm-4.023-5.536a.75.75 0 0 1-.421-.953l.898-1.949a.75.75 0 1 1 1.834.842l-.898 1.95a.75.75 0 0 1-1.413.108zm-10.073 11.917a.75.75 0 0 1-.421-.953l.898-1.949a.75.75 0 1 1 1.834.842l-.898 1.95a.75.75 0 0 1-1.413.108zM12 6.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM1.5 12a10.5 10.5 0 1 1 21 0 10.5 10.5 0 0 1-21 0z"/></svg>
                     Spark Fleeting Thought
                 </button>
-                <!-- New Purchase Modulator Button -->
-                <button id="purchase-mode-button" class="secondary-button">Buy x1</button>
+                <button id="multiplier-button" class="secondary-button">Buy x1</button>
             </section>
 
             <nav id="main-nav">
@@ -69,7 +71,7 @@
             </footer>
         </aside>
 
-        <!-- (The rest of the HTML - main and right panels - remains unchanged) -->
+        <!-- Center Panel: Contains all switchable content panels -->
         <main id="center-panel">
             <div id="noosphere-panel" class="panel active">
                 <div id="noosphere-graph"></div>
@@ -96,6 +98,7 @@
                     <ul id="discovered-recipes-list"></ul>
                 </div>
             </div>
+
             <div id="concepts-panel" class="panel">
                 <h2>Discovered Concepts</h2>
                 <div id="concepts-list" class="idea-list-panel"></div>
@@ -124,6 +127,7 @@
                     <div id="paradigm-crafters-list" class="upgrades-grid"></div>
                 </div>
             </div>
+
             <div id="transcendence-panel" class="panel">
                 <h2>Transcendence</h2>
                 <p>Reach higher states of understanding. Reset your current intellectual construct for profound, permanent Wisdom.</p>
@@ -134,6 +138,8 @@
                 <p>Game settings and options will be available here.</p>
             </div>
         </main>
+
+        <!-- Right Panel: Displays contextual details for selected items -->
         <aside id="right-panel">
             <div id="details-view">
                 <h2>Selected Idea</h2>
