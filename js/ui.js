@@ -69,11 +69,8 @@ const UI = {
         this.elements.wsCount.textContent = Utils.formatNumber(gameState.resources.wisdom_shards);
 
         let totalFtPerSec = 0;
-        Object.values(gameState.generators).forEach(genState => {
-            const genData = Object.values(GENERATORS_DATA).find(g => g.id === genState.id);
-            if (!genData && genState.id) { // Find by id if keys are not matching
-                 genData = GENERATORS_DATA[genState.id];
-            }
+        Object.entries(gameState.generators).forEach(([genId, genState]) => {
+            const genData = GENERATORS_DATA[genId];
             if (genData && genState.level > 0 && genData.output?.fleeting_thought) {
                 const currentLevel = genState.level; const baseOutput = genData.output.fleeting_thought; const scale = genData.outputScale || 1;
                 const levelBonus = Math.pow(scale, Math.max(0, currentLevel - 1));
@@ -132,7 +129,17 @@ const UI = {
             const isMaxLevel = currentLevel >= (genData.maxLevel || Infinity); const card = document.createElement('div'); card.className = 'upgrade-card';
             let costString = Object.entries(cost).map(([res, val]) =>`${Utils.formatNumber(val)} ${IDEAS_DATA[res]?.name || Utils.capitalizeFirst(res.replace(/_/g, ' '))}`).join(', '); if (isMaxLevel) costString = 'N/A';
             let outputString = "Effect: "; if (genData.output && typeof genData.output === 'object') { const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = genData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : ""; if (GameLogic._isValidNumber(genData.output.fleeting_thought) && GameLogic._isValidNumber(outputScale)) { const ftOutputValue = (genData.output.fleeting_thought * (outputScale**scalePower) * displayLevel); outputString += `${ftOutputValue.toFixed(2)} FT/sec${prefix}<br>`; } Object.entries(genData.output).forEach(([outRes, outVal]) => { if (outRes !== 'fleeting_thought' && GameLogic._isValidNumber(outVal) && GameLogic._isValidNumber(outputScale)) { const ratePerLevel = outVal * (outputScale**scalePower) * displayLevel * 100; outputString += `${ratePerLevel.toFixed(2)}% chance/sec for ${IDEAS_DATA[outRes]?.name || outRes}${prefix}<br>`; } }); } else { outputString = "Effect: (None defined)"; } outputString = outputString.replace(/<br>$/, '');
-            card.innerHTML = `<h3>${genData.icon || ''} ${genData.name} (Lvl ${currentLevel}${isMaxLevel ? ' - MAX' : ''})</h3> <p>${genData.description || ''}</p> <p class="cost">Cost: ${costString}</p> <p class="output">${outputString || 'Effect: N/A'}</p> <button class="action-button buy-generator" data-generator-id="${genData.id}" ${!canAfford || isMaxLevel ? 'disabled' : ''}>${isMaxLevel ? 'Max Level' : (currentLevel === 0 ? 'Build' : 'Upgrade')}</button>`;
+            
+            // *** THIS IS THE CORRECTED LINE ***
+            card.innerHTML = `
+                <h3>${genData.icon || ''} ${genData.name} (Lvl ${currentLevel}${isMaxLevel ? ' - MAX' : ''})</h3>
+                <p>${genData.description || ''}</p>
+                <p class="cost">Cost: ${costString}</p>
+                <p class="output">${outputString || 'Effect: N/A'}</p>
+                <button class="action-button buy-generator" data-generator-id="${genData.id}" ${!canAfford || isMaxLevel ? 'disabled' : ''}>
+                    ${isMaxLevel ? 'Max Level' : (currentLevel === 0 ? 'Build' : 'Upgrade')}
+                </button>
+            `;
             this.elements.generatorsList.appendChild(card);
         });
     },
@@ -173,7 +180,17 @@ const UI = {
             const isMaxLevel = currentLevel >= (crafterData.maxLevel || Infinity); const card = document.createElement('div'); card.className = 'upgrade-card';
             let costString = Object.entries(cost).map(([res, val]) => `${Utils.formatNumber(val)} ${IDEAS_DATA[res]?.name || Utils.capitalizeFirst(res.replace(/_/g, ' '))}`).join(', '); if (isMaxLevel) costString = 'N/A';
             const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = crafterData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : ""; let outputVal = 0; if(GameLogic._isValidNumber(crafterData.outputAmount) && GameLogic._isValidNumber(outputScale)){ outputVal = crafterData.outputAmount * (outputScale ** scalePower) * displayLevel;} const outputString = `Crafts: ${outputVal.toFixed(4)} ${targetIdea.name}/sec${prefix}`;
-            card.innerHTML = `<h3>${crafterData.name} (Lvl ${currentLevel}${isMaxLevel ? ' - MAX' : ''})</h3> <p>${crafterData.description || `Automates crafting of ${targetIdea.name}.`}</p> <p class="cost">Cost: ${costString}</p> <p class="output">${outputString}</p> <button class="action-button buy-autocrafter" data-crafter-id="${crafterData.id}" ${!canAfford || isMaxLevel ? 'disabled' : ''}> ${isMaxLevel ? 'Max Level' : (currentLevel === 0 ? 'Build' : 'Upgrade')} </button>`;
+            
+            // *** THIS IS THE SECOND CORRECTED LINE ***
+            card.innerHTML = `
+                <h3>${crafterData.name} (Lvl ${currentLevel}${isMaxLevel ? ' - MAX' : ''})</h3>
+                <p>${crafterData.description || `Automates crafting of ${targetIdea.name}.`}</p>
+                <p class="cost">Cost: ${costString}</p>
+                <p class="output">${outputString}</p>
+                <button class="action-button buy-autocrafter" data-crafter-id="${crafterData.id}" ${!canAfford || isMaxLevel ? 'disabled' : ''}>
+                    ${isMaxLevel ? 'Max Level' : (currentLevel === 0 ? 'Build' : 'Upgrade')}
+                </button>
+            `;
             listElement.appendChild(card);
         });
         if (!foundAnyCrafters) listElement.innerHTML = `<p class="text-muted">Discover an idea of this tier to unlock its auto-crafter.</p>`;
