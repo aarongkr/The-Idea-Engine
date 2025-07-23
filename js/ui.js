@@ -5,11 +5,12 @@
  */
 const UI = {
     elements: {
+        // Cache DOM elements for performance
         ftCount: document.getElementById('ft-count'),
         ftPerSecCount: document.getElementById('ft-per-sec-count'),
         wsCount: document.getElementById('ws-count'),
         sparkButton: document.getElementById('spark-button'),
-        multiplierButton: document.getElementById('multiplier-button'), // New
+        multiplierButton: document.getElementById('multiplier-button'),
         generatorsList: document.getElementById('generators-list'),
         forgeSlot1: document.getElementById('forge-slot-1'),
         forgeSlot2: document.getElementById('forge-slot-2'),
@@ -74,28 +75,39 @@ const UI = {
         const currentMultiplier = gameState.purchaseMultiplier;
         this.elements.multiplierButton.textContent = `Buy x${currentMultiplier}`;
     },
-    
-    /* *Updates the main resource displays (FT, WS, FT/sec) and the tier summary list.*/
+
+    /**
+     * Switches the currently active center panel.
+     * @param {string} panelId - The ID of the panel to activate.
+     * @param {HTMLElement} clickedButton - The navigation button that was clicked.
+     */
+    switchPanel(panelId, clickedButton) {
+        this.elements.panels.forEach(panel => panel.classList.remove('active'));
+        this.elements.navButtons.forEach(btn => btn.classList.remove('active'));
+        const targetPanel = document.getElementById(panelId);
+        if (targetPanel) targetPanel.classList.add('active');
+        if (clickedButton) clickedButton.classList.add('active');
+        if (panelId === 'noosphere-panel' && typeof Noosphere !== 'undefined' && Noosphere.network) {
+             setTimeout(() => { if(Noosphere.network) { Noosphere.network.redraw(); Noosphere.network.fit();}}, 50);
+        }
+    },
+
+    /**
+     * Updates the main resource displays and the tier summary list.
+     */
     updateResourceDisplay() {
-        // Update the Fleeting Thoughts and Wisdom Shards counts
         this.elements.ftCount.textContent = Utils.formatNumber(gameState.resources.fleeting_thought);
         this.elements.wsCount.textContent = Utils.formatNumber(gameState.resources.wisdom_shards);
 
-        // Calculate and display total FT/sec from all sources
         let totalFtPerSec = 0;
-        // 1. Add income from Base Generators
-        Object.values(gameState.generators).forEach(genState => {
-            // Find the static data for the generator by its ID
-            const genData = Object.values(GENERATORS_DATA).find(g => g.id === genState.id);
+        Object.entries(gameState.generators).forEach(([genId, genState]) => {
+            const genData = GENERATORS_DATA[genId];
             if (genData && genState.level > 0 && genData.output?.fleeting_thought) {
-                const currentLevel = genState.level;
-                const baseOutput = genData.output.fleeting_thought;
-                const scale = genData.outputScale || 1;
+                const currentLevel = genState.level; const baseOutput = genData.output.fleeting_thought; const scale = genData.outputScale || 1;
                 const levelBonus = Math.pow(scale, Math.max(0, currentLevel - 1));
                 totalFtPerSec += (baseOutput * currentLevel) * levelBonus;
             }
         });
-        // 2. Add income from owned Ideas that have a bonus
         Object.entries(gameState.ideas).forEach(([ideaId, count]) => {
             const ideaData = IDEAS_DATA[ideaId];
             if (ideaData?.attributes?.ft_bonus_per_sec && GameLogic._isValidNumber(count) && count > 0) {
@@ -104,22 +116,18 @@ const UI = {
         });
         this.elements.ftPerSecCount.textContent = Utils.formatNumber(totalFtPerSec) + "/sec";
 
-        // Update the "My Ideas" section to be a Tier Summary
         let tierSummaryHTML = '<h3>Idea Tiers</h3><ul class="compact-list">';
         const tierCounts = { 1: 0, 2: 0, 3: 0, 4: 0 };
         const totalPerTier = { 1: 0, 2: 0, 3: 0, 4: 0 };
-
         Object.values(IDEAS_DATA).forEach(ideaData => {
             const tier = ideaData.tier;
             if (tier >= 1 && tier <= 4) {
                 totalPerTier[tier]++;
-                // An idea is "counted" if it's discovered and at least one is owned
                 if (gameState.discoveredIdeas.has(ideaData.id) && (gameState.ideas[ideaData.id] || 0) > 0) {
                     tierCounts[tier]++;
                 }
             }
         });
-
         tierSummaryHTML += `<li>Concepts (T1): ${tierCounts[1]} / ${totalPerTier[1]}</li>`;
         tierSummaryHTML += `<li>Insights (T2): ${tierCounts[2]} / ${totalPerTier[2]}</li>`;
         tierSummaryHTML += `<li>Theories (T3): ${tierCounts[3]} / ${totalPerTier[3]}</li>`;
@@ -135,28 +143,28 @@ const UI = {
         this.elements.generatorsList.innerHTML = '';
         Object.values(GENERATORS_DATA).forEach(genData => {
             let unlocked = true;
-            if (genData.unlocksWith) { unlocked = genData.unlocksWith.every(cond => { let conditionMet = false; const parts = cond.split('_'); const lastPart = parts[parts.length - 1]; const potentialLevel = parseInt(lastPart?.trim(), 10); if (parts.length > 1 && !isNaN(potentialLevel)) { const genId_cond = parts.slice(0, -1).join('_'); const requiredLevel = potentialLevel; const currentGenState = gameState.generators[genId_cond]; const currentLevel = currentGenState?.level; conditionMet = currentGenState && GameLogic._isValidNumber(currentLevel) && currentLevel >= requiredLevel; } else { const ideaId_cond = cond; conditionMet = gameState.discoveredIdeas.has(ideaId_cond); } return conditionMet; }); }
+            if (genData.unlocksWith) {
+                unlocked = genData.unlocksWith.every(cond => {
+                    let conditionMet = false; const parts = cond.split('_'); const lastPart = parts[parts.length - 1]; const potentialLevel = parseInt(lastPart?.trim(), 10);
+                    if (parts.length > 1 && !isNaN(potentialLevel)) {
+                        const genId_cond = parts.slice(0, -1).join('_'); const requiredLevel = potentialLevel; const currentGenState = gameState.generators[genId_cond]; const currentLevel = currentGenState?.level;
+                        conditionMet = currentGenState && GameLogic._isValidNumber(currentLevel) && currentLevel >= requiredLevel;
+                    } else { const ideaId_cond = cond; conditionMet = gameState.discoveredIdeas.has(ideaId_cond); }
+                    return conditionMet;
+                });
+            }
             if (!unlocked) return;
 
             const currentLevel = gameState.generators[genData.id]?.level || 0;
             const isMaxLevel = currentLevel >= (genData.maxLevel || Infinity);
-            
-            // Calculate multi-buy details
-            const purchaseDetails = GameLogic.calculateMultiBuy(
-                genData.baseCost,
-                genData.costScale,
-                currentLevel,
-                gameState.purchaseMultiplier,
-                genData.maxLevel
-            );
+            const purchaseDetails = GameLogic.calculateMultiBuy(genData.baseCost, genData.costScale, currentLevel, gameState.purchaseMultiplier, genData.maxLevel);
 
             let costString = "N/A";
             let canAfford = false;
             if (purchaseDetails.levelsToBuy > 0) {
                 costString = Object.entries(purchaseDetails.totalCost).map(([res, val]) =>`${Utils.formatNumber(val)} ${IDEAS_DATA[res]?.name || Utils.capitalizeFirst(res.replace(/_/g, ' '))}`).join(', ');
-                canAfford = true; // calculateMultiBuy ensures this
+                canAfford = true;
             } else if (!isMaxLevel) {
-                 // Show cost for a single level if we can't afford the multi-buy
                 const singlePurchase = GameLogic.calculateMultiBuy(genData.baseCost, genData.costScale, currentLevel, 1, genData.maxLevel);
                 costString = Object.entries(singlePurchase.totalCost).map(([res, val]) =>`${Utils.formatNumber(val)} ${IDEAS_DATA[res]?.name || Utils.capitalizeFirst(res.replace(/_/g, ' '))}`).join(', ');
             }
@@ -166,13 +174,34 @@ const UI = {
                 buttonText = currentLevel === 0 ? "Build +1" : "Upgrade +1";
             }
             
-            const card = document.createElement('div');
-            card.className = 'upgrade-card';
+            const card = document.createElement('div'); card.className = 'upgrade-card';
             let outputString = "Effect: "; if (genData.output && typeof genData.output === 'object') { const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = genData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : ""; if (GameLogic._isValidNumber(genData.output.fleeting_thought) && GameLogic._isValidNumber(outputScale)) { const ftOutputValue = (genData.output.fleeting_thought * (outputScale**scalePower) * displayLevel); outputString += `${ftOutputValue.toFixed(2)} FT/sec${prefix}<br>`; } Object.entries(genData.output).forEach(([outRes, outVal]) => { if (outRes !== 'fleeting_thought' && GameLogic._isValidNumber(outVal) && GameLogic._isValidNumber(outputScale)) { const ratePerLevel = outVal * (outputScale**scalePower) * displayLevel * 100; outputString += `${ratePerLevel.toFixed(2)}% chance/sec for ${IDEAS_DATA[outRes]?.name || outRes}${prefix}<br>`; } }); } else { outputString = "Effect: (None defined)"; } outputString = outputString.replace(/<br>$/, '');
             
             card.innerHTML = `<h3>${genData.icon || ''} ${genData.name} (Lvl ${currentLevel}${isMaxLevel ? ' - MAX' : ''})</h3> <p>${genData.description || ''}</p> <p class="cost">Cost: ${costString}</p> <p class="output">${outputString || 'Effect: N/A'}</p> <button class="action-button buy-generator" data-generator-id="${genData.id}" ${!canAfford || isMaxLevel ? 'disabled' : ''}>${buttonText}</button>`;
             this.elements.generatorsList.appendChild(card);
         });
+    },
+
+    /**
+     * Generic function to render lists of discovered ideas in their respective panels.
+     */
+    renderTieredIdeaList(tier, listElement) {
+        listElement.innerHTML = ''; let foundAny = false;
+        Array.from(gameState.discoveredIdeas)
+            .map(id => IDEAS_DATA[id])
+            .filter(ideaData => ideaData && ideaData.tier === tier)
+            .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+            .forEach(ideaData => {
+                foundAny = true; const li = document.createElement('li'); const ownedCount = gameState.ideas[ideaData.id] || 0;
+                let ftBonusHTML = '';
+                if (ideaData.attributes?.ft_bonus_per_sec && GameLogic._isValidNumber(ownedCount) && ownedCount > 0) {
+                    const totalBonus = ideaData.attributes.ft_bonus_per_sec * ownedCount;
+                    ftBonusHTML = `<span class="idea-description">Grants ${Utils.formatNumber(totalBonus)} FT/sec total</span>`;
+                }
+                li.innerHTML = `<span class="idea-name">${ideaData.name}</span> <span class="idea-owned">Owned: ${Utils.formatNumber(ownedCount)}</span> <span class="idea-description">${ideaData.description || ''}</span> ${ftBonusHTML}`;
+                li.dataset.ideaId = ideaData.id; listElement.appendChild(li);
+            });
+        if (!foundAny) listElement.innerHTML = `<p class="text-muted">No ideas of this tier discovered yet.</p>`;
     },
 
     /**
@@ -183,21 +212,11 @@ const UI = {
         Object.values(CRAFTERS_DATA).forEach(crafterData => {
             if (!crafterData.id.startsWith(crafterTypePrefix + '_')) return;
             let unlocked = true; if (crafterData.unlocksWith) unlocked = crafterData.unlocksWith.every(cond => gameState.discoveredIdeas.has(cond)); if (!unlocked) return;
-            
             foundAnyCrafters = true; const targetIdea = IDEAS_DATA[crafterData.targetIdeaId]; if (!targetIdea) return;
             const currentLevel = gameState.crafters[crafterData.id]?.level || 0;
             const isMaxLevel = currentLevel >= (crafterData.maxLevel || Infinity);
-
-            const purchaseDetails = GameLogic.calculateMultiBuy(
-                crafterData.baseCost,
-                crafterData.costScale,
-                currentLevel,
-                gameState.purchaseMultiplier,
-                crafterData.maxLevel
-            );
-
-            let costString = "N/A";
-            let canAfford = false;
+            const purchaseDetails = GameLogic.calculateMultiBuy(crafterData.baseCost, crafterData.costScale, currentLevel, gameState.purchaseMultiplier, crafterData.maxLevel);
+            let costString = "N/A"; let canAfford = false;
             if (purchaseDetails.levelsToBuy > 0) {
                 costString = Object.entries(purchaseDetails.totalCost).map(([res, val]) => `${Utils.formatNumber(val)} ${IDEAS_DATA[res]?.name || Utils.capitalizeFirst(res.replace(/_/g, ' '))}`).join(', ');
                 canAfford = true;
@@ -205,15 +224,12 @@ const UI = {
                 const singlePurchase = GameLogic.calculateMultiBuy(crafterData.baseCost, crafterData.costScale, currentLevel, 1, crafterData.maxLevel);
                 costString = Object.entries(singlePurchase.totalCost).map(([res, val]) => `${Utils.formatNumber(val)} ${IDEAS_DATA[res]?.name || Utils.capitalizeFirst(res.replace(/_/g, ' '))}`).join(', ');
             }
-
             let buttonText = isMaxLevel ? "Max Level" : (currentLevel === 0 ? `Build +${purchaseDetails.levelsToBuy}` : `Upgrade +${purchaseDetails.levelsToBuy}`);
             if (purchaseDetails.levelsToBuy === 0 && !isMaxLevel) {
                  buttonText = currentLevel === 0 ? "Build +1" : "Upgrade +1";
             }
-
             const card = document.createElement('div'); card.className = 'upgrade-card';
             const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = crafterData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : ""; let outputVal = 0; if(GameLogic._isValidNumber(crafterData.outputAmount) && GameLogic._isValidNumber(outputScale)){ outputVal = crafterData.outputAmount * (outputScale ** scalePower) * displayLevel;} const outputString = `Crafts: ${outputVal.toFixed(4)} ${targetIdea.name}/sec${prefix}`;
-            
             card.innerHTML = `<h3>${crafterData.name} (Lvl ${currentLevel}${isMaxLevel ? ' - MAX' : ''})</h3> <p>${crafterData.description || `Automates crafting of ${targetIdea.name}.`}</p> <p class="cost">Cost: ${costString}</p> <p class="output">${outputString}</p> <button class="action-button buy-autocrafter" data-crafter-id="${crafterData.id}" ${!canAfford || isMaxLevel ? 'disabled' : ''}>${buttonText}</button>`;
             listElement.appendChild(card);
         });
@@ -335,6 +351,7 @@ const UI = {
         this.populateForgeSelectors();
         this.updateDiscoveredRecipes();
         this.updateTranscendButton();
+        this.updateMultiplierButtonText(); // Ensure multiplier button text is current
     },
 
     /**
