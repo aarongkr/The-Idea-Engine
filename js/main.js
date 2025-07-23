@@ -12,6 +12,7 @@ function main() {
     // Initialize UI components and event listeners
     if (typeof UI !== 'undefined') UI.init();
     if (typeof Noosphere !== 'undefined') Noosphere.init('noosphere-graph', 'tooltip-container');
+    if (typeof Tutorial !== 'undefined') Tutorial.init();
 
     // Perform the initial full render of the UI and graph based on the loaded state
     if (typeof UI !== 'undefined') UI.updateAllUI();
@@ -38,8 +39,11 @@ function main() {
     });
     if (resetBtn) resetBtn.addEventListener('click', () => resetGameConfirm(false));
 
+    // Start the tutorial if it's not completed
+    if (typeof Tutorial !== 'undefined') Tutorial.start();
+
     // Start the game loop, executing the tick function periodically
-    gameLoopInterval = setInterval(GameLogic.tick, 100); // 10 ticks per second
+    gameLoopInterval = setInterval(GameLogic.tick, 100);
     
     console.log("The Idea Engine Initialized and Running.");
 }
@@ -48,4 +52,4 @@ function main() {
 document.addEventListener('DOMContentLoaded', main);
 
 // Set up an auto-save interval
-setInterval(saveGame, 30000); // Save every 30 seconds
+setInterval(saveGame, 30000);
