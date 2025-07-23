@@ -74,6 +74,59 @@ const UI = {
         const currentMultiplier = gameState.purchaseMultiplier;
         this.elements.multiplierButton.textContent = `Buy x${currentMultiplier}`;
     },
+    
+    /* *Updates the main resource displays (FT, WS, FT/sec) and the tier summary list.*/
+    updateResourceDisplay() {
+        // Update the Fleeting Thoughts and Wisdom Shards counts
+        this.elements.ftCount.textContent = Utils.formatNumber(gameState.resources.fleeting_thought);
+        this.elements.wsCount.textContent = Utils.formatNumber(gameState.resources.wisdom_shards);
+
+        // Calculate and display total FT/sec from all sources
+        let totalFtPerSec = 0;
+        // 1. Add income from Base Generators
+        Object.values(gameState.generators).forEach(genState => {
+            // Find the static data for the generator by its ID
+            const genData = Object.values(GENERATORS_DATA).find(g => g.id === genState.id);
+            if (genData && genState.level > 0 && genData.output?.fleeting_thought) {
+                const currentLevel = genState.level;
+                const baseOutput = genData.output.fleeting_thought;
+                const scale = genData.outputScale || 1;
+                const levelBonus = Math.pow(scale, Math.max(0, currentLevel - 1));
+                totalFtPerSec += (baseOutput * currentLevel) * levelBonus;
+            }
+        });
+        // 2. Add income from owned Ideas that have a bonus
+        Object.entries(gameState.ideas).forEach(([ideaId, count]) => {
+            const ideaData = IDEAS_DATA[ideaId];
+            if (ideaData?.attributes?.ft_bonus_per_sec && GameLogic._isValidNumber(count) && count > 0) {
+                totalFtPerSec += ideaData.attributes.ft_bonus_per_sec * count;
+            }
+        });
+        this.elements.ftPerSecCount.textContent = Utils.formatNumber(totalFtPerSec) + "/sec";
+
+        // Update the "My Ideas" section to be a Tier Summary
+        let tierSummaryHTML = '<h3>Idea Tiers</h3><ul class="compact-list">';
+        const tierCounts = { 1: 0, 2: 0, 3: 0, 4: 0 };
+        const totalPerTier = { 1: 0, 2: 0, 3: 0, 4: 0 };
+
+        Object.values(IDEAS_DATA).forEach(ideaData => {
+            const tier = ideaData.tier;
+            if (tier >= 1 && tier <= 4) {
+                totalPerTier[tier]++;
+                // An idea is "counted" if it's discovered and at least one is owned
+                if (gameState.discoveredIdeas.has(ideaData.id) && (gameState.ideas[ideaData.id] || 0) > 0) {
+                    tierCounts[tier]++;
+                }
+            }
+        });
+
+        tierSummaryHTML += `<li>Concepts (T1): ${tierCounts[1]} / ${totalPerTier[1]}</li>`;
+        tierSummaryHTML += `<li>Insights (T2): ${tierCounts[2]} / ${totalPerTier[2]}</li>`;
+        tierSummaryHTML += `<li>Theories (T3): ${tierCounts[3]} / ${totalPerTier[3]}</li>`;
+        tierSummaryHTML += `<li>Paradigms (T4): ${tierCounts[4]} / ${totalPerTier[4]}</li>`;
+        tierSummaryHTML += '</ul>';
+        this.elements.activeConceptsSummary.innerHTML = tierSummaryHTML;
+    },
 
     /**
      * Renders the list of available base generators, calculating multi-buy costs.
