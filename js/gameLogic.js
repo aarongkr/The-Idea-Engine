@@ -146,19 +146,19 @@ const GameLogic = {
     },
 
     /**
-     * Calculates the cost and number of levels that can be bought for a given item.
+     * Calculates the total cost for a specific number of upgrades and how many of those are affordable.
      * @param {object} baseCost - The base cost object of the item.
      * @param {number} costScale - The scaling factor for the cost.
      * @param {number} currentLevel - The current level of the item.
      * @param {number|string} multiplier - The number of levels to attempt to buy (1, 10, 100, or 'Max').
      * @param {number} maxLevel - The maximum level of the item.
-     * @returns {{levelsToBuy: number, totalCost: object, canAffordExact: boolean}} - The result of the calculation.
+     * @returns {{levelsToBuy: number, totalCost: object, affordableLevels: number}} - The result of the calculation.
      */
     calculateMultiBuy(baseCost, costScale, currentLevel, multiplier, maxLevel) {
         const result = {
-            levelsToBuy: 0,
-            totalCost: {},
-            canAffordExact: false // Tracks if the EXACT multiplier amount is affordable
+            levelsToBuy: 0,     // The number of levels requested to buy
+            totalCost: {},        // The total cost for 'levelsToBuy'
+            affordableLevels: 0 // The number of levels the player can actually afford
         };
         for (const res in baseCost) {
             result.totalCost[res] = 0;
@@ -167,13 +167,13 @@ const GameLogic = {
         const maxPossibleBuy = maxLevel - currentLevel;
         if (maxPossibleBuy <= 0) return result;
 
-        const limit = (multiplier === 'Max') ? maxPossibleBuy : Math.min(multiplier, maxPossibleBuy);
+        result.levelsToBuy = (multiplier === 'Max') ? maxPossibleBuy : Math.min(multiplier, maxPossibleBuy);
         
         let tempOwnedResources = {};
         Object.keys(gameState.resources).forEach(key => tempOwnedResources[key] = gameState.resources[key]);
         Object.keys(gameState.ideas).forEach(key => tempOwnedResources[key] = gameState.ideas[key]);
         
-        for (let i = 0; i < limit; i++) {
+        for (let i = 0; i < result.levelsToBuy; i++) {
             const levelToBuy = currentLevel + i;
             let levelCost = {};
             let canAffordThisLevel = true;
@@ -181,27 +181,19 @@ const GameLogic = {
             for (const res in baseCost) {
                 const calculatedCost = Math.floor(baseCost[res] * Math.pow(costScale, levelToBuy));
                 levelCost[res] = calculatedCost;
-                if ((tempOwnedResources[res] || 0) < calculatedCost) {
+                result.totalCost[res] += calculatedCost; // Tally total cost regardless of affordability
+
+                if ((tempOwnedResources[res] || 0) < levelCost[res]) {
                     canAffordThisLevel = false;
-                    break;
                 }
             }
 
             if (canAffordThisLevel) {
                 for (const res in levelCost) {
                     tempOwnedResources[res] -= levelCost[res];
-                    result.totalCost[res] += levelCost[res];
                 }
-                result.levelsToBuy++;
-            } else {
-                break; // Stop if we can't afford the next level
+                result.affordableLevels++;
             }
-        }
-        
-        // After the loop, check if the number of levels we *could* buy matches the requested number
-        // This is only relevant for non-'Max' multipliers.
-        if (multiplier !== 'Max' && result.levelsToBuy === multiplier) {
-            result.canAffordExact = true;
         }
         
         return result;
@@ -212,24 +204,19 @@ const GameLogic = {
         const currentLevel = gameState.generators[generatorId]?.level || 0;
         if (currentLevel >= (genData.maxLevel || Infinity)) { if (typeof UI !== 'undefined') UI.showNotification("Already at max level!", "info"); return; }
         
-        let levelsToBuy, totalCost;
-        if (gameState.purchaseMultiplier === 'Max') {
-            const purchaseDetails = GameLogic.calculateMultiBuy(genData.baseCost, genData.costScale, currentLevel, 'Max', genData.maxLevel);
-            levelsToBuy = purchaseDetails.levelsToBuy;
-            totalCost = purchaseDetails.totalCost;
-        } else {
-            const purchaseDetails = GameLogic.calculateMultiBuy(genData.baseCost, genData.costScale, currentLevel, gameState.purchaseMultiplier, genData.maxLevel);
-            // The fix: only proceed if the exact amount is affordable
-            if (!purchaseDetails.canAffordExact) {
-                if (typeof UI !== 'undefined') UI.showNotification(`Not enough resources to buy x${gameState.purchaseMultiplier}!`, "error");
-                return;
-            }
-            levelsToBuy = purchaseDetails.levelsToBuy;
-            totalCost = purchaseDetails.totalCost;
+        const purchaseDetails = GameLogic.calculateMultiBuy(genData.baseCost, genData.costScale, currentLevel, gameState.purchaseMultiplier, genData.maxLevel);
+        
+        const levelsToBuy = (gameState.purchaseMultiplier === 'Max') ? purchaseDetails.affordableLevels : purchaseDetails.levelsToBuy;
+        
+        if (purchaseDetails.affordableLevels < levelsToBuy) {
+            if (typeof UI !== 'undefined') UI.showNotification(`Not enough resources to buy x${gameState.purchaseMultiplier}!`, "error");
+            return;
         }
 
         if (levelsToBuy > 0) {
-            for (const res in totalCost) { if (gameState.resources[res] !== undefined) gameState.resources[res] -= totalCost[res]; else if (gameState.ideas[res] !== undefined) gameState.ideas[res] -= totalCost[res];}
+            // Recalculate cost just for the levels we are actually buying to be safe
+            const finalPurchase = GameLogic.calculateMultiBuy(genData.baseCost, genData.costScale, currentLevel, levelsToBuy, genData.maxLevel);
+            for (const res in finalPurchase.totalCost) { if (gameState.resources[res] !== undefined) gameState.resources[res] -= finalPurchase.totalCost[res]; else if (gameState.ideas[res] !== undefined) gameState.ideas[res] -= finalPurchase.totalCost[res];}
             gameState.generators[generatorId].level += levelsToBuy;
             if (typeof UI !== 'undefined') { UI.updateAllUI(); UI.showNotification(`${genData.name} upgraded by +${levelsToBuy} to Lvl ${gameState.generators[generatorId].level}!`, 'success');}
         } else { if (typeof UI !== 'undefined') UI.showNotification("Not enough resources!", "error");}
@@ -239,25 +226,19 @@ const GameLogic = {
         const crafterData = CRAFTERS_DATA[crafterId]; if (!crafterData) return;
         const currentLevel = gameState.crafters[crafterId]?.level || 0;
         if (currentLevel >= (crafterData.maxLevel || Infinity)) { if (typeof UI !== 'undefined') UI.showNotification("Crafter already at max level!", "info"); return; }
+        
+        const purchaseDetails = GameLogic.calculateMultiBuy(crafterData.baseCost, crafterData.costScale, currentLevel, gameState.purchaseMultiplier, crafterData.maxLevel);
+        
+        const levelsToBuy = (gameState.purchaseMultiplier === 'Max') ? purchaseDetails.affordableLevels : purchaseDetails.levelsToBuy;
 
-        let levelsToBuy, totalCost;
-        if (gameState.purchaseMultiplier === 'Max') {
-            const purchaseDetails = GameLogic.calculateMultiBuy(crafterData.baseCost, crafterData.costScale, currentLevel, 'Max', crafterData.maxLevel);
-            levelsToBuy = purchaseDetails.levelsToBuy;
-            totalCost = purchaseDetails.totalCost;
-        } else {
-            const purchaseDetails = GameLogic.calculateMultiBuy(crafterData.baseCost, crafterData.costScale, currentLevel, gameState.purchaseMultiplier, crafterData.maxLevel);
-            // The fix: only proceed if the exact amount is affordable
-            if (!purchaseDetails.canAffordExact) {
-                if (typeof UI !== 'undefined') UI.showNotification(`Not enough resources to buy x${gameState.purchaseMultiplier}!`, "error");
-                return;
-            }
-            levelsToBuy = purchaseDetails.levelsToBuy;
-            totalCost = purchaseDetails.totalCost;
+        if (purchaseDetails.affordableLevels < levelsToBuy) {
+            if (typeof UI !== 'undefined') UI.showNotification(`Not enough resources for this crafter!`, "error");
+            return;
         }
 
         if (levelsToBuy > 0) {
-            for (const res in totalCost) { if (gameState.resources[res] !== undefined) gameState.resources[res] -= totalCost[res]; else if (gameState.ideas[res] !== undefined) gameState.ideas[res] -= totalCost[res];}
+            const finalPurchase = GameLogic.calculateMultiBuy(crafterData.baseCost, crafterData.costScale, currentLevel, levelsToBuy, crafterData.maxLevel);
+            for (const res in finalPurchase.totalCost) { if (gameState.resources[res] !== undefined) gameState.resources[res] -= finalPurchase.totalCost[res]; else if (gameState.ideas[res] !== undefined) gameState.ideas[res] -= finalPurchase.totalCost[res];}
             if (!gameState.crafters[crafterId]) gameState.crafters[crafterId] = { level: 0 };
             gameState.crafters[crafterId].level += levelsToBuy;
             if (typeof UI !== 'undefined') { UI.updateAllUI(); UI.showNotification(`${crafterData.name} upgraded by +${levelsToBuy} to Lvl ${gameState.crafters[crafterId].level}!`, 'success');}
@@ -325,7 +306,7 @@ const GameLogic = {
             lastUpdate: Date.now(), resources: { fleeting_thought: 0, wisdom_shards: currentWS + wsGained }, ideas: {},
             generators: {}, crafters: {}, unlockedRecipes: [], noosphereState: { nodes: [], edges: [] },
             discoveredIdeas: new Set(['fleeting_thought']), transcendenceCount: currentTranscendCount + 1, tutorialCompleted: true,
-            purchaseMultiplier: gameState.purchaseMultiplier, // Preserve multiplier setting
+            purchaseMultiplier: gameState.purchaseMultiplier,
             gameVersion: gameState.gameVersion
         };
         Object.keys(gameState).forEach(key => delete gameState[key]);
