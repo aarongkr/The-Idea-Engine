@@ -13,7 +13,8 @@ let gameState = {
     noosphereState: { nodes: [], edges: [] },
     discoveredIdeas: new Set(),
     transcendenceCount: 0,
-    gameVersion: "0.1.0"
+    tutorialCompleted: false, // Flag to track if the tutorial has been finished
+    gameVersion: "0.1.1" // Bump version for the new state property
 };
 
 /**
@@ -31,7 +32,8 @@ function initializeGameState(isNewGame = false) {
         gameState.unlockedRecipes = [];
         gameState.discoveredIdeas = new Set(['fleeting_thought']);
         gameState.transcendenceCount = 0;
-        gameState.gameVersion = "0.1.0";
+        gameState.tutorialCompleted = false; // Ensure it's false for a new game
+        gameState.gameVersion = "0.1.1";
         gameState.noosphereState = { nodes: [], edges: [] };
         console.log("Initializing NEW game state.");
     }
@@ -78,14 +80,14 @@ function initializeGameState(isNewGame = false) {
 
     if (!Array.isArray(gameState.unlockedRecipes)) gameState.unlockedRecipes = [];
     if (!(gameState.discoveredIdeas instanceof Set)) {
-        // Handle case where save converted Set to an array or object
         gameState.discoveredIdeas = new Set(Array.isArray(gameState.discoveredIdeas) ? gameState.discoveredIdeas : []);
     }
     gameState.discoveredIdeas.add('fleeting_thought');
 
     gameState.transcendenceCount = Number(gameState.transcendenceCount) || 0;
     gameState.lastUpdate = Number(gameState.lastUpdate) || Date.now();
-    gameState.gameVersion = gameState.gameVersion || "0.1.0";
+    gameState.tutorialCompleted = gameState.tutorialCompleted === true; // Coerce to boolean
+    gameState.gameVersion = gameState.gameVersion || "0.1.1";
 }
 
 /**
@@ -94,7 +96,6 @@ function initializeGameState(isNewGame = false) {
 function saveGame() {
     try {
         gameState.lastUpdate = Date.now();
-        // Convert Set to Array for JSON compatibility
         const savableGameState = { ...gameState, discoveredIdeas: Array.from(gameState.discoveredIdeas) };
         localStorage.setItem('ideaEngineSave', JSON.stringify(savableGameState));
         if (typeof UI !== 'undefined' && UI.showNotification) {
