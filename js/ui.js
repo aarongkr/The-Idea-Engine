@@ -5,7 +5,6 @@
  */
 const UI = {
     elements: {
-        // Cache DOM elements for performance
         ftCount: document.getElementById('ft-count'),
         ftPerSecCount: document.getElementById('ft-per-sec-count'),
         wsCount: document.getElementById('ws-count'),
@@ -36,12 +35,10 @@ const UI = {
      * Initializes UI event listeners using event delegation for dynamically created elements.
      */
     init() {
-        // Panel Navigation
         this.elements.navButtons.forEach(button => {
             button.addEventListener('click', () => this.switchPanel(button.dataset.panel, button));
         });
 
-        // Use Event Delegation for dynamic buttons
         this.elements.generatorsList.addEventListener('click', this.handleBuyGeneratorClick);
         this.elements.insightCraftersList.addEventListener('click', this.handleBuyAutoCrafterClick);
         this.elements.theoryCraftersList.addEventListener('click', this.handleBuyAutoCrafterClick);
@@ -61,7 +58,6 @@ const UI = {
         if (targetPanel) targetPanel.classList.add('active');
         if (clickedButton) clickedButton.classList.add('active');
 
-        // Fit Noosphere graph to view when its panel is selected
         if (panelId === 'noosphere-panel' && typeof Noosphere !== 'undefined' && Noosphere.network) {
              setTimeout(() => { if(Noosphere.network) { Noosphere.network.redraw(); Noosphere.network.fit();}}, 50);
         }
@@ -74,17 +70,15 @@ const UI = {
         this.elements.ftCount.textContent = Utils.formatNumber(gameState.resources.fleeting_thought);
         this.elements.wsCount.textContent = Utils.formatNumber(gameState.resources.wisdom_shards);
 
-        // Calculate and display total FT/sec
         let totalFtPerSec = 0;
-        Object.entries(gameState.generators).forEach(([id, gen]) => {
-            const genData = GENERATORS_DATA[id];
-            if (gen.level > 0 && genData.output?.fleeting_thought && GameLogic._isValidNumber(genData.output.fleeting_thought)) {
-                const displayLevel = gen.level;
-                const scalePower = Math.max(0, displayLevel - 1);
-                const outputScale = genData.outputScale || 1;
-                if(GameLogic._isValidNumber(outputScale)) {
-                    totalFtPerSec += (genData.output.fleeting_thought * (outputScale**scalePower) * displayLevel);
-                }
+        Object.values(gameState.generators).forEach(gen => {
+            const genData = GENERATORS_DATA[Object.keys(GENERATORS_DATA).find(key => GENERATORS_DATA[key].id === gen.id)];
+            if (genData && gen.level > 0 && genData.output?.fleeting_thought) {
+                const currentLevel = gen.level;
+                const baseOutput = genData.output.fleeting_thought;
+                const scale = genData.outputScale || 1;
+                const levelBonus = Math.pow(scale, Math.max(0, currentLevel - 1));
+                totalFtPerSec += (baseOutput * currentLevel) * levelBonus;
             }
         });
         Object.entries(gameState.ideas).forEach(([ideaId, count]) => {
@@ -95,23 +89,18 @@ const UI = {
         });
         this.elements.ftPerSecCount.textContent = Utils.formatNumber(totalFtPerSec) + "/sec";
 
-
-        // Update "My Ideas" to be a Tier Summary
         let tierSummaryHTML = '<h3>Idea Tiers</h3><ul class="compact-list">';
         const tierCounts = { 1: 0, 2: 0, 3: 0, 4: 0 };
         const totalPerTier = { 1: 0, 2: 0, 3: 0, 4: 0 };
-
         Object.values(IDEAS_DATA).forEach(ideaData => {
             const tier = ideaData.tier;
             if (tier >= 1 && tier <= 4) {
                 totalPerTier[tier]++;
-                // An idea is "counted" if it's discovered and at least one is owned
                 if (gameState.discoveredIdeas.has(ideaData.id) && (gameState.ideas[ideaData.id] || 0) > 0) {
                     tierCounts[tier]++;
                 }
             }
         });
-
         tierSummaryHTML += `<li>Concepts (T1): ${tierCounts[1]} / ${totalPerTier[1]}</li>`;
         tierSummaryHTML += `<li>Insights (T2): ${tierCounts[2]} / ${totalPerTier[2]}</li>`;
         tierSummaryHTML += `<li>Theories (T3): ${tierCounts[3]} / ${totalPerTier[3]}</li>`;
@@ -151,8 +140,6 @@ const UI = {
 
     /**
      * Generic function to render lists of discovered ideas in their respective panels.
-     * @param {number} tier - The tier of ideas to list (1 for Concepts, 2 for Insights, etc.)
-     * @param {HTMLElement} listElement - The DOM element to populate.
      */
     renderTieredIdeaList(tier, listElement) {
         listElement.innerHTML = ''; let foundAny = false;
@@ -175,8 +162,6 @@ const UI = {
 
     /**
      * Generic function to render Auto-Crafters.
-     * @param {string} crafterTypePrefix - e.g., 'insight', 'theory', 'paradigm'.
-     * @param {HTMLElement} listElement - The DOM element to populate.
      */
     renderAutoCrafters(crafterTypePrefix, listElement) {
         listElement.innerHTML = ''; let foundAnyCrafters = false;
@@ -192,7 +177,7 @@ const UI = {
             card.innerHTML = `<button class="action-button buy-autocrafter" data-crafter-id="${crafterData.id}" ${!canAfford || isMaxLevel ? 'disabled' : ''}> ${isMaxLevel ? 'Max Level' : (currentLevel === 0 ? 'Build' : 'Upgrade')} </button>`;
             listElement.appendChild(card);
         });
-        if (!foundAnyCrafters) listElement.innerHTML = `<p class="text-muted">No auto-crafters available for this tier yet.</p>`;
+        if (!foundAnyCrafters) listElement.innerHTML = `<p class="text-muted">Discover an idea of this tier to unlock its auto-crafter.</p>`;
     },
 
     /**
@@ -250,7 +235,6 @@ const UI = {
 
     /**
      * Handles clicking on a discovered recipe to populate the forge.
-     * @param {Event} e - The click event.
      */
     handleRecipeClick(e) {
         const listItem = e.target.closest('li');
@@ -325,7 +309,6 @@ const UI = {
          let canTranscend = false;
          let wsToGain = 0;
          
-         // Check if any paradigm is owned
          const anyParadigmOwned = Array.from(gameState.discoveredIdeas).some(id => IDEAS_DATA[id]?.tier === 4 && (gameState.ideas[id] || 0) > 0);
 
          if (anyParadigmOwned) {
