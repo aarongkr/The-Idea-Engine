@@ -23,10 +23,7 @@ const Tutorial = {
             isComplete: () => gameState.generators.mind_palace?.level > 0,
             before: () => {
                 if (typeof UI !== 'undefined') {
-                    // Force the UI to switch to the correct panel
                     UI.switchPanel('refinement-panel', document.querySelector('.nav-button[data-panel="refinement-panel"]'));
-                    // *** FIX: Manually trigger a render of the generators ***
-                    // This ensures the button exists before we try to highlight it.
                     UI.renderGenerators();
                 }
             }
@@ -81,6 +78,10 @@ const Tutorial = {
         this.clearHighlights();
         gameState.tutorialCompleted = true;
         saveGame();
+        // *** FIX: Trigger a final UI update when the tutorial ends ***
+        if (typeof UI !== 'undefined') {
+            UI.updateAllUI();
+        }
     },
 
     showStep() {
@@ -119,13 +120,11 @@ const Tutorial = {
     highlightElement(selector) {
         this.clearHighlights();
         if (selector) {
-            // The timeout is still good practice to let the DOM update.
             setTimeout(() => {
                 const targetElement = document.querySelector(selector);
                 if (targetElement) {
                     targetElement.classList.add('tutorial-highlight');
                 } else {
-                    // This log helps if a selector is wrong in the future
                     console.warn(`Tutorial trying to highlight an element that was not found: ${selector}`);
                 }
             }, 50);
