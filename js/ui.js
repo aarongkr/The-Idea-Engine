@@ -5,7 +5,6 @@
  */
 const UI = {
     elements: {
-        // Cache DOM elements for performance
         ftCount: document.getElementById('ft-count'),
         ftPerSecCount: document.getElementById('ft-per-sec-count'),
         wsCount: document.getElementById('ws-count'),
@@ -33,17 +32,11 @@ const UI = {
         transcendButton: document.getElementById('transcend-button')
     },
 
-    /**
-     * Initializes UI event listeners using event delegation for dynamically created elements.
-     */
     init() {
         this.elements.navButtons.forEach(button => {
             button.addEventListener('click', () => this.switchPanel(button.dataset.panel, button));
         });
-
         this.elements.multiplierButton.addEventListener('click', () => this.cycleMultiplier());
-
-        // Use Event Delegation for dynamic buttons
         this.elements.generatorsList.addEventListener('click', this.handleBuyGeneratorClick);
         this.elements.insightCraftersList.addEventListener('click', this.handleBuyAutoCrafterClick);
         this.elements.theoryCraftersList.addEventListener('click', this.handleBuyAutoCrafterClick);
@@ -51,28 +44,19 @@ const UI = {
         this.elements.discoveredRecipesList.addEventListener('click', this.handleRecipeClick);
     },
 
-    /**
-     * Cycles the purchase multiplier (1 -> 10 -> 100 -> Max -> 1).
-     */
     cycleMultiplier() {
         const multipliers = [1, 10, 100, 'Max'];
         const currentIndex = multipliers.indexOf(gameState.purchaseMultiplier);
         const nextIndex = (currentIndex + 1) % multipliers.length;
         gameState.purchaseMultiplier = multipliers[nextIndex];
-        this.updateAllUI(); // A full update ensures all costs and buttons are refreshed
+        this.updateAllUI();
     },
 
-    /**
-     * Updates the text of the multiplier button to reflect the current state.
-     */
     updateMultiplierButtonText() {
         const currentMultiplier = gameState.purchaseMultiplier;
         this.elements.multiplierButton.textContent = `Buy x${currentMultiplier}`;
     },
 
-    /**
-     * Switches the currently active center panel.
-     */
     switchPanel(panelId, clickedButton) {
         this.elements.panels.forEach(panel => panel.classList.remove('active'));
         this.elements.navButtons.forEach(btn => btn.classList.remove('active'));
@@ -84,13 +68,9 @@ const UI = {
         }
     },
 
-    /**
-     * Updates the main resource displays and the tier summary list.
-     */
     updateResourceDisplay() {
         this.elements.ftCount.textContent = Utils.formatNumber(gameState.resources.fleeting_thought);
         this.elements.wsCount.textContent = Utils.formatNumber(gameState.resources.wisdom_shards);
-
         let totalFtPerSec = 0;
         Object.entries(gameState.generators).forEach(([genId, genState]) => {
             const genData = GENERATORS_DATA[genId];
@@ -107,7 +87,6 @@ const UI = {
             }
         });
         this.elements.ftPerSecCount.textContent = Utils.formatNumber(totalFtPerSec) + "/sec";
-
         let tierSummaryHTML = '<h3>Idea Tiers</h3><ul class="compact-list">';
         const tierCounts = { 1: 0, 2: 0, 3: 0, 4: 0 };
         const totalPerTier = { 1: 0, 2: 0, 3: 0, 4: 0 };
@@ -129,73 +108,52 @@ const UI = {
     },
 
     /**
-     * Renders a generic upgrade card (for generators or crafters).
-     * @param {HTMLElement} container - The parent element to append the card to.
-     * @param {object} itemData - The data object for the item (from GENERATORS_DATA or CRAFTERS_DATA).
-     * @param {number} currentLevel - The current level of the item.
-     * @param {string} buttonClass - The CSS class for the buy button.
-     * @param {string} buttonDataAttribute - The data attribute for the item's ID.
+     * Renders a generic upgrade card, now correctly displaying cost for fixed multipliers.
      */
     renderUpgradeCard(container, itemData, currentLevel, buttonClass, buttonDataAttribute) {
         const isMaxLevel = currentLevel >= (itemData.maxLevel || Infinity);
         
-        // *** CORE FIX IS HERE ***
-        // 1. Calculate the cost and affordability for the exact multiplier selected by the player.
-        const purchaseDetails = GameLogic.calculateMultiBuy(
-            itemData.baseCost,
-            itemData.costScale,
-            currentLevel,
-            gameState.purchaseMultiplier,
-            itemData.maxLevel
-        );
+        const purchaseDetails = GameLogic.calculateMultiBuy(itemData.baseCost, itemData.costScale, currentLevel, gameState.purchaseMultiplier, itemData.maxLevel);
+        
+        let canAfford = false;
+        let costToDisplay = {};
+        let levelsToBuyText = "0";
 
-        let costToDisplay, levelsToBuyText, canAfford;
-
-        if (gameState.purchaseMultiplier === 'Max') {
-            // For 'Max', the calculated values are exactly what we want to show.
-            costToDisplay = purchaseDetails.totalCost;
-            levelsToBuyText = purchaseDetails.levelsToBuy;
-            canAfford = purchaseDetails.levelsToBuy > 0; // Can afford if we can buy at least one level.
+        if (isMaxLevel) {
+            costToDisplay = {}; // No cost if maxed out
+            canAfford = false;
+        } else if (gameState.purchaseMultiplier === 'Max') {
+            canAfford = purchaseDetails.affordableLevels > 0;
+            // For 'Max', we need a separate calculation to get the cost of only the affordable levels
+            const affordableDetails = GameLogic.calculateMultiBuy(itemData.baseCost, itemData.costScale, currentLevel, purchaseDetails.affordableLevels, itemData.maxLevel);
+            costToDisplay = affordableDetails.totalCost;
+            levelsToBuyText = purchaseDetails.affordableLevels.toString();
         } else {
-            // For x1, x10, x100, we *always* calculate the cost for that specific amount,
-            // even if we can't afford it. This ensures the correct price is always displayed.
-            const exactCostDetails = GameLogic.calculateMultiBuy(
-                itemData.baseCost,
-                itemData.costScale,
-                currentLevel,
-                gameState.purchaseMultiplier,
-                itemData.maxLevel
-            );
-            costToDisplay = exactCostDetails.totalCost;
-            levelsToBuyText = gameState.purchaseMultiplier; // Always show the selected multiplier
-            canAfford = exactCostDetails.canAffordExact; // The button is only enabled if the EXACT amount is affordable.
+            // For x1, x10, x100, the cost is for the full amount, and affordability depends on that.
+            canAfford = purchaseDetails.affordableLevels >= purchaseDetails.levelsToBuy;
+            costToDisplay = purchaseDetails.totalCost;
+            levelsToBuyText = purchaseDetails.levelsToBuy.toString();
         }
-
-        let costString = isMaxLevel ? "N/A" : Object.entries(costToDisplay)
-            .map(([res, val]) => `${Utils.formatNumber(val)} ${IDEAS_DATA[res]?.name || Utils.capitalizeFirst(res.replace(/_/g, ' '))}`)
-            .join(', ');
+        
+        let costString = isMaxLevel ? "N/A" : Object.entries(costToDisplay).map(([res, val]) => `${Utils.formatNumber(val)} ${IDEAS_DATA[res]?.name || Utils.capitalizeFirst(res.replace(/_/g, ' '))}`).join(', ');
         
         let buttonText;
         if (isMaxLevel) {
             buttonText = "Max Level";
         } else {
-            buttonText = (currentLevel === 0 ? `Build ` : `Upgrade `) + `+${levelsToBuyText}`;
-            if(gameState.purchaseMultiplier !== 'Max') {
-                 buttonText = (currentLevel === 0 ? `Build ` : `Upgrade `) + `x${levelsToBuyText}`;
-            }
+            const amount = (gameState.purchaseMultiplier === 'Max') ? levelsToBuyText : gameState.purchaseMultiplier;
+            buttonText = currentLevel === 0 ? `Build +${amount}` : `Upgrade +${amount}`;
         }
-        // *** END CORE FIX ***
 
         const card = document.createElement('div');
         card.className = 'upgrade-card';
 
-        // Output string generation (common for both types)
         let outputString = "Effect: ";
-        if (itemData.output) { // Base generators
+        if (itemData.output) {
             const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = itemData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : "";
             if (GameLogic._isValidNumber(itemData.output.fleeting_thought)) { const ftOutputValue = (itemData.output.fleeting_thought * (outputScale**scalePower) * displayLevel); outputString += `${ftOutputValue.toFixed(2)} FT/sec${prefix}<br>`; }
             Object.entries(itemData.output).forEach(([outRes, outVal]) => { if (outRes !== 'fleeting_thought' && GameLogic._isValidNumber(outVal)) { const rate = outVal * (outputScale**scalePower) * displayLevel * 100; outputString += `${rate.toFixed(2)}% chance/sec for ${IDEAS_DATA[outRes]?.name || outRes}${prefix}<br>`; } });
-        } else if (itemData.targetIdeaId) { // Auto-crafters
+        } else if (itemData.targetIdeaId) {
             const targetIdea = IDEAS_DATA[itemData.targetIdeaId];
             const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = itemData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : "";
             const outputVal = (itemData.outputAmount || 0) * (outputScale ** scalePower) * displayLevel;
