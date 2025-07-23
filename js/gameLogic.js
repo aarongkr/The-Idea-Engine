@@ -18,6 +18,7 @@ const GameLogic = {
         const delta = Math.max(0, (now - this.lastTick) / 1000);
         this.lastTick = now;
 
+        // Check for tutorial step completion before other logic
         if (typeof Tutorial !== 'undefined' && Tutorial.isActive) {
             Tutorial.checkCompletion();
         }
@@ -28,9 +29,7 @@ const GameLogic = {
 
         // --- FT Generation ---
         let ftPerSecondThisTick = 0;
-        // From Base Generators
         Object.entries(gameState.generators).forEach(([genId, genState]) => {
-            // *** FIX: Direct lookup using genId is much more reliable ***
             const genData = GENERATORS_DATA[genId];
             if (genData && genState.level > 0 && genData.output?.fleeting_thought) {
                 const currentLevel = genState.level; const baseOutput = genData.output.fleeting_thought; const scale = genData.outputScale || 1;
@@ -38,7 +37,6 @@ const GameLogic = {
                 ftPerSecondThisTick += (baseOutput * currentLevel) * levelBonus;
             }
         });
-        // From owned Ideas
         Object.entries(gameState.ideas).forEach(([ideaId, count]) => {
             const ideaData = IDEAS_DATA[ideaId];
             if (ideaData?.attributes?.ft_bonus_per_sec && GameLogic._isValidNumber(count) && count > 0) {
@@ -50,7 +48,6 @@ const GameLogic = {
 
         // --- Base Concept Generation ---
         Object.entries(gameState.generators).forEach(([genId, genState]) => {
-            // *** FIX: Direct lookup using genId ***
             const genData = GENERATORS_DATA[genId];
             if (genData && genState.level > 0 && genData.output) {
                 Object.entries(genData.output).forEach(([outputIdeaId, baseChance]) => {
@@ -68,7 +65,6 @@ const GameLogic = {
 
         // --- Auto-Crafter Production ---
         Object.entries(gameState.crafters).forEach(([crafterId, crafterState]) => {
-            // *** FIX: Direct lookup using crafterId ***
             const crafterData = CRAFTERS_DATA[crafterId];
             const currentLevel = crafterState?.level;
             if (crafterData && GameLogic._isValidNumber(currentLevel) && currentLevel > 0) {
@@ -94,22 +90,22 @@ const GameLogic = {
         });
 
         // --- UI Update Throttle ---
-        if (now - (gameState.lastUIRefresh || 0) > 200) {
-            if (typeof UI !== 'undefined') UI.updateAllUI();
+        // *** FIX: Do not run the periodic full UI update while the tutorial is active ***
+        // The tutorial will manage its own specific UI updates.
+        if (now - (gameState.lastUIRefresh || 0) > 200 && (typeof Tutorial === 'undefined' || !Tutorial.isActive)) {
+            if (typeof UI !== 'undefined' && UI.updateAllUI) {
+                 UI.updateAllUI();
+            }
             gameState.lastUIRefresh = now;
         }
     },
 
-    /**
-     * Calculates gains accumulated while the game was closed.
-     */
+    // ... (The rest of the file - calculateOfflineProgress, sparkFleetingThought, buyGenerator, buyAutoCrafter, etc. - remains unchanged from the previous full version.)
     calculateOfflineProgress(timeOfflineMs) {
         const offlineGains = { ftGained: 0, ideasGained: {} };
         if (!GameLogic._isValidNumber(timeOfflineMs) || timeOfflineMs <= 1000) return offlineGains;
         const secondsOffline = timeOfflineMs / 1000;
-
         Object.entries(gameState.generators).forEach(([genId, genState]) => {
-            // *** FIX: Direct lookup using genId ***
             const genData = GENERATORS_DATA[genId];
             if (genData && genState.level > 0 && genData.output) {
                 if (genData.output.fleeting_thought) {
@@ -128,16 +124,13 @@ const GameLogic = {
                 });
             }
         });
-
         Object.entries(gameState.ideas).forEach(([ideaId, count]) => {
             const ideaData = IDEAS_DATA[ideaId];
             if (ideaData?.attributes?.ft_bonus_per_sec && GameLogic._isValidNumber(count) && count > 0) {
                 offlineGains.ftGained += ideaData.attributes.ft_bonus_per_sec * count * secondsOffline;
             }
         });
-
         Object.entries(gameState.crafters).forEach(([crafterId, crafterState]) => {
-            // *** FIX: Direct lookup using crafterId ***
             const crafterData = CRAFTERS_DATA[crafterId];
             if (crafterData && crafterState.level > 0) {
                 const currentLevel = crafterState.level; const baseOutputAmount = crafterData.outputAmount || 0; const outputScale = crafterData.outputScale || 1;
@@ -149,12 +142,9 @@ const GameLogic = {
                 }
             }
         });
-
         if (!GameLogic._isValidNumber(offlineGains.ftGained)) offlineGains.ftGained = 0;
         return offlineGains;
     },
-    
-    // ... (The rest of the file - sparkFleetingThought, buyGenerator, buyAutoCrafter, attemptCombination, gainIdea, calculateWisdomShardsOnTranscend, transcend - remains unchanged from the previous full version.)
     sparkFleetingThought() {
         if (!GameLogic._isValidNumber(gameState.resources.fleeting_thought)) gameState.resources.fleeting_thought = 0;
         let wisdomShardsBonus = 0;
@@ -162,7 +152,6 @@ const GameLogic = {
         gameState.resources.fleeting_thought += (1 + wisdomShardsBonus);
         if (typeof UI !== 'undefined') UI.updateResourceDisplay();
     },
-
     buyGenerator(generatorId) {
         const genData = GENERATORS_DATA[generatorId]; if (!genData) return;
         const currentLevel = gameState.generators[generatorId]?.level || 0;
@@ -175,7 +164,6 @@ const GameLogic = {
             if (typeof UI !== 'undefined') { UI.updateAllUI(); UI.showNotification(`${genData.name} upgraded to Lvl ${gameState.generators[generatorId].level}!`, 'success');}
         } else { if (typeof UI !== 'undefined') UI.showNotification("Not enough resources!", "error");}
     },
-
     buyAutoCrafter(crafterId) {
         const crafterData = CRAFTERS_DATA[crafterId]; if (!crafterData) return;
         const currentLevel = gameState.crafters[crafterId]?.level || 0;
@@ -189,7 +177,6 @@ const GameLogic = {
             if (typeof UI !== 'undefined') { UI.updateAllUI(); UI.showNotification(`${crafterData.name} upgraded to Lvl ${gameState.crafters[crafterId].level}!`, 'success');}
         } else { if (typeof UI !== 'undefined') UI.showNotification("Not enough resources for this crafter!", "error");}
     },
-
     attemptCombination() {
         if (!UI?.elements) return; const inputId1 = UI.elements.forgeSlot1.value; const inputId2 = UI.elements.forgeSlot2.value;
         if (!inputId1 || !inputId2) { UI.elements.combinationResult.textContent = "Please select two ideas to combine."; UI.elements.combinationResult.className = 'error'; return;}
@@ -210,7 +197,6 @@ const GameLogic = {
             if (typeof UI !== 'undefined') { UI.populateForgeSelectors(); UI.updateResourceDisplay(); }
         } else { UI.elements.combinationResult.textContent = "These ideas don't seem to form a new synthesis... yet."; UI.elements.combinationResult.className = 'info';}
     },
-
     gainIdea(ideaId, amount = 1, fromBatch = false) {
         if (!IDEAS_DATA[ideaId] || ideaId === 'fleeting_thought' || !GameLogic._isValidNumber(amount) || amount <= 0) return;
         const wasFirstDiscovery = !gameState.discoveredIdeas.has(ideaId);
@@ -232,12 +218,10 @@ const GameLogic = {
             UI.updateResourceDisplay();
         }
     },
-
      calculateWisdomShardsOnTranscend() {
         let totalConceptualMass = 0; Object.entries(gameState.ideas).forEach(([id, count]) => { const ideaData = IDEAS_DATA[id]; if (ideaData?.tier > 0 && GameLogic._isValidNumber(count) && count > 0) { const ideaWorth = (ideaData.tier * 10); if(GameLogic._isValidNumber(ideaWorth)){ totalConceptualMass += ideaWorth * count;}}});
         return Math.floor(Math.sqrt(Math.max(0, totalConceptualMass) / 1000)) + (Number(gameState.transcendenceCount) || 0);
     },
-
      transcend() {
         const anyParadigmOwned = Array.from(gameState.discoveredIdeas).some(id => IDEAS_DATA[id]?.tier === 4 && (gameState.ideas[id] || 0) > 0);
         if (!anyParadigmOwned) { if (typeof UI !== 'undefined') UI.showNotification("A Paradigm is required to Transcend.", "error"); return;}
