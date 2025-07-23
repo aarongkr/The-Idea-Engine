@@ -40,7 +40,7 @@ const Noosphere = {
             },
             stabilization: { enabled: true, iterations: 500, updateInterval: 25, fit: true }
         },
-        interaction: { hover: true, tooltipDelay: 200, dragNodes: true, dragView: true, zoomView: true, navigationButtons: true }
+        interaction: { hover: true, tooltipDelay: 200, dragNodes: true, dragView: true, zoomView: true, navigationButtons: false }
     },
 
     /**
