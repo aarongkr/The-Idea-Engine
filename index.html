@@ -5,12 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Idea Engine</title>
     <link rel="stylesheet" href="style.css">
-    <!-- External library for graph visualization -->
     <link href="https://unpkg.com/vis-network/styles/vis-network.min.css" rel="stylesheet" type="text/css" />
-    <!-- Custom fonts for UI theming -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- The Tutorial Overlay -->
+    <div id="tutorial-overlay" class="hidden">
+        <div id="tutorial-box">
+            <p id="tutorial-text">Welcome to The Idea Engine!</p>
+            <div class="tutorial-buttons">
+                <button id="tutorial-next-button" class="action-button">Next</button>
+                <button id="skip-tutorial-button" class="secondary-button">Skip Tutorial</button>
+            </div>
+        </div>
+    </div>
+
     <div id="game-container">
         <!-- Left Panel: Displays core resources, actions, and main navigation -->
         <aside id="left-panel">
@@ -31,7 +40,6 @@
                     <span class="resource-label">Wisdom Shards (WS):</span>
                     <span id="ws-count" class="resource-value">0</span>
                 </div>
-                <!-- Summary of discovered ideas by tier -->
                 <div id="active-concepts-summary"></div>
             </section>
 
@@ -74,15 +82,11 @@
                 <div id="forge-interface">
                     <div class="forge-slots">
                         <div class="select-wrapper">
-                            <select id="forge-slot-1" class="forge-select">
-                                <option value="">Select Idea...</option>
-                            </select>
+                            <select id="forge-slot-1" class="forge-select"><option value="">Select Idea...</option></select>
                         </div>
                         <span class="plus-icon">+</span>
                         <div class="select-wrapper">
-                            <select id="forge-slot-2" class="forge-select">
-                                <option value="">Select Idea...</option>
-                            </select>
+                            <select id="forge-slot-2" class="forge-select"><option value="">Select Idea...</option></select>
                         </div>
                     </div>
                     <button id="combine-button" class="action-button">Synthesize</button>
@@ -144,14 +148,13 @@
         </aside>
     </div>
 
-    <!-- External Scripts -->
+    <!-- Scripts (Order is important) -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    
-    <!-- Game Scripts (Order is important) -->
     <script src="js/utils.js"></script>
     <script src="js/config/ideasData.js"></script>
     <script src="js/config/generatorsData.js"></script>
     <script src="js/config/craftersData.js"></script>
+    <script src="js/tutorial.js"></script> <!-- New Tutorial Script -->
     <script src="js/gameState.js"></script>
     <script src="js/noosphere.js"></script>
     <script src="js/ui.js"></script>
