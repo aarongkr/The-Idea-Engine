@@ -333,4 +333,8 @@ const UI = {
          this.elements.transcendButton.disabled = !canTranscend;
          this.elements.transcendButton.textContent = canTranscend ? `Transcend (${wsToGain} WS)` : 'A Paradigm is Required';
      }
-};
+};```
+
+---
+
+The other files (`gameState.js`, `gameLogic.js`, `noosphere.js`, `main.js`, and the config files) remain the same as the complete versions I provided in the previous two responses. With this corrected `ui.js`, your game should be fully functional again, including the tutorial system.
