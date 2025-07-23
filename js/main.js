@@ -29,7 +29,7 @@ function main() {
     const saveBtn = document.getElementById('save-button');
     const loadBtn = document.getElementById('load-button');
     const resetBtn = document.getElementById('reset-button');
-
+    
     if (saveBtn) saveBtn.addEventListener('click', saveGame);
     if (loadBtn) loadBtn.addEventListener('click', () => {
         loadGame();
@@ -44,7 +44,7 @@ function main() {
 
     // Start the game loop, executing the tick function periodically
     gameLoopInterval = setInterval(GameLogic.tick, 100);
-
+    
     console.log("The Idea Engine Initialized and Running.");
 }
 
