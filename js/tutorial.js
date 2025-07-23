@@ -9,10 +9,10 @@ const Tutorial = {
     // Defines the sequence of steps in the tutorial
     steps: [
         {
-            text: "Welcome to The Idea Engine! Your journey begins with a single spark. Click 'Spark Fleeting Thought' to create your first resource.",
+            text: "Welcome to The Idea Engine! Your journey begins with a single spark. Click 'Spark Fleeting Thought' to create your first bunch of resources.",
             target: '#spark-button',
             // This condition checks if the step is complete by looking at the game state.
-            isComplete: () => gameState.resources.fleeting_thought >= 1,
+            isComplete: () => gameState.resources.fleeting_thought >= 20,
             // An optional function to run before this step is shown.
             before: () => {}
         },
