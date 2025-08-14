@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Idea Engine</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- External library for graph visualization -->
+    <link href="https://unpkg.com/vis-network/styles/vis-network.min.css" rel="stylesheet" type="text/css" />
+    <!-- Custom fonts for UI theming -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- The Tutorial Overlay -->
+    <div id="tutorial-overlay" class="hidden">
+        <div id="tutorial-box">
+            <p id="tutorial-text">Welcome to The Idea Engine!</p>
+            <div class="tutorial-buttons">
+                <button id="tutorial-next-button" class="action-button">Next</button>
+                <button id="skip-tutorial-button" class="secondary-button">Skip Tutorial</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <!-- Left Panel: Displays core resources, actions, and main navigation -->
+        <aside id="left-panel">
+            <header>
+                <h1>The Idea Engine</h1>
+            </header>
+            <section id="resources-display">
+                <h2>Resources</h2>
+                <div class="resource-item">
+                    <span class="resource-label">Fleeting Thoughts (FT):</span>
+                    <span id="ft-count" class="resource-value">0</span>
+                </div>
+                 <div class="resource-item">
+                    <span class="resource-label">FT/sec:</span>
+                    <span id="ft-per-sec-count" class="resource-value">0</span>
+                </div>
+                <div class="resource-item">
+                    <span class="resource-label">Wisdom Shards (WS):</span>
+                    <span id="ws-count" class="resource-value">0</span>
+                </div>
+                <div id="active-concepts-summary"></div>
+            </section>
+
+            <section id="core-actions">
+                <button id="spark-button" class="action-button">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 2.25c.41 0 .75.34.75.75v2.25a.75.75 0 0 1-1.5 0V3c0-.41.34-.75.75-.75zM12 18.75c-.41 0-.75-.34-.75-.75v-2.25a.75.75 0 0 1 1.5 0V18c0 .41-.34.75-.75.75zM5.066 6.043a.75.75 0 0 1 .953-.421l1.949.898a.75.75 0 1 1-.842 1.834l-1.95-.898a.75.75 0 0 1-.108-1.413zm11.917 10.073a.75.75 0 0 1 .953-.421l1.949.898a.75.75 0 0 1-.842 1.834l-1.95-.898a.75.75 0 0 1-.108-1.413zM2.25 12a.75.75 0 0 1 .75-.75h2.25a.75.75 0 0 1 0 1.5H3a.75.75 0 0 1-.75-.75zm18.75 0a.75.75 0 0 1 .75-.75h2.25a.75.75 0 0 1 0 1.5H21a.75.75 0 0 1-.75-.75zm-4.023-5.536a.75.75 0 0 1-.421-.953l.898-1.949a.75.75 0 1 1 1.834.842l-.898 1.95a.75.75 0 0 1-1.413.108zm-10.073 11.917a.75.75 0 0 1-.421-.953l.898-1.949a.75.75 0 1 1 1.834.842l-.898 1.95a.75.75 0 0 1-1.413.108zM12 6.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM1.5 12a10.5 10.5 0 1 1 21 0 10.5 10.5 0 0 1-21 0z"/></svg>
+                    Spark Fleeting Thought
+                </button>
+                <button id="multiplier-button" class="secondary-button">Buy x1</button>
+            </section>
+
+            <nav id="main-nav">
+                <button class="nav-button active" data-panel="noosphere-panel">Noosphere</button>
+                <button class="nav-button" data-panel="refinement-panel">Base Refinement</button>
+                <button class="nav-button" data-panel="synthesis-panel">Synthesis Forge</button>
+                <button class="nav-button" data-panel="concepts-panel">Concepts</button>
+                <button class="nav-button" data-panel="insights-panel">Insights</button>
+                <button class="nav-button" data-panel="theories-panel">Theories</button>
+                <button class="nav-button" data-panel="paradigms-panel">Paradigms</button>
+                <button class="nav-button" data-panel="transcendence-panel">Transcendence</button>
+                <button class="nav-button" data-panel="settings-panel">Settings</button>
+            </nav>
+            <footer>
+                <button id="save-button">Save</button>
+                <button id="load-button">Load</button>
+                <button id="reset-button">Reset Game</button>
+            </footer>
+        </aside>
+
+        <!-- Center Panel: Contains all switchable content panels -->
+        <main id="center-panel">
+            <div id="noosphere-panel" class="panel active">
+                <div id="noosphere-graph"></div>
+            </div>
+            <div id="refinement-panel" class="panel">
+                <h2>Base Refinement Processes</h2>
+                <div id="generators-list" class="upgrades-grid"></div>
+            </div>
+            <div id="synthesis-panel" class="panel">
+                <h2>Synthesis Forge</h2>
+                <div id="forge-interface">
+                    <div class="forge-slots">
+                        <div class="select-wrapper">
+                            <select id="forge-slot-1" class="forge-select"><option value="">Select Idea...</option></select>
+                        </div>
+                        <span class="plus-icon">+</span>
+                        <div class="select-wrapper">
+                            <select id="forge-slot-2" class="forge-select"><option value="">Select Idea...</option></select>
+                        </div>
+                    </div>
+                    <button id="combine-button" class="action-button">Synthesize</button>
+                    <div id="combination-result"></div>
+                    <h3>Discovered Recipes: (Click to load into forge)</h3>
+                    <ul id="discovered-recipes-list"></ul>
+                </div>
+            </div>
+
+            <div id="concepts-panel" class="panel">
+                <h2>Discovered Concepts</h2>
+                <div id="concepts-list" class="idea-list-panel"></div>
+            </div>
+            <div id="insights-panel" class="panel">
+                <h2>Discovered Insights</h2>
+                <div id="insights-list" class="idea-list-panel"></div>
+                <div class="auto-crafter-section">
+                    <h2>Insight Auto-Crafters</h2>
+                    <div id="insight-crafters-list" class="upgrades-grid"></div>
+                </div>
+            </div>
+            <div id="theories-panel" class="panel">
+                <h2>Discovered Theories</h2>
+                <div id="theories-list" class="idea-list-panel"></div>
+                 <div class="auto-crafter-section">
+                    <h2>Theory Auto-Crafters</h2>
+                    <div id="theory-crafters-list" class="upgrades-grid"></div>
+                </div>
+            </div>
+            <div id="paradigms-panel" class="panel">
+                <h2>Discovered Paradigms</h2>
+                <div id="paradigms-list" class="idea-list-panel"></div>
+                 <div class="auto-crafter-section">
+                    <h2>Paradigm Auto-Crafters</h2>
+                    <div id="paradigm-crafters-list" class="upgrades-grid"></div>
+                </div>
+            </div>
+
+            <div id="transcendence-panel" class="panel">
+                <h2>Transcendence</h2>
+                <p>Reach higher states of understanding. Reset your current intellectual construct for profound, permanent Wisdom.</p>
+                <button id="transcend-button" class="action-button" disabled>Not Yet Wise Enough</button>
+            </div>
+            <div id="settings-panel" class="panel">
+                <h2>Settings</h2>
+                <p>Game settings and options will be available here.</p>
+            </div>
+        </main>
+
+        <!-- Right Panel: Displays contextual details for selected items -->
+        <aside id="right-panel">
+            <div id="details-view">
+                <h2>Selected Idea</h2>
+                <div id="selected-idea-name">Nothing Selected</div>
+                <div id="selected-idea-description">Click a node in the Noosphere or an item in your lists.</div>
+                <div id="selected-idea-attributes"></div>
+            </div>
+             <div id="tooltip-container"></div>
+        </aside>
+    </div>
+
+    <!-- Scripts (Order is important) -->
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/config/ideasData.js"></script>
+    <script src="js/config/generatorsData.js"></script>
+    <script src="js/config/craftersData.js"></script>
+    <script src="js/tutorial.js"></script>
+    <script src="js/gameState.js"></script>
+    <script src="js/noosphere.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/gameLogic.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

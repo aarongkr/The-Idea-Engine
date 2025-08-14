@@ -1,0 +1,305 @@
+/* style.css */
+
+/* --- :root Variables --- */
+:root {
+    --bg-color: #1a1d24;
+    --panel-bg-color: #23272f;
+    --panel-border-color: #3a3f4b;
+    --text-color: #e0e0e0;
+    --text-muted-color: #a0a0a0;
+    --primary-color: #4fc3f7;
+    --secondary-color: #ff7043;
+    --accent-glow: #00e5ff;
+    --font-main: 'Roboto', sans-serif;
+    --font-title: 'Orbitron', sans-serif;
+    --button-bg: #303540;
+    --button-hover-bg: #404550;
+    --success-color: #2ecc71;
+    --error-color: #e74c3c;
+    --special-color: #f39c12;
+}
+
+/* --- General & Body Styles --- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-main); background-color: var(--bg-color); color: var(--text-color); overflow: hidden; font-size: 14px; }
+h1, h2, h3 { font-family: var(--font-title); color: var(--primary-color); margin-bottom: 10px; }
+h1 { font-size: 1.8em; text-align: center; margin-bottom: 20px;}
+h2 { font-size: 1.4em; border-bottom: 1px solid var(--panel-border-color); padding-bottom: 5px;}
+h3 { font-size: 1.2em; }
+
+/* --- Tutorial Overlay Styles --- */
+#tutorial-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); z-index: 20000;
+    display: flex; justify-content: center; align-items: center;
+    opacity: 1; transition: opacity 0.3s ease-in-out;
+}
+#tutorial-overlay.hidden { opacity: 0; pointer-events: none; }
+#tutorial-box {
+    background-color: var(--panel-bg-color); padding: 25px 30px; border-radius: 8px;
+    border: 1px solid var(--panel-border-color); box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+    max-width: 450px; text-align: center; z-index: 20002;
+}
+#tutorial-text { font-size: 1.1em; line-height: 1.6; margin-bottom: 20px; }
+.tutorial-buttons { display: flex; gap: 15px; justify-content: center; }
+.tutorial-highlight {
+    position: relative !important; z-index: 20001 !important;
+    box-shadow: 0 0 15px 5px var(--accent-glow); border-radius: 5px;
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+/* --- Layout Containers --- */
+#game-container { display: flex; height: 100vh; }
+#left-panel, #right-panel {
+    background-color: var(--panel-bg-color); border-right: 1px solid var(--panel-border-color);
+    padding: 20px; display: flex; flex-direction: column; overflow-y: auto;
+}
+#left-panel { width: 280px; }
+#right-panel { width: 250px; border-left: 1px solid var(--panel-border-color); border-right: none; }
+#center-panel { flex-grow: 1; padding: 20px; background-color: var(--bg-color); overflow-y: auto; }
+.panel { display: none; }
+.panel.active { display: block; animation: fadeIn 0.5s; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* --- Left Panel & Navigation --- */
+#main-nav { margin-top: 20px; margin-bottom: auto; }
+.nav-button {
+    display: block; width: 100%; padding: 10px 15px; margin-bottom: 8px; background-color: var(--button-bg);
+    color: var(--text-color); border: 1px solid var(--panel-border-color); border-radius: 4px;
+    text-align: left; cursor: pointer; transition: background-color 0.2s, box-shadow 0.2s;
+}
+.nav-button:hover { background-color: var(--button-hover-bg); box-shadow: 0 0 8px var(--accent-glow); }
+.nav-button.active { background-color: var(--primary-color); color: var(--bg-color); font-weight: bold; }
+#resources-display .resource-item { margin-bottom: 8px; display: flex; justify-content: space-between; font-size: 0.95em; }
+.resource-label { color: var(--text-muted-color); }
+.resource-value { font-weight: bold; color: var(--primary-color); }
+#resources-display #ft-per-sec-count { color: var(--success-color); }
+ul.compact-list { list-style: none; padding-left: 10px; margin-top: 5px; }
+ul.compact-list li { margin-bottom: 3px; font-size: 0.9em; color: var(--text-muted-color); }
+
+/* --- Buttons --- */
+.action-button {
+    background-color: var(--primary-color); color: var(--bg-color); border: none; padding: 12px 20px;
+    border-radius: 5px; font-weight: bold; cursor: pointer; transition: background-color 0.2s, transform 0.1s;
+    display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 10px;
+}
+.action-button:hover { background-color: #80d8ff; }
+.action-button:active { transform: scale(0.98); }
+.action-button:disabled { background-color: #555; color: #888; cursor: not-allowed; }
+.action-button svg { margin-right: 5px;}
+#spark-button svg path { stroke: var(--bg-color); stroke-width: 0.5px;}
+#spark-button:hover svg path { animation: spin 2s linear infinite; }
+@keyframes spin { 0% { transform-origin: center; transform: rotate(0deg); } 100% { transform-origin: center; transform: rotate(360deg); } }
+
+.secondary-button {
+    background-color: transparent; color: var(--text-muted-color); border: 1px solid var(--button-bg);
+    padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+.secondary-button:hover { background-color: var(--button-bg); color: var(--text-color); }
+#multiplier-button { width: 100%; margin-top: 8px; padding: 8px 10px; }
+
+#left-panel footer {
+    margin-top: auto; padding-top: 15px; border-top: 1px solid var(--panel-border-color); display: flex; gap: 10px;
+}
+#left-panel footer button {
+    flex: 1; padding: 8px 10px; font-size: 0.9em; background-color: var(--button-bg); color: var(--text-color);
+    border: 1px solid var(--panel-border-color); border-radius: 4px; cursor: pointer; text-align: center;
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+#left-panel footer button:hover { background-color: var(--button-hover-bg); box-shadow: 0 0 6px var(--primary-color); }
+#left-panel footer button:active { transform: scale(0.98); }
+#reset-button { border-color: var(--secondary-color); color: var(--secondary-color); }
+#reset-button:hover { background-color: #4d3d36; box-shadow: 0 0 6px var(--secondary-color); color: #ffe0b2; }
+
+/* --- Center Panel Content --- */
+#noosphere-graph { width: 100%; height: calc(100vh - 40px); border: 1px solid var(--panel-border-color); background-color: #1c1c22; }
+.upgrades-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+.upgrade-card {
+    background-color: var(--panel-bg-color); border: 1px solid var(--panel-border-color); padding: 15px;
+    border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); display: flex; flex-direction: column;
+}
+.upgrade-card h3 { font-size: 1.1em; color: var(--primary-color); margin-top: 0;}
+.upgrade-card p { font-size: 0.9em; margin-bottom: 10px; color: var(--text-muted-color); }
+.upgrade-card .cost { font-size: 0.9em; margin-bottom: 10px; }
+.upgrade-card .output { margin-bottom: 15px; flex-grow: 1; }
+.upgrade-card .action-button { margin-top: auto; }
+#forge-interface { max-width: 600px; margin: 0 auto; }
+.forge-slots { display: flex; align-items: center; justify-content: center; margin-bottom: 20px; gap: 10px; }
+.plus-icon { font-size: 1.5em; color: var(--primary-color); }
+.select-wrapper { flex-grow: 1; position: relative; background-color: var(--button-bg); border: 1px solid var(--panel-border-color); border-radius: 4px; overflow: hidden; }
+.select-wrapper::after { content: '▼'; position: absolute; top: 50%; right: 12px; transform: translateY(-50%); font-size: 0.8em; color: var(--text-muted-color); pointer-events: none; }
+.forge-select {
+    width: 100%; padding: 10px; padding-right: 30px; background-color: transparent; color: var(--text-color);
+    border: none; cursor: pointer; -webkit-appearance: none; -moz-appearance: none; appearance: none;
+    position: relative; z-index: 1;
+}
+.forge-select option { background-color: var(--button-hover-bg); color: var(--text-color); }
+#combination-result {
+    margin-top: 15px; padding: 10px; border: 1px dashed var(--panel-border-color); text-align: center;
+    min-height: 40px; border-radius: 4px; transition: background-color 0.3s;
+}
+#combination-result.success { border-color: var(--success-color); background-color: rgba(46, 204, 113, 0.1); }
+#combination-result.error { border-color: var(--error-color); background-color: rgba(231, 76, 60, 0.1); }
+#combination-result.info { border-color: var(--primary-color); background-color: rgba(79, 195, 247, 0.1); }
+#discovered-recipes-list { list-style: none; padding: 0; margin-top: 15px; }
+#discovered-recipes-list li {
+    background-color: #2a2e37; padding: 8px; border-radius: 3px; margin-bottom: 5px;
+    font-size: 0.9em; cursor: pointer; transition: background-color 0.2s;
+}
+#discovered-recipes-list li:hover { background-color: var(--button-hover-bg); }
+.idea-list-panel { margin-bottom: 20px; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 4px; }
+.idea-list-panel li {
+    background-color: var(--button-bg); padding: 10px 15px; margin-bottom: 8px;
+    border-radius: 4px; border: 1px solid var(--panel-border-color);
+}
+.idea-list-panel .idea-name { font-weight: bold; color: var(--primary-color); font-size: 1.1em; }
+.idea-list-panel .idea-owned { float: right; font-size: 0.9em; color: var(--secondary-color); font-weight: bold; }
+.idea-list-panel .idea-description { font-size: 0.9em; color: var(--text-muted-color); display: block; margin-top: 5px; clear: both; }
+.auto-crafter-section { margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--panel-border-color); }
+
+/* --- Right Panel: Details View --- */
+#details-view h2 { font-size: 1.2em; }
+#selected-idea-name { font-size: 1.1em; font-weight: bold; color: var(--secondary-color); margin-bottom: 10px; }
+#selected-idea-description, #selected-idea-attributes { font-size: 0.9em; color: var(--text-muted-color); line-height: 1.5; }
+#selected-idea-attributes p { margin-bottom: 5px; }
+
+/* --- Overlays: Tooltip & Notifications --- */
+#tooltip-container {
+    position: absolute; background-color: rgba(40, 40, 50, 0.9); color: #fff; padding: 10px;
+    border-radius: 5px; border: 1px solid var(--primary-color); box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    pointer-events: none; display: none; font-size: 0.9em; z-index: 10000;
+    white-space: pre-wrap; max-width: 300px;
+}
+.game-notification {
+    position: fixed; bottom: 20px; right: 20px; padding: 15px 20px; border-radius: 6px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.4); z-index: 10000; opacity: 1;
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out; background-color: var(--panel-bg-color);
+    color: var(--text-color); border-left: 5px solid var(--panel-border-color); min-width: 280px;
+    max-width: 400px; font-size: 0.95em;
+}
+.game-notification.info { border-left-color: var(--primary-color); }
+.game-notification.success { border-left-color: var(--success-color); }
+.game-notification.error { border-left-color: var(--error-color); }
+.game-notification.special { border-left-color: var(--special-color); background-color: #403041; }
+.game-notification.exiting { opacity: 0; transform: translateX(calc(100% + 30px)); }
+
+/* --- Utility Classes --- */
+.text-muted { color: var(--text-muted-color); font-style: italic; }
+
+/* --- Tutorial Overlay Styles --- */
+#tutorial-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 20000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
+}
+
+#tutorial-overlay.hidden {
+    opacity: 0;
+    pointer-events: none; /* Allows clicks to pass through when hidden */
+}
+
+#tutorial-box {
+    background-color: var(--panel-bg-color);
+    padding: 25px 30px;
+    border-radius: 8px;
+    border: 1px solid var(--panel-border-color);
+    box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+    max-width: 450px;
+    text-align: center;
+    z-index: 20002; /* Above the dark overlay */
+}
+
+#tutorial-text {
+    font-size: 1.1em;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.tutorial-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+/* This class highlights the target element for a tutorial step */
+.tutorial-highlight {
+    position: relative !important; /* Important to override other position rules */
+    z-index: 20001 !important; /* Above the overlay, below the text box */
+    box-shadow: 0 0 15px 5px var(--accent-glow);
+    border-radius: 5px; /* Matches most button styles */
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+
+/* --- Secondary & Multiplier Button Styles --- */
+.secondary-button {
+    background-color: transparent;
+    color: var(--text-muted-color);
+    border: 1px solid var(--button-bg);
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+.secondary-button:hover {
+    background-color: var(--button-bg);
+    color: var(--text-color);
+}
+
+#multiplier-button {
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px 10px;
+}
+
+/* Wrapper for select dropdowns to style them */
+.select-wrapper {
+    flex-grow: 1;
+    position: relative;
+    background-color: var(--button-bg);
+    border: 1px solid var(--panel-border-color);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.select-wrapper::after {
+    content: '▼';
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    font-size: 0.8em;
+    color: var(--text-muted-color);
+    pointer-events: none;
+}
+
+.forge-select {
+    width: 100%;
+    padding: 10px;
+    padding-right: 30px; /* Make space for the arrow */
+    background-color: transparent;
+    color: var(--text-color);
+    border: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    position: relative;
+    z-index: 1;
+}
+
+.forge-select option {
+    background-color: var(--button-hover-bg);
+    color: var(--text-color);
+}
