@@ -152,7 +152,7 @@ const UI = {
             const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1);
             const totalBonus = (effectData.ft_per_click * displayLevel) * (scale ** scalePower);
             const prefix = currentLevel === 0 ? " (Lvl 1)" : "";
-            outputString = `Effect: +${totalBonus.toFixed(2)} FT per click${prefix}`;
+            outputString = `Effect: +${Utils.formatNumber(totalBonus)} FT per click${prefix}`;
         } else if (itemData.effect?.global_ft_multiplier_bonus) {
             const totalBonus = currentLevel * itemData.effect.global_ft_multiplier_bonus * 100;
             outputString = `Effect: +${totalBonus.toFixed(0)}% to all FT generation`;
@@ -161,15 +161,15 @@ const UI = {
                 if (outRes === 'fleeting_thought') {
                     const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = itemData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : "";
                     const ftOutputValue = (outVal * (outputScale ** scalePower) * displayLevel);
-                    outputString += `${ftOutputValue.toFixed(2)} FT/sec${prefix}<br>`;
+                    outputString += `${Utils.formatNumber(ftOutputValue)} FT/sec${prefix}<br>`;
                 } else if (GameLogic._isValidNumber(outVal)) {
                     const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = itemData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : "";
                     const itemsPerSecond = outVal * (outputScale ** scalePower) * displayLevel;
                     if (itemsPerSecond < 1) {
                         const secondsPerItem = 1 / itemsPerSecond;
-                        outputString += `1 ${IDEAS_DATA[outRes]?.name || outRes} / ${secondsPerItem.toFixed(2)}s${prefix}<br>`;
+                        outputString += `1 ${IDEAS_DATA[outRes]?.name || outRes} / ${Utils.formatNumber(secondsPerItem)}s${prefix}<br>`;
                     } else {
-                        outputString += `${itemsPerSecond.toFixed(2)} ${IDEAS_DATA[outRes]?.name || outRes}/sec${prefix}<br>`;
+                        outputString += `${Utils.formatNumber(itemsPerSecond)} ${IDEAS_DATA[outRes]?.name || outRes}/sec${prefix}<br>`;
                     }
                 }
             });
@@ -179,9 +179,9 @@ const UI = {
             const craftsPerSecond = (itemData.outputAmount || 0) * (outputScale ** scalePower) * displayLevel;
             if (craftsPerSecond > 0 && craftsPerSecond < 1) {
                 const secondsPerCraft = 1 / craftsPerSecond;
-                outputString = `Crafts: 1 ${targetIdea.name} / ${secondsPerCraft.toFixed(2)}s${prefix}`;
+                outputString = `Crafts: 1 ${targetIdea.name} / ${Utils.formatNumber(secondsPerCraft)}s${prefix}`;
             } else {
-                outputString = `Crafts: ${craftsPerSecond.toFixed(3)} ${targetIdea.name}/sec${prefix}`;
+                outputString = `Crafts: ${Utils.formatNumber(craftsPerSecond)} ${targetIdea.name}/sec${prefix}`;
             }
         }
         outputString = outputString.replace(/<br>$/, '').trim();
@@ -338,3 +338,4 @@ const UI = {
          this.elements.transcendButton.textContent = canTranscend ? `Transcend (${wsToGain} WS)` : 'A Paradigm is Required';
      }
 };
+
