@@ -21,6 +21,80 @@ const Noosphere = {
             shadow: { enabled: true, color: 'rgba(0,0,0,0.5)', size: 5, x: 2, y: 2 },
             scaling: { min: 20, max: 50, label: { enabled: true, min: 12, max: 22 } }
         },
+
+        // Group-level visual styles for the noosphere
+        // Concepts -> red circles
+        // Insights  -> blue squares
+        // Theories  -> green pentagons
+        // Paradigms -> yellow hexagons
+        groups: {
+            concept: {
+                shape: 'circle',
+                color: {
+                    background: '#ff4d4d',      // red
+                    border: '#b30000',          // darker red border
+                    highlight: {
+                        background: '#ff7f7f',  // lighter red on select
+                        border: '#800000'       // darker highlight border
+                    },
+                    hover: {
+                        background: '#ff9999',
+                        border: '#990000'
+                    }
+                },
+                font: { color: '#ffffff' }
+            },
+            insight: {
+                shape: 'square',
+                color: {
+                    background: '#4da6ff',      // blue
+                    border: '#0059b3',          // darker blue border
+                    highlight: {
+                        background: '#80c1ff',  // lighter blue on select
+                        border: '#003d66'
+                    },
+                    hover: {
+                        background: '#66b3ff',
+                        border: '#004d99'
+                    }
+                },
+                font: { color: '#ffffff' }
+            },
+            theory: {
+                shape: 'pentagon',
+                color: {
+                    background: '#66cc66',      // green
+                    border: '#2e8b2e',          // darker green border
+                    highlight: {
+                        background: '#99e699',  // lighter green on select
+                        border: '#266626'
+                    },
+                    hover: {
+                        background: '#8fe08f',
+                        border: '#2e8b2e'
+                    }
+                },
+                font: { color: '#ffffff' }
+            },
+            paradigm: {
+                shape: 'hexagon',
+                color: {
+                    background: '#ffd24d',      // yellow
+                    border: '#b38f00',          // darker yellow/gold border
+                    highlight: {
+                        background: '#ffe48f',  // lighter yellow on select
+                        border: '#8f6b00'
+                    },
+                    hover: {
+                        background: '#ffeab3',
+                        border: '#a37a00'
+                    }
+                },
+                // darker font for readability on yellow
+                font: { color: '#222222' }
+            }
+        },
+
         edges: {
             width: 1.5,
             color: { color: '#606878', highlight: '#4fc3f7', hover: '#7fd3f8' },
@@ -111,13 +185,14 @@ const Noosphere = {
             default: value = 15;
         }
 
+        // Keep any explicit color/shape defined on ideaData, otherwise rely on group styles above.
         this.nodes.add({
             id: ideaId,
             label: nodeLabel,
             title: ideaData.name,
             group: ideaData.group || `tier${ideaData.tier}`,
-            shape: ideaData.shape || 'ellipse',
-            color: ideaData.color,
+            shape: ideaData.shape || undefined,
+            color: ideaData.color || undefined,
             value: value,
             level: ideaData.tier,
         });
@@ -171,4 +246,3 @@ const Noosphere = {
         });
     }
 };
-
