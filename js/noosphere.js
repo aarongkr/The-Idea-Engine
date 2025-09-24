@@ -16,7 +16,7 @@ const Noosphere = {
             improvedLayout: true,
         },
         nodes: {
-            borderWidth: 2,
+            borderWidth: 1,
             font: { color: '#ffffff', size: 12, face: 'Roboto', strokeWidth: 0 },
             shadow: { enabled: true, color: 'rgba(0,0,0,0.5)', size: 5, x: 2, y: 2 },
             scaling: { min: 20, max: 50, label: { enabled: true, min: 12, max: 22 } }
@@ -171,3 +171,4 @@ const Noosphere = {
         });
     }
 };
+
