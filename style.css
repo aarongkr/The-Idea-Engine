@@ -181,7 +181,7 @@ ul.compact-list li { margin-bottom: 3px; font-size: 0.9em; color: var(--text-mut
 .game-notification.info { border-left-color: var(--primary-color); }
 .game-notification.success { border-left-color: var(--success-color); }
 .game-notification.error { border-left-color: var(--error-color); }
-.game-notification.special { border-left-color: var(--special-color); background-color: #403041; }
+.game-notification.special { border-left-color: var(--primary-color); background-color: #354b54; }
 .game-notification.exiting { opacity: 0; transform: translateX(calc(100% + 30px)); }
 
 /* --- Utility Classes --- */
@@ -303,4 +303,5 @@ ul.compact-list li { margin-bottom: 3px; font-size: 0.9em; color: var(--text-mut
     background-color: var(--button-hover-bg);
     color: var(--text-color);
 }
+
 
