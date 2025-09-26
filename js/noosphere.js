@@ -90,8 +90,6 @@ const Noosphere = {
                         border: '#a37a00'
                     }
                 },
-                // darker font for readability on yellow
-                font: { color: '#222222' }
             }
         },
 
@@ -246,3 +244,4 @@ const Noosphere = {
         });
     }
 };
+
