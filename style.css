@@ -87,9 +87,37 @@ ul.compact-list li { margin-bottom: 3px; font-size: 0.9em; color: var(--text-mut
 .action-button:active { transform: scale(0.98); }
 .action-button:disabled { background-color: #555; color: #888; cursor: not-allowed; }
 .action-button svg { margin-right: 5px;}
-#spark-button svg path { stroke: var(--bg-color); stroke-width: 0.5px;}
-#spark-button:hover svg path { animation: spin 2s linear infinite; }
-@keyframes spin { 0% { transform-origin: center; transform: rotate(0deg); } 100% { transform-origin: center; transform: rotate(360deg); } }
+#spark-button svg {
+    margin-right: 5px;
+}
+
+#spark-button svg .outer-crystal {
+    transform-origin: center;
+    transition: transform 2s linear;
+}
+
+#spark-button svg .inner-crystal {
+    transform-origin: center;
+    transition: transform 2s linear;
+}
+
+#spark-button:hover svg .outer-crystal {
+    animation: spin-clockwise 2s linear infinite;
+}
+
+#spark-button:hover svg .inner-crystal {
+    animation: spin-counter-clockwise 2s linear infinite;
+}
+
+@keyframes spin-clockwise {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes spin-counter-clockwise {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(-360deg); }
+}
 
 .secondary-button {
     background-color: transparent; color: var(--text-muted-color); border: 1px solid var(--button-bg);

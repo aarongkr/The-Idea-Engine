@@ -138,8 +138,14 @@ const UI = {
         if (isMaxLevel) {
             buttonText = "Max Level";
         } else {
-            const amount = (gameState.purchaseMultiplier === 'Max') ? levelsToBuyText : gameState.purchaseMultiplier;
-            buttonText = currentLevel === 0 ? `Build +${amount}` : `Upgrade +${amount}`;
+            let displayAmount;
+            if (gameState.purchaseMultiplier === 'Max') {
+                // Show either affordable levels or 1 (minimum display)
+                displayAmount = Math.max(1, purchaseDetails.affordableLevels);
+            } else {
+                displayAmount = gameState.purchaseMultiplier;
+            }
+            buttonText = currentLevel === 0 ? `Build +${displayAmount}` : `Upgrade +${displayAmount}`;
         }
 
         const card = document.createElement('div');

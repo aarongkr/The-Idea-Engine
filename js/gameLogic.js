@@ -203,7 +203,7 @@ const GameLogic = {
         for (const res in baseCost) { result.totalCost[res] = 0; }
         const maxPossibleBuy = maxLevel - currentLevel;
         if (maxPossibleBuy <= 0) return result;
-        result.levelsToBuy = (multiplier === 'Max') ? maxPossibleBuy : Math.min(multiplier, maxPossibleBuy);
+        result.levelsToBuy = (multiplier === 'Max') ? Math.max(1, maxPossibleBuy) : Math.max(1, Math.min(multiplier, maxPossibleBuy));
         let tempOwnedResources = {};
         Object.keys(gameState.resources).forEach(key => tempOwnedResources[key] = gameState.resources[key]);
         Object.keys(gameState.ideas).forEach(key => tempOwnedResources[key] = gameState.ideas[key]);
@@ -226,6 +226,20 @@ const GameLogic = {
                 result.affordableLevels++;
             }
         }
+        
+        if (multiplier === 'Max' && result.affordableLevels === 0) {
+        result.levelsToBuy = 1;
+        // Recalculate totalCost for just 1 level
+        for (const res in baseCost) {
+            result.totalCost[res] = 0;
+        }
+        const levelCost = {};
+        for (const res in baseCost) {
+            const calculatedCost = Math.floor(baseCost[res] * Math.pow(costScale, currentLevel));
+            levelCost[res] = calculatedCost;
+            result.totalCost[res] = calculatedCost;
+        }
+    }
         return result;
     },
 
