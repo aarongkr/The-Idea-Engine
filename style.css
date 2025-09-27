@@ -332,4 +332,182 @@ ul.compact-list li { margin-bottom: 3px; font-size: 0.9em; color: var(--text-mut
     color: var(--text-color);
 }
 
+/* Wisdom Shop Styling */
+.shop-description {
+    font-style: italic;
+    color: var(--text-muted-color);
+    margin-bottom: 20px;
+    text-align: center;
+}
 
+.wisdom-balance {
+    background-color: rgba(79, 195, 247, 0.1);
+    border: 1px solid var(--primary-color);
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 25px;
+    text-align: center;
+    font-size: 1.1em;
+}
+
+.wisdom-balance .resource-value {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.shop-category {
+    margin-bottom: 30px;
+}
+
+.shop-category h3 {
+    color: var(--secondary-color);
+    border-bottom: 2px solid var(--secondary-color);
+    padding-bottom: 5px;
+    margin-bottom: 15px;
+}
+
+.shop-upgrades-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+.shop-upgrade-card {
+    background-color: var(--panel-bg-color);
+    border: 1px solid var(--panel-border-color);
+    border-radius: 5px;
+    padding: 15px;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.shop-upgrade-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px rgba(79, 195, 247, 0.3);
+}
+
+.shop-upgrade-card.purchased {
+    border-color: var(--success-color);
+    background-color: rgba(46, 204, 113, 0.05);
+}
+
+.shop-upgrade-card.max-level {
+    border-color: var(--special-color);
+    background-color: rgba(243, 156, 18, 0.05);
+}
+
+.shop-upgrade-card.locked {
+    opacity: 0.5;
+    border-color: #555;
+}
+
+.shop-upgrade-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.shop-upgrade-icon {
+    font-size: 1.5em;
+    margin-right: 10px;
+}
+
+.shop-upgrade-title {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: var(--primary-color);
+    flex-grow: 1;
+}
+
+.shop-upgrade-level {
+    font-size: 0.9em;
+    color: var(--text-muted-color);
+    background-color: var(--button-bg);
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.shop-upgrade-description {
+    color: var(--text-muted-color);
+    font-size: 0.9em;
+    line-height: 1.4;
+    margin-bottom: 12px;
+}
+
+.shop-upgrade-effect {
+    background-color: rgba(79, 195, 247, 0.1);
+    border-left: 3px solid var(--primary-color);
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    font-size: 0.85em;
+    color: var(--text-color);
+}
+
+.shop-upgrade-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.shop-upgrade-cost {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.shop-upgrade-button {
+    background-color: var(--primary-color);
+    color: var(--bg-color);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.shop-upgrade-button:hover:not(:disabled) {
+    background-color: #80d8ff;
+    transform: translateY(-1px);
+}
+
+.shop-upgrade-button:disabled {
+    background-color: #555;
+    color: #888;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.shop-upgrade-button.purchased {
+    background-color: var(--success-color);
+}
+
+.shop-upgrade-button.max-level {
+    background-color: var(--special-color);
+}
+
+/* Special styling for upgrade chains/branches */
+.upgrade-branch {
+    position: relative;
+}
+
+.upgrade-branch::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+    border-radius: 2px;
+}
+
+/* Locked upgrade styling */
+.shop-upgrade-card.locked .shop-upgrade-title,
+.shop-upgrade-card.locked .shop-upgrade-cost {
+    color: #666;
+}
+
+.shop-upgrade-card.locked .shop-upgrade-icon {
+    filter: grayscale(100%);
+}

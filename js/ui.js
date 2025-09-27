@@ -29,7 +29,12 @@ const UI = {
         theoryCraftersList: document.getElementById('theory-crafters-list'),
         paradigmsList: document.getElementById('paradigms-list'),
         paradigmCraftersList: document.getElementById('paradigm-crafters-list'),
-        transcendButton: document.getElementById('transcend-button')
+        transcendButton: document.getElementById('transcend-button'),
+        wsShopBalance: document.getElementById('ws-shop-balance'),
+        qolUpgrades: document.getElementById('qol-upgrades'),
+        tapUpgrades: document.getElementById('tap-upgrades'),
+        globalUpgrades: document.getElementById('global-upgrades'),
+        offlineUpgrades: document.getElementById('offline-upgrades'),
     },
 
     init() {
@@ -42,6 +47,18 @@ const UI = {
         this.elements.theoryCraftersList.addEventListener('click', this.handleBuyAutoCrafterClick);
         this.elements.paradigmCraftersList.addEventListener('click', this.handleBuyAutoCrafterClick);
         this.elements.discoveredRecipesList.addEventListener('click', this.handleRecipeClick);
+        if (this.elements.qolUpgrades) {
+            this.elements.qolUpgrades.addEventListener('click', this.handleWisdomShopPurchase);
+        }
+        if (this.elements.tapUpgrades) {
+            this.elements.tapUpgrades.addEventListener('click', this.handleWisdomShopPurchase);
+        }
+        if (this.elements.globalUpgrades) {
+            this.elements.globalUpgrades.addEventListener('click', this.handleWisdomShopPurchase);
+        }
+        if (this.elements.offlineUpgrades) {
+            this.elements.offlineUpgrades.addEventListener('click', this.handleWisdomShopPurchase);
+        }
     },
 
     cycleMultiplier() {
@@ -71,27 +88,14 @@ const UI = {
     updateResourceDisplay() {
         this.elements.ftCount.textContent = Utils.formatNumber(gameState.resources.fleeting_thought);
         this.elements.wsCount.textContent = Utils.formatNumber(gameState.resources.wisdom_shards);
-        let totalFtPerSec = 0;
-        Object.entries(gameState.generators).forEach(([genId, genState]) => {
-            const genData = GENERATORS_DATA[genId];
-            if (genData && genState.level > 0 && genData.output?.fleeting_thought) {
-                const currentLevel = genState.level; const baseOutput = genData.output.fleeting_thought; const scale = genData.outputScale || 1;
-                const levelBonus = Math.pow(scale, Math.max(0, currentLevel - 1));
-                totalFtPerSec += (baseOutput * currentLevel) * levelBonus;
-            }
-        });
-        Object.entries(gameState.ideas).forEach(([ideaId, count]) => {
-            const ideaData = IDEAS_DATA[ideaId];
-            if (ideaData?.attributes?.ft_bonus_per_sec && GameLogic._isValidNumber(count) && count > 0) {
-                totalFtPerSec += ideaData.attributes.ft_bonus_per_sec * count;
-            }
-        });
-        let globalMultiplier = 1;
-        const methodicalApproachLevel = gameState.generators.methodical_approach?.level || 0;
-        if (methodicalApproachLevel > 0) {
-            globalMultiplier += methodicalApproachLevel * GENERATORS_DATA.methodical_approach.effect.global_ft_multiplier_bonus;
+        const ftPerSecRate = GameLogic.calculateCurrentFtPerSec();
+        this.elements.ftPerSecCount.textContent = Utils.formatNumber(ftPerSecRate) + "/sec";
+        
+        const multiBuyUnlocked = gameState.wisdomShop.multi_buy_unlock?.level >= 1;
+        if (this.elements.multiplierButton) {
+            this.elements.multiplierButton.style.display = multiBuyUnlocked ? 'block' : 'none';
         }
-        this.elements.ftPerSecCount.textContent = Utils.formatNumber(totalFtPerSec * globalMultiplier) + "/sec";
+
         let tierSummaryHTML = '<h3>Idea Tiers</h3><ul class="compact-list">';
         const tierCounts = { 1: 0, 2: 0, 3: 0, 4: 0 };
         const totalPerTier = { 1: 0, 2: 0, 3: 0, 4: 0 };
@@ -112,6 +116,78 @@ const UI = {
         this.elements.activeConceptsSummary.innerHTML = tierSummaryHTML;
     },
 
+    handleBulkParadigmUpgrade() {
+        const bulkUnlocked = gameState.wisdomShop.paradigm_bulk_manager?.level >= 1;
+        if (!bulkUnlocked) {
+            UI.showNotification('Paradigm Automation upgrade required!', 'error');
+            return;
+        }
+
+        let upgradesPerformed = 0;
+        let totalCost = { fleeting_thought: 0 };
+
+        // Calculate total cost for all paradigm crafters
+        Object.keys(CRAFTERS_DATA).forEach(crafterId => {
+            if (crafterId.startsWith('paradigm_')) {
+                const crafterData = CRAFTERS_DATA[crafterId];
+                const currentLevel = gameState.crafters[crafterId]?.level || 0;
+                
+                if (currentLevel < (crafterData.maxLevel || Infinity)) {
+                    const purchaseDetails = GameLogic.calculateMultiBuy(
+                        crafterData.baseCost, 
+                        crafterData.costScale, 
+                        currentLevel, 
+                        gameState.purchaseMultiplier, 
+                        crafterData.maxLevel
+                    );
+                    
+                    if (purchaseDetails.affordableLevels > 0) {
+                        const levelsToBuy = (gameState.purchaseMultiplier === 'Max') ? 
+                            purchaseDetails.affordableLevels : 
+                            Math.min(gameState.purchaseMultiplier, purchaseDetails.affordableLevels);
+                            
+                        if (levelsToBuy > 0) {
+                            const finalPurchase = GameLogic.calculateMultiBuy(
+                                crafterData.baseCost, 
+                                crafterData.costScale, 
+                                currentLevel, 
+                                levelsToBuy, 
+                                crafterData.maxLevel
+                            );
+                            
+                            // Add to total cost
+                            Object.entries(finalPurchase.totalCost).forEach(([res, cost]) => {
+                                totalCost[res] = (totalCost[res] || 0) + cost;
+                            });
+                            upgradesPerformed += levelsToBuy;
+                        }
+                    }
+                }
+            }
+        });
+
+        // Check if we can afford the total cost
+        let canAffordAll = true;
+        Object.entries(totalCost).forEach(([res, cost]) => {
+            const available = gameState.resources[res] || gameState.ideas[res] || 0;
+            if (available < cost) canAffordAll = false;
+        });
+
+        if (!canAffordAll || upgradesPerformed === 0) {
+            UI.showNotification('Cannot afford bulk paradigm upgrade.', 'error');
+            return;
+        }
+
+        // Perform the bulk purchase
+        Object.keys(CRAFTERS_DATA).forEach(crafterId => {
+            if (crafterId.startsWith('paradigm_')) {
+                GameLogic.buyAutoCrafter(crafterId);
+            }
+        });
+
+        UI.showNotification(`Bulk upgraded ${upgradesPerformed} paradigm crafter levels!`, 'success');
+        UI.updateAllUI();
+    },
     /**
      * Renders a generic upgrade card with intelligent formatting for output and costs.
      */
@@ -151,7 +227,6 @@ const UI = {
         const card = document.createElement('div');
         card.className = 'upgrade-card';
 
-        // --- MODIFIED: Output String Generation Logic ---
         let outputString = "Effect: ";
         if (itemData.effect?.ft_per_click) {
             const effectData = itemData.effect; const scale = itemData.outputScale || 1;
@@ -217,17 +292,33 @@ const UI = {
     },
 
     renderAutoCrafters(crafterTypePrefix, listElement) {
-        listElement.innerHTML = ''; let foundAnyCrafters = false;
+        listElement.innerHTML = ''; 
+        let foundAnyCrafters = false;
+        if (crafterTypePrefix === 'paradigm') {
+            const bulkUnlocked = gameState.wisdomShop.paradigm_bulk_manager?.level >= 1;
+            if (bulkUnlocked) {
+                const bulkButton = document.createElement('div');
+                bulkButton.className = 'bulk-upgrade-section';
+                bulkButton.innerHTML = `
+                    <button class="action-button bulk-paradigm-upgrade" style="margin-bottom: 20px;">
+                        🏭 Upgrade All Paradigm Crafters (x${gameState.purchaseMultiplier})
+                    </button>
+                `;
+                bulkButton.addEventListener('click', this.handleBulkParadigmUpgrade);
+                listElement.appendChild(bulkButton);
+            }
+        }
         Object.values(CRAFTERS_DATA).forEach(crafterData => {
             if (!crafterData.id.startsWith(crafterTypePrefix + '_')) return;
-            let unlocked = true; if (crafterData.unlocksWith) unlocked = crafterData.unlocksWith.every(cond => gameState.discoveredIdeas.has(cond));
+            let unlocked = true;
+            if (crafterData.unlocksWith) unlocked = crafterData.unlocksWith.every(cond => gameState.discoveredIdeas.has(cond));
             if (unlocked) {
                 foundAnyCrafters = true;
                 const currentLevel = gameState.crafters[crafterData.id]?.level || 0;
                 this.renderUpgradeCard(listElement, crafterData, currentLevel, 'buy-autocrafter', 'data-crafter-id');
             }
         });
-        if (!foundAnyCrafters) listElement.innerHTML = `<p class="text-muted">Discover an idea of this tier to unlock its auto-crafter.</p>`;
+        if (!foundAnyCrafters) listElement.innerHTML += `<p class="text-muted">Discover an idea of this tier to unlock its auto-crafter.</p>`;
     },
 
     renderTieredIdeaList(tier, listElement) {
@@ -239,6 +330,105 @@ const UI = {
                 li.dataset.ideaId = ideaData.id; listElement.appendChild(li);
         });
         if (!foundAny) listElement.innerHTML = `<p class="text-muted">No ideas of this tier discovered yet.</p>`;
+    },
+
+    renderWisdomShopCategory(container, category) {
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        const upgrades = Object.values(WISDOM_SHOP_DATA).filter(upgrade => upgrade.category === category);
+        
+        upgrades.forEach(upgrade => {
+            if (!WisdomShop.isUnlocked(upgrade.id)) return; // Skip locked upgrades for now
+            
+            const currentLevel = gameState.wisdomShop[upgrade.id]?.level || 0;
+            const maxLevel = upgrade.maxLevel || 1;
+            const cost = WisdomShop.getCost(upgrade.id);
+            const canAfford = WisdomShop.canAfford(upgrade.id);
+            const isMaxLevel = currentLevel >= maxLevel;
+            const isPurchased = currentLevel > 0;
+            
+            // Determine effect text
+            let effectText = '';
+            if (upgrade.getEffectValue) {
+                const nextLevelValue = upgrade.getEffectValue(currentLevel + 1);
+                const currentValue = currentLevel > 0 ? upgrade.getEffectValue(currentLevel) : 0;
+                
+                if (upgrade.id.includes('multiplier')) {
+                    effectText = `+${(nextLevelValue * 100).toFixed(0)}% to all FT generation`;
+                } else if (upgrade.id === 'tap_ft_bonus') {
+                    effectText = `+${nextLevelValue.toFixed(0)}% of FT/sec per manual spark`;
+                } else if (upgrade.id === 'offline_effectiveness') {
+                    effectText = `Offline earns ${nextLevelValue.toFixed(0)}% of online rate`;
+                } else if (upgrade.id === 'offline_time_cap') {
+                    effectText = `Offline cap: ${nextLevelValue}hours`;
+                }
+                
+                if (currentLevel > 0 && !isMaxLevel) {
+                    if (upgrade.id.includes('multiplier')) {
+                        effectText = `Currently: +${(currentValue * 100).toFixed(0)}% → +${(nextLevelValue * 100).toFixed(0)}%`;
+                    } else if (upgrade.id === 'tap_ft_bonus') {
+                        effectText = `Currently: +${currentValue.toFixed(0)}% → +${nextLevelValue.toFixed(0)}%`;
+                    } else if (upgrade.id === 'offline_effectiveness') {
+                        effectText = `Currently: ${currentValue.toFixed(0)}% → ${nextLevelValue.toFixed(0)}%`;
+                    } else if (upgrade.id === 'offline_time_cap') {
+                        effectText = `Currently: ${currentValue}h → ${nextLevelValue}h`;
+                    }
+                }
+            }
+            
+            // Button text and styling
+            let buttonText = 'Purchase';
+            let buttonClass = 'shop-upgrade-button';
+            
+            if (isMaxLevel) {
+                buttonText = 'Maxed';
+                buttonClass += ' max-level';
+            } else if (isPurchased) {
+                buttonText = 'Upgrade';
+                buttonClass += ' purchased';
+            }
+            
+            if (!canAfford && !isMaxLevel) {
+                buttonClass += ' disabled';
+            }
+            
+            const card = document.createElement('div');
+            card.className = `shop-upgrade-card ${isPurchased ? 'purchased' : ''} ${isMaxLevel ? 'max-level' : ''}`;
+            
+            card.innerHTML = `
+                <div class="shop-upgrade-header">
+                    <span class="shop-upgrade-icon">${upgrade.icon || '⚡'}</span>
+                    <span class="shop-upgrade-title">${upgrade.name}</span>
+                    <span class="shop-upgrade-level">${currentLevel}/${maxLevel}</span>
+                </div>
+                <div class="shop-upgrade-description">${upgrade.description}</div>
+                ${effectText ? `<div class="shop-upgrade-effect">${effectText}</div>` : ''}
+                <div class="shop-upgrade-footer">
+                    <span class="shop-upgrade-cost">${isMaxLevel ? 'Complete' : `${Utils.formatNumber(cost)} WS`}</span>
+                    <button class="${buttonClass}" data-upgrade-id="${upgrade.id}" ${(!canAfford || isMaxLevel) ? 'disabled' : ''}>
+                        ${buttonText}
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(card);
+        });
+    },
+
+    handleWisdomShopPurchase(e) {
+        const button = e.target.closest('.shop-upgrade-button');
+        if (button && !button.disabled) {
+            const upgradeId = button.dataset.upgradeId;
+            if (WisdomShop.purchase(upgradeId)) {
+                UI.updateWisdomShop();
+                UI.updateResourceDisplay();
+                UI.showNotification(`Purchased ${WISDOM_SHOP_DATA[upgradeId].name}!`, 'success');
+            } else {
+                UI.showNotification('Cannot purchase this upgrade.', 'error');
+            }
+        }
     },
 
     handleBuyGeneratorClick(e) {
@@ -277,6 +467,17 @@ const UI = {
             UI.elements.combinationResult.textContent = "Recipe loaded into forge.";
             UI.elements.combinationResult.className = 'info';
         }
+    },
+
+    updateWisdomShop() {
+        if (this.elements.wsShopBalance) {
+            this.elements.wsShopBalance.textContent = Utils.formatNumber(gameState.resources.wisdom_shards);
+        }
+        
+        this.renderWisdomShopCategory(this.elements.qolUpgrades, 'quality_of_life');
+        this.renderWisdomShopCategory(this.elements.tapUpgrades, 'tap_bonuses');
+        this.renderWisdomShopCategory(this.elements.globalUpgrades, 'global_multipliers');
+        this.renderWisdomShopCategory(this.elements.offlineUpgrades, 'offline');
     },
 
     updateDetailsView(ideaData) {
@@ -325,6 +526,7 @@ const UI = {
         this.updateDiscoveredRecipes();
         this.updateTranscendButton();
         this.updateMultiplierButtonText();
+        this.updateWisdomShop();
     },
 
      updateTranscendButton() {

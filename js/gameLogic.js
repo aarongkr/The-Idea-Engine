@@ -12,11 +12,11 @@ const GameLogic = {
 
     tick() {
         const now = Date.now();
-        if (!GameLogic._isValidNumber(this.lastTick) || this.lastTick <= 0 || this.lastTick > now) {
-             this.lastTick = now - 100;
+        if (!GameLogic._isValidNumber(GameLogic.lastTick) || GameLogic.lastTick <= 0 || GameLogic.lastTick > now) {
+             GameLogic.lastTick = now - 100;
         }
-        const delta = Math.max(0, (now - this.lastTick) / 1000);
-        this.lastTick = now;
+        const delta = Math.max(0, (now - GameLogic.lastTick) / 1000);
+        GameLogic.lastTick = now;
 
         if (typeof Tutorial !== 'undefined' && Tutorial.isActive) {
             Tutorial.checkCompletion();
@@ -26,35 +26,11 @@ const GameLogic = {
              gameState.resources.fleeting_thought = 0;
         }
 
-        // --- FT Generation ---
-        let ftPerSecondThisTick = 0;
-        // From Base Generators
-        Object.entries(gameState.generators).forEach(([genId, genState]) => {
-            const genData = GENERATORS_DATA[genId];
-            if (genData && genState.level > 0 && genData.output?.fleeting_thought) {
-                const currentLevel = genState.level; const baseOutput = genData.output.fleeting_thought; const scale = genData.outputScale || 1;
-                const levelBonus = Math.pow(scale, Math.max(0, currentLevel - 1));
-                ftPerSecondThisTick += (baseOutput * currentLevel) * levelBonus;
-            }
-        });
-        // From owned Ideas
-        Object.entries(gameState.ideas).forEach(([ideaId, count]) => {
-            const ideaData = IDEAS_DATA[ideaId];
-            if (ideaData?.attributes?.ft_bonus_per_sec && GameLogic._isValidNumber(count) && count > 0) {
-                ftPerSecondThisTick += ideaData.attributes.ft_bonus_per_sec * count;
-            }
-        });
-        
-        // ** NEW: Apply Global FT Multiplier **
-        let globalMultiplier = 1;
-        const methodicalApproachLevel = gameState.generators.methodical_approach?.level || 0;
-        if (methodicalApproachLevel > 0) {
-            const methodicalApproachData = GENERATORS_DATA.methodical_approach;
-            globalMultiplier += methodicalApproachLevel * methodicalApproachData.effect.global_ft_multiplier_bonus;
-        }
+        const baseFtPerSec = GameLogic.calculateCurrentFtPerSec() / GameLogic.calculateGlobalFtMultiplier(); // Get base before multipliers
+        const finalFtPerSec = baseFtPerSec * GameLogic.calculateGlobalFtMultiplier(); // Apply all multipliers
 
         // Apply total FT gain for this tick
-        gameState.resources.fleeting_thought += (ftPerSecondThisTick * globalMultiplier) * delta;
+        gameState.resources.fleeting_thought += finalFtPerSec * delta;
 
 
         // --- Concept Generation ---
@@ -114,22 +90,27 @@ const GameLogic = {
         if (!GameLogic._isValidNumber(timeOfflineMs) || timeOfflineMs <= 1000) return offlineGains;
         const secondsOffline = timeOfflineMs / 1000;
         
-        // Calculate base ft/sec before applying multiplier
-        let baseFtPerSec = 0;
-        Object.entries(gameState.generators).forEach(([genId, genState]) => {
-            const genData = GENERATORS_DATA[genId];
-            if (genData && genState.level > 0 && genData.output?.fleeting_thought) {
-                const currentLevel = genState.level; const baseOutput = genData.output.fleeting_thought; const scale = genData.outputScale || 1;
-                const levelBonus = Math.pow(scale, Math.max(0, currentLevel - 1));
-                baseFtPerSec += (baseOutput * currentLevel) * levelBonus;
-            }
-        });
-        Object.entries(gameState.ideas).forEach(([ideaId, count]) => {
-            const ideaData = IDEAS_DATA[ideaId];
-            if (ideaData?.attributes?.ft_bonus_per_sec && GameLogic._isValidNumber(count) && count > 0) {
-                baseFtPerSec += ideaData.attributes.ft_bonus_per_sec * count;
-            }
-        });
+        // Calculate offline effectiveness from wisdom shop
+        let offlineEffectiveness = 1.0; // Default 100% of online rate
+        const offlineEffectivenessLevel = gameState.wisdomShop.offline_effectiveness?.level || 0;
+        if (offlineEffectivenessLevel > 0) {
+            offlineEffectiveness = WISDOM_SHOP_DATA.offline_effectiveness.getEffectValue(offlineEffectivenessLevel) / 100;
+        }
+
+        // Calculate time cap from wisdom shop  
+        let maxOfflineHours = 24; // Default 24 hour cap
+        const offlineTimeCapLevel = gameState.wisdomShop.offline_time_cap?.level || 0;
+        if (offlineTimeCapLevel > 0) {
+            maxOfflineHours = WISDOM_SHOP_DATA.offline_time_cap.getEffectValue(offlineTimeCapLevel);
+        }
+
+        const maxOfflineSeconds = Math.min(secondsOffline, maxOfflineHours * 3600);
+        const effectiveOfflineSeconds = maxOfflineSeconds * offlineEffectiveness;
+        
+        // Calculate FT gains with new multiplier system
+        const baseFtPerSec = GameLogic.calculateCurrentFtPerSec() / GameLogic.calculateGlobalFtMultiplier();
+        const finalFtPerSec = baseFtPerSec * GameLogic.calculateGlobalFtMultiplier();
+        offlineGains.ftGained = finalFtPerSec * effectiveOfflineSeconds;
 
         // ** NEW: Apply Global FT Multiplier to offline gains **
         let globalMultiplier = 1;
@@ -180,7 +161,7 @@ const GameLogic = {
         let wisdomShardsBonus = 0;
         if (GameLogic._isValidNumber(gameState.resources.wisdom_shards)) wisdomShardsBonus = gameState.resources.wisdom_shards * 0.1;
         
-        // ** NEW: Add bonus from 'Focused Intent' generator **
+        
         let clickBonus = 0;
         const focusedIntentLevel = gameState.generators.focused_intent?.level || 0;
         if (focusedIntentLevel > 0) {
@@ -188,14 +169,75 @@ const GameLogic = {
             const baseBonus = focusedIntentData.effect.ft_per_click;
             const scale = focusedIntentData.outputScale || 1;
             const levelBonus = Math.pow(scale, Math.max(0, focusedIntentLevel - 1));
-            // The bonus is additive per level and also scales
             clickBonus = (baseBonus * focusedIntentLevel) * levelBonus;
+        }
+
+        let wisdomTapBonus = 0;
+        const tapBonusLevel = gameState.wisdomShop.tap_ft_bonus?.level || 0;
+        if (tapBonusLevel > 0) {
+            const currentFtPerSec = GameLogic.calculateCurrentFtPerSec();
+            const bonusPercentage = WISDOM_SHOP_DATA.tap_ft_bonus.getEffectValue(tapBonusLevel) / 100;
+            wisdomTapBonus = currentFtPerSec * bonusPercentage;
         }
 
         const ftGained = 1 + wisdomShardsBonus + clickBonus;
         gameState.resources.fleeting_thought += ftGained;
         
         if (typeof UI !== 'undefined') UI.updateResourceDisplay();
+    },
+
+    calculateCurrentFtPerSec() {
+        let totalFtPerSec = 0;
+        
+        // From Base Generators
+        Object.entries(gameState.generators).forEach(([genId, genState]) => {
+            const genData = GENERATORS_DATA[genId];
+            if (genData && genState.level > 0 && genData.output?.fleeting_thought) {
+                const currentLevel = genState.level;
+                const baseOutput = genData.output.fleeting_thought;
+                const scale = genData.outputScale || 1;
+                const levelBonus = Math.pow(scale, Math.max(0, currentLevel - 1));
+                totalFtPerSec += (baseOutput * currentLevel) * levelBonus;
+            }
+        });
+        
+        // From owned Ideas
+        Object.entries(gameState.ideas).forEach(([ideaId, count]) => {
+            const ideaData = IDEAS_DATA[ideaId];
+            if (ideaData?.attributes?.ft_bonus_per_sec && GameLogic._isValidNumber(count) && count > 0) {
+                totalFtPerSec += ideaData.attributes.ft_bonus_per_sec * count;
+            }
+        });
+
+        // Apply existing multipliers (methodical approach + wisdom shop global multipliers)
+        return totalFtPerSec * GameLogic.calculateGlobalFtMultiplier();
+    },
+
+    calculateGlobalFtMultiplier() {
+        let globalMultiplier = 1;
+        
+        // Existing methodical approach bonus
+        const methodicalApproachLevel = gameState.generators.methodical_approach?.level || 0;
+        if (methodicalApproachLevel > 0) {
+            const methodicalApproachData = GENERATORS_DATA.methodical_approach;
+            globalMultiplier += methodicalApproachLevel * methodicalApproachData.effect.global_ft_multiplier_bonus;
+        }
+
+        // NEW: Wisdom shop global multipliers
+        const wisdomMultipliers = [
+            'global_ft_multiplier_25', 'global_ft_multiplier_50', 'global_ft_multiplier_75', 
+            'global_ft_multiplier_100', 'global_ft_multiplier_150'
+        ];
+
+        wisdomMultipliers.forEach(upgradeid => {
+            const level = gameState.wisdomShop[upgradeid]?.level || 0;
+            if (level > 0) {
+                const upgrade = WISDOM_SHOP_DATA[upgradeid];
+                globalMultiplier += upgrade.getEffectValue();
+            }
+        });
+
+        return globalMultiplier;
     },
 
     calculateMultiBuy(baseCost, costScale, currentLevel, multiplier, maxLevel) {
@@ -226,7 +268,7 @@ const GameLogic = {
                 result.affordableLevels++;
             }
         }
-        
+
         if (multiplier === 'Max' && result.affordableLevels === 0) {
         result.levelsToBuy = 1;
         // Recalculate totalCost for just 1 level

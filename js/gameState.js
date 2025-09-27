@@ -15,7 +15,8 @@ let gameState = {
     transcendenceCount: 0,
     tutorialCompleted: false,
     purchaseMultiplier: 1,
-    gameVersion: "0.1.3" // Version bump for new generator types
+    gameVersion: "0.1.4", // wisdom shop update
+    wisdomShop: {}
 };
 
 /**
@@ -35,6 +36,7 @@ function initializeGameState(isNewGame = false) {
         gameState.purchaseMultiplier = 1;
         gameState.gameVersion = "0.1.3";
         gameState.noosphereState = { nodes: [], edges: [] };
+        gameState.wisdomShop = {};
     }
 
     // Sanitize Core Properties
@@ -76,8 +78,90 @@ function initializeGameState(isNewGame = false) {
     if (!validMultipliers.includes(gameState.purchaseMultiplier)) {
         gameState.purchaseMultiplier = 1;
     }
-    gameState.gameVersion = gameState.gameVersion || "0.1.3";
+
+    if (typeof gameState.wisdomShop !== 'object' || gameState.wisdomShop === null) {
+        gameState.wisdomShop = {};
+    }
+    
+    // Initialize all wisdom shop upgrades to level 0 if they don't exist
+    Object.keys(WISDOM_SHOP_DATA).forEach(upgradeId => {
+        if (!gameState.wisdomShop[upgradeId]) {
+            gameState.wisdomShop[upgradeId] = { level: 0 };
+        } else {
+            // Sanitize existing data
+            gameState.wisdomShop[upgradeId].level = Number(gameState.wisdomShop[upgradeId].level) || 0;
+        }
+    });
+
+    gameState.gameVersion = gameState.gameVersion || "0.1.4";
 }
+
+const WisdomShop = {
+    canAfford(upgradeId) {
+        const upgrade = WISDOM_SHOP_DATA[upgradeId];
+        if (!upgrade) return false;
+        
+        const currentLevel = gameState.wisdomShop[upgradeId]?.level || 0;
+        if (currentLevel >= upgrade.maxLevel) return false;
+        
+        const cost = upgrade.baseCost ? 
+            Math.floor(upgrade.baseCost * Math.pow(upgrade.costScale || 1, currentLevel)) :
+            upgrade.cost;
+            
+        return gameState.resources.wisdom_shards >= cost;
+    },
+
+    getCost(upgradeId) {
+        const upgrade = WISDOM_SHOP_DATA[upgradeId];
+        if (!upgrade) return 0;
+        
+        const currentLevel = gameState.wisdomShop[upgradeId]?.level || 0;
+        return upgrade.baseCost ? 
+            Math.floor(upgrade.baseCost * Math.pow(upgrade.costScale || 1, currentLevel)) :
+            upgrade.cost;
+    },
+
+    isUnlocked(upgradeId) {
+        const upgrade = WISDOM_SHOP_DATA[upgradeId];
+        if (!upgrade || !upgrade.unlockCondition) return true;
+        
+        try {
+            return upgrade.unlockCondition();
+        } catch (error) {
+            console.error(`Error checking unlock condition for ${upgradeId}:`, error);
+            return false;
+        }
+    },
+
+    purchase(upgradeId) {
+        if (!this.canAfford(upgradeId) || !this.isUnlocked(upgradeId)) {
+            return false;
+        }
+
+        const upgrade = WISDOM_SHOP_DATA[upgradeId];
+        const cost = this.getCost(upgradeId);
+        
+        // Deduct cost
+        gameState.resources.wisdom_shards -= cost;
+        
+        // Increase level
+        if (!gameState.wisdomShop[upgradeId]) {
+            gameState.wisdomShop[upgradeId] = { level: 0 };
+        }
+        gameState.wisdomShop[upgradeId].level++;
+        
+        // Apply the upgrade effect
+        if (upgrade.applyEffect) {
+            try {
+                upgrade.applyEffect(gameState.wisdomShop[upgradeId].level);
+            } catch (error) {
+                console.error(`Error applying effect for ${upgradeId}:`, error);
+            }
+        }
+
+        return true;
+    }
+};
 
 /**
  * Saves the current gameState to localStorage.

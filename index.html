@@ -61,6 +61,7 @@
                     </svg>
                     Spark Fleeting Thought
                 </button>
+                <button id="multiplier-button" class="secondary-button" style="display: none;">Buy x1</button> 
             </section>
 
             <nav id="main-nav">
@@ -72,6 +73,7 @@
                 <button class="nav-button" data-panel="theories-panel">Theories</button>
                 <button class="nav-button" data-panel="paradigms-panel">Paradigms</button>
                 <button class="nav-button" data-panel="transcendence-panel">Transcendence</button>
+                <button class="nav-button" data-panel="wisdom-shop-panel">Wisdom Shop</button>
                 <button class="nav-button" data-panel="settings-panel">Settings</button>
             </nav>
             <footer>
@@ -147,6 +149,39 @@
                 <h2>Settings</h2>
                 <p>Game settings and options will be available here.</p>
             </div>
+            <div id="wisdom-shop-panel" class="panel">
+                <h2>Wisdom Shard Shop</h2>
+                <p class="shop-description">Spend accumulated Wisdom to unlock permanent upgrades and conveniences.</p>
+                
+                <div class="wisdom-balance">
+                    <span class="resource-label">Available Wisdom Shards:</span>
+                    <span id="ws-shop-balance" class="resource-value">0</span>
+                </div>
+
+                <!-- Quality of Life Upgrades -->
+                <div class="shop-category">
+                    <h3>Quality of Life</h3>
+                    <div id="qol-upgrades" class="shop-upgrades-grid"></div>
+                </div>
+
+                <!-- Tap/Click Bonuses -->
+                <div class="shop-category">
+                    <h3>Enhanced Focus</h3>
+                    <div id="tap-upgrades" class="shop-upgrades-grid"></div>
+                </div>
+
+                <!-- Global Multipliers -->
+                <div class="shop-category">
+                    <h3>Cognitive Enhancements</h3>
+                    <div id="global-upgrades" class="shop-upgrades-grid"></div>
+                </div>
+
+                <!-- Offline Improvements -->
+                <div class="shop-category">
+                    <h3>Persistent Contemplation</h3>
+                    <div id="offline-upgrades" class="shop-upgrades-grid"></div>
+                </div>
+            </div>
         </main>
 
         <!-- Right Panel: Displays contextual details for selected items -->
@@ -167,6 +202,7 @@
     <script src="js/config/ideasData.js"></script>
     <script src="js/config/generatorsData.js"></script>
     <script src="js/config/craftersData.js"></script>
+    <script src="js/config/wisdomShopData.js"></script>
     <script src="js/tutorial.js"></script>
     <script src="js/gameState.js"></script>
     <script src="js/noosphere.js"></script>
