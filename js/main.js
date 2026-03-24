@@ -20,7 +20,7 @@ function main() {
 
 
     // Setup core game action event listeners
-    if (UI?.elements?.sparkButton) UI.elements.sparkButton.addEventListener('click', GameLogic.sparkFleetingThought);
+    if (UI?.elements?.sparkButton) UI.elements.sparkButton.addEventListener('click', GameLogic.sparkThought);
     if (UI?.elements?.combineButton) UI.elements.combineButton.addEventListener('click', GameLogic.attemptCombination);
     if (UI?.elements?.transcendButton) UI.elements.transcendButton.addEventListener('click', GameLogic.transcend);
 

@@ -1,289 +1,354 @@
 // js/config/craftersData.js
 
 /**
- * Defines the "Auto-Crafters" for the game.
- * These are special buildings that consume lower-tier ideas to automatically produce
- * higher-tier ideas (Insights, Theories, Paradigms).
- * Each crafter is unlocked upon the first manual discovery of its target idea.
+ * Defines the Auto-Crafters — buildings that consume lower-tier ideas to
+ * automatically produce higher-tier ones.
+ *
+ * Naming philosophy: each crafter name describes the intellectual process or
+ * the cognitive/institutional apparatus that would naturally produce that idea.
+ * Insight crafters are "engines" and "synthesisers"; Theory crafters are
+ * "institutes" and "laboratories"; Paradigm crafters are "institutes",
+ * "observatories", "academies", and "foundations".
  */
 const CRAFTERS_DATA = {
-    // --- Insight Crafters (6 total) ---
+
+    // =========================================================================
+    // Insight Crafters (6)
+    // Each consumes two base Concepts to produce one Insight.
+    // =========================================================================
+
+    insight_thermodynamics_crafter: {
+        id: 'insight_thermodynamics_crafter',
+        name: 'Thermodynamic Engine',
+        description: 'Feeds Matter and Energy into a cyclic reasoning loop, automatically generating Insight: Thermodynamics.',
+        targetIdeaId: 'insight_thermodynamics',
+        baseCost: { thought: 10000, concept_matter: 5, concept_energy: 5 },
+        costScale: 1.5, outputAmount: 0.01, outputScale: 1.1, maxLevel: 50,
+        unlocksWith: ['insight_thermodynamics']
+    },
     insight_structure_crafter: {
-        id: 'insight_structure_crafter', name: 'Structural Synthesizer',
-        description: 'Automates the combination of Duality and Pattern to produce Insight: Structure.',
+        id: 'insight_structure_crafter',
+        name: 'Structural Synthesiser',
+        description: 'Weaves Matter and Information together to continuously produce Insight: Structure.',
         targetIdeaId: 'insight_structure',
-        baseCost: { fleeting_thought: 10000, concept_duality: 5, concept_pattern: 5 },
+        baseCost: { thought: 10000, concept_matter: 5, concept_information: 5 },
         costScale: 1.5, outputAmount: 0.01, outputScale: 1.1, maxLevel: 50,
         unlocksWith: ['insight_structure']
     },
-    insight_substance_crafter: {
-        id: 'insight_substance_crafter', name: 'Substantial Assembler',
-        description: 'Automates the creation of Insight: Substance from Matter and Energy.',
-        targetIdeaId: 'insight_substance',
-        baseCost: { fleeting_thought: 12000, concept_matter: 5, concept_energy: 5 },
+    insight_entropy_crafter: {
+        id: 'insight_entropy_crafter',
+        name: 'Entropy Accumulator',
+        description: 'Tracks the dispersal of Matter across Time, distilling the concept of Insight: Entropy.',
+        targetIdeaId: 'insight_entropy',
+        baseCost: { thought: 10000, concept_matter: 5, concept_time: 5 },
         costScale: 1.5, outputAmount: 0.01, outputScale: 1.1, maxLevel: 50,
-        unlocksWith: ['insight_substance']
+        unlocksWith: ['insight_entropy']
     },
-    insight_causality_crafter: {
-        id: 'insight_causality_crafter', name: 'Causal Engine',
-        description: 'Automates the synthesis of Insight: Causality from Pattern and Energy.',
-        targetIdeaId: 'insight_causality',
-        baseCost:{fleeting_thought:11000,concept_pattern:5,concept_energy:5},
-        costScale:1.5, outputAmount:0.01, outputScale:1.1, maxLevel:50,
-        unlocksWith: ['insight_causality']
+    insight_signal_crafter: {
+        id: 'insight_signal_crafter',
+        name: 'Signal Modulator',
+        description: 'Encodes Energy as Information in a repeating cycle, producing Insight: Signal.',
+        targetIdeaId: 'insight_signal',
+        baseCost: { thought: 10000, concept_energy: 5, concept_information: 5 },
+        costScale: 1.5, outputAmount: 0.01, outputScale: 1.1, maxLevel: 50,
+        unlocksWith: ['insight_signal']
     },
-    insight_form_crafter: {
-        id: 'insight_form_crafter', name: 'Form Modulator',
-        description: 'Automates the shaping of Insight: Form from Duality and Matter.',
-        targetIdeaId: 'insight_form',
-        baseCost:{fleeting_thought:9000,concept_duality:5,concept_matter:5},
-        costScale:1.5, outputAmount:0.01, outputScale:1.1, maxLevel:50,
-        unlocksWith: ['insight_form']
+    insight_dynamics_crafter: {
+        id: 'insight_dynamics_crafter',
+        name: 'Dynamics Processor',
+        description: 'Traces the evolution of Energy through Time, generating Insight: Dynamics.',
+        targetIdeaId: 'insight_dynamics',
+        baseCost: { thought: 10000, concept_energy: 5, concept_time: 5 },
+        costScale: 1.5, outputAmount: 0.01, outputScale: 1.1, maxLevel: 50,
+        unlocksWith: ['insight_dynamics']
     },
-    insight_potential_crafter: {
-        id: 'insight_potential_crafter', name: 'Potential Harmonizer',
-        description: 'Automates the realization of Insight: Potential from Duality and Energy.',
-        targetIdeaId: 'insight_potential',
-        baseCost:{fleeting_thought:10000,concept_duality:5,concept_energy:5},
-        costScale:1.5, outputAmount:0.01, outputScale:1.1, maxLevel:50,
-        unlocksWith: ['insight_potential']
-    },
-    insight_mechanism_crafter: {
-        id: 'insight_mechanism_crafter', name: 'Mechanistic Weaver',
-        description: 'Automates the construction of Insight: Mechanism from Pattern and Matter.',
-        targetIdeaId: 'insight_mechanism',
-        baseCost:{fleeting_thought:11000,concept_pattern:5,concept_matter:5},
-        costScale:1.5, outputAmount:0.01, outputScale:1.1, maxLevel:50,
-        unlocksWith: ['insight_mechanism']
+    insight_memory_crafter: {
+        id: 'insight_memory_crafter',
+        name: 'Memory Consolidator',
+        description: 'Imprints Information against the flow of Time, steadily producing Insight: Memory.',
+        targetIdeaId: 'insight_memory',
+        baseCost: { thought: 10000, concept_information: 5, concept_time: 5 },
+        costScale: 1.5, outputAmount: 0.01, outputScale: 1.1, maxLevel: 50,
+        unlocksWith: ['insight_memory']
     },
 
-    // --- Theory Crafters (15 total) ---
-    theory_framework_crafter: {
-        id: 'theory_framework_crafter', name: 'Framework Theorem Prover',
-        description: 'Automates Theory: Framework from Structure and Causality.',
-        targetIdeaId: 'theory_framework',
-        baseCost: { fleeting_thought: 100000, insight_structure: 2, insight_causality: 2 },
+    // =========================================================================
+    // Theory Crafters (15)
+    // Each consumes two Insights to produce one Theory.
+    // =========================================================================
+
+    theory_materials_science_crafter: {
+        id: 'theory_materials_science_crafter',
+        name: 'Materials Research Laboratory',
+        description: 'Fuses Thermodynamics and Structure insights to systematically generate Theory: Materials Science.',
+        targetIdeaId: 'theory_materials_science',
+        baseCost: { thought: 100000, insight_thermodynamics: 2, insight_structure: 2 },
         costScale: 1.8, outputAmount: 0.005, outputScale: 1.1, maxLevel: 30,
-        unlocksWith: ['theory_framework']
+        unlocksWith: ['theory_materials_science']
     },
-    theory_architecture_crafter: {
-        id: 'theory_architecture_crafter', name: 'Architectural Blueprint Generator',
-        description: 'Automates Theory: Architecture from Structure and Form.',
-        targetIdeaId: 'theory_architecture',
-        baseCost: { fleeting_thought: 110000, insight_structure: 2, insight_form: 2 },
+    theory_statistical_mechanics_crafter: {
+        id: 'theory_statistical_mechanics_crafter',
+        name: 'Statistical Mechanics Institute',
+        description: 'Bridges Thermodynamics and Entropy to produce Theory: Statistical Mechanics.',
+        targetIdeaId: 'theory_statistical_mechanics',
+        baseCost: { thought: 110000, insight_thermodynamics: 2, insight_entropy: 2 },
         costScale: 1.8, outputAmount: 0.005, outputScale: 1.1, maxLevel: 30,
-        unlocksWith: ['theory_architecture']
+        unlocksWith: ['theory_statistical_mechanics']
     },
-    theory_metaphysics_crafter: {
-        id: 'theory_metaphysics_crafter', name: 'Metaphysical Inquiry Engine',
-        description: 'Automates Theory: Metaphysics from Structure and Potential.',
-        targetIdeaId: 'theory_metaphysics',
-        baseCost: { fleeting_thought: 120000, insight_structure: 2, insight_potential: 2 },
+    theory_electromagnetic_theory_crafter: {
+        id: 'theory_electromagnetic_theory_crafter',
+        name: 'Electromagnetic Research Centre',
+        description: 'Unifies Thermodynamics and Signal insights to produce Theory: Electromagnetism.',
+        targetIdeaId: 'theory_electromagnetic_theory',
+        baseCost: { thought: 120000, insight_thermodynamics: 2, insight_signal: 2 },
         costScale: 1.8, outputAmount: 0.005, outputScale: 1.1, maxLevel: 30,
-        unlocksWith: ['theory_metaphysics']
+        unlocksWith: ['theory_electromagnetic_theory']
     },
-    theory_cybernetics_crafter: {
-        id: 'theory_cybernetics_crafter', name: 'Cybernetic Core Constructor',
-        description: 'Automates Theory: Cybernetics from Structure and Mechanism.',
-        targetIdeaId: 'theory_cybernetics',
-        baseCost: { fleeting_thought: 130000, insight_structure: 2, insight_mechanism: 2 },
+    theory_classical_mechanics_crafter: {
+        id: 'theory_classical_mechanics_crafter',
+        name: 'Classical Mechanics Laboratory',
+        description: 'Derives motion laws from Thermodynamics and Dynamics to produce Theory: Classical Mechanics.',
+        targetIdeaId: 'theory_classical_mechanics',
+        baseCost: { thought: 130000, insight_thermodynamics: 2, insight_dynamics: 2 },
         costScale: 1.8, outputAmount: 0.005, outputScale: 1.1, maxLevel: 30,
-        unlocksWith: ['theory_cybernetics']
+        unlocksWith: ['theory_classical_mechanics']
     },
-    theory_cosmology_crafter: {
-        id: 'theory_cosmology_crafter', name: 'Cosmological Modeler',
-        description: 'Automates Theory: Cosmology from Structure and Substance.',
-        targetIdeaId: 'theory_cosmology',
-        baseCost: { fleeting_thought: 150000, insight_structure: 2, insight_substance: 2 },
-        costScale: 1.8, outputAmount: 0.004, outputScale: 1.1, maxLevel: 30,
-        unlocksWith: ['theory_cosmology']
-    },
-    theory_ontology_crafter: {
-        id: 'theory_ontology_crafter', name: 'Ontological Classifier',
-        description: 'Automates Theory: Ontology from Substance and Form.',
-        targetIdeaId: 'theory_ontology',
-        baseCost: { fleeting_thought: 140000, insight_substance: 2, insight_form: 2 },
-        costScale: 1.8, outputAmount: 0.0045, outputScale: 1.1, maxLevel: 30,
-        unlocksWith: ['theory_ontology']
-    },
-    theory_thermodynamics_crafter: {
-        id: 'theory_thermodynamics_crafter', name: 'Thermo-Dynamic Simulator',
-        description: 'Automates Theory: Thermodynamics from Substance and Potential.',
-        targetIdeaId: 'theory_thermodynamics',
-        baseCost: { fleeting_thought: 160000, insight_substance: 2, insight_potential: 2 },
-        costScale: 1.8, outputAmount: 0.004, outputScale: 1.1, maxLevel: 30,
-        unlocksWith: ['theory_thermodynamics']
-    },
-    theory_engineering_crafter: {
-        id: 'theory_engineering_crafter', name: 'Engineering Design Suite',
-        description: 'Automates Theory: Engineering from Substance and Mechanism.',
-        targetIdeaId: 'theory_engineering',
-        baseCost: { fleeting_thought: 170000, insight_substance: 2, insight_mechanism: 2 },
-        costScale: 1.8, outputAmount: 0.0035, outputScale: 1.1, maxLevel: 30,
-        unlocksWith: ['theory_engineering']
-    },
-    theory_physics_crafter: {
-        id: 'theory_physics_crafter', name: 'Unified Physics Postulator',
-        description: 'Automates Theory: Physics from Substance and Causality.',
-        targetIdeaId: 'theory_physics',
-        baseCost: { fleeting_thought: 180000, insight_substance: 2, insight_causality: 2 },
-        costScale: 1.8, outputAmount: 0.003, outputScale: 1.1, maxLevel: 30,
-        unlocksWith: ['theory_physics']
-    },
-    theory_aesthetics_crafter: {
-        id: 'theory_aesthetics_crafter', name: 'Aesthetic Principle Synthesizer',
-        description: 'Automates Theory: Aesthetics from Causality and Form.',
-        targetIdeaId: 'theory_aesthetics',
-        baseCost: { fleeting_thought: 125000, insight_causality: 2, insight_form: 2 },
+    theory_chemical_kinetics_crafter: {
+        id: 'theory_chemical_kinetics_crafter',
+        name: 'Kinetics Analysis Engine',
+        description: 'Combines Thermodynamics and Memory insights to produce Theory: Chemical Kinetics.',
+        targetIdeaId: 'theory_chemical_kinetics',
+        baseCost: { thought: 110000, insight_thermodynamics: 2, insight_memory: 2 },
         costScale: 1.8, outputAmount: 0.005, outputScale: 1.1, maxLevel: 30,
-        unlocksWith: ['theory_aesthetics']
+        unlocksWith: ['theory_chemical_kinetics']
     },
-    theory_information_crafter: {
-        id: 'theory_information_crafter', name: 'Information Flow Modeler',
-        description: 'Automates Theory: Information from Causality and Potential.',
-        targetIdeaId: 'theory_information',
-        baseCost: { fleeting_thought: 135000, insight_causality: 2, insight_potential: 2 },
-        costScale: 1.8, outputAmount: 0.0048, outputScale: 1.1, maxLevel: 30,
-        unlocksWith: ['theory_information']
-    },
-    theory_logic_crafter: {
-        id: 'theory_logic_crafter', name: 'Logical Deduction Engine',
-        description: 'Automates Theory: Logic from Causality and Mechanism.',
-        targetIdeaId: 'theory_logic',
-        baseCost: { fleeting_thought: 145000, insight_causality: 2, insight_mechanism: 2 },
-        costScale: 1.8, outputAmount: 0.0046, outputScale: 1.1, maxLevel: 30,
-        unlocksWith: ['theory_logic']
-    },
-    theory_morphology_crafter: {
-        id: 'theory_morphology_crafter', name: 'Morphogenetic Patterner',
-        description: 'Automates Theory: Morphology from Form and Potential.',
-        targetIdeaId: 'theory_morphology',
-        baseCost: { fleeting_thought: 130000, insight_form: 2, insight_potential: 2 },
+    theory_geology_crafter: {
+        id: 'theory_geology_crafter',
+        name: 'Deep Time Observatory',
+        description: 'Reads Structure against Entropy to generate Theory: Geology.',
+        targetIdeaId: 'theory_geology',
+        baseCost: { thought: 100000, insight_structure: 2, insight_entropy: 2 },
         costScale: 1.8, outputAmount: 0.005, outputScale: 1.1, maxLevel: 30,
-        unlocksWith: ['theory_morphology']
+        unlocksWith: ['theory_geology']
     },
-    theory_system_dynamics_crafter: {
-        id: 'theory_system_dynamics_crafter', name: 'System Evolution Predictor',
-        description: 'Automates Theory: System Dynamics from Form and Mechanism.',
-        targetIdeaId: 'theory_system_dynamics',
-        baseCost: { fleeting_thought: 140000, insight_form: 2, insight_mechanism: 2 },
-        costScale: 1.8, outputAmount: 0.0047, outputScale: 1.1, maxLevel: 30,
-        unlocksWith: ['theory_system_dynamics']
+    theory_crystallography_crafter: {
+        id: 'theory_crystallography_crafter',
+        name: 'Lattice Mapping Array',
+        description: 'Decodes Signal patterns within Structure to produce Theory: Crystallography.',
+        targetIdeaId: 'theory_crystallography',
+        baseCost: { thought: 110000, insight_structure: 2, insight_signal: 2 },
+        costScale: 1.8, outputAmount: 0.005, outputScale: 1.1, maxLevel: 30,
+        unlocksWith: ['theory_crystallography']
     },
-    theory_computation_crafter: {
-        id: 'theory_computation_crafter', name: 'Algorithmic Thought Processor',
-        description: 'Automates Theory: Computation from Potential and Mechanism.',
-        targetIdeaId: 'theory_computation',
-        baseCost: { fleeting_thought: 155000, insight_potential: 2, insight_mechanism: 2 },
-        costScale: 1.8, outputAmount: 0.0042, outputScale: 1.1, maxLevel: 30,
-        unlocksWith: ['theory_computation']
+    theory_fluid_dynamics_crafter: {
+        id: 'theory_fluid_dynamics_crafter',
+        name: 'Flow Dynamics Simulator',
+        description: 'Models Structure in motion through Dynamics insights to produce Theory: Fluid Dynamics.',
+        targetIdeaId: 'theory_fluid_dynamics',
+        baseCost: { thought: 120000, insight_structure: 2, insight_dynamics: 2 },
+        costScale: 1.8, outputAmount: 0.005, outputScale: 1.1, maxLevel: 30,
+        unlocksWith: ['theory_fluid_dynamics']
+    },
+    theory_archaeology_crafter: {
+        id: 'theory_archaeology_crafter',
+        name: 'Stratigraphic Archive',
+        description: 'Recovers Memory embedded in physical Structure to produce Theory: Archaeology.',
+        targetIdeaId: 'theory_archaeology',
+        baseCost: { thought: 100000, insight_structure: 2, insight_memory: 2 },
+        costScale: 1.8, outputAmount: 0.005, outputScale: 1.1, maxLevel: 30,
+        unlocksWith: ['theory_archaeology']
+    },
+    theory_information_theory_crafter: {
+        id: 'theory_information_theory_crafter',
+        name: 'Shannon Codex Engine',
+        description: 'Formalises the relationship between Entropy and Signal to generate Theory: Information Theory.',
+        targetIdeaId: 'theory_information_theory',
+        baseCost: { thought: 140000, insight_entropy: 2, insight_signal: 2 },
+        costScale: 1.8, outputAmount: 0.005, outputScale: 1.1, maxLevel: 30,
+        unlocksWith: ['theory_information_theory']
+    },
+    theory_chaos_theory_crafter: {
+        id: 'theory_chaos_theory_crafter',
+        name: 'Nonlinear Dynamics Laboratory',
+        description: 'Tracks Entropy unfolding through Dynamics to produce Theory: Chaos Theory.',
+        targetIdeaId: 'theory_chaos_theory',
+        baseCost: { thought: 130000, insight_entropy: 2, insight_dynamics: 2 },
+        costScale: 1.8, outputAmount: 0.005, outputScale: 1.1, maxLevel: 30,
+        unlocksWith: ['theory_chaos_theory']
+    },
+    theory_evolutionary_theory_crafter: {
+        id: 'theory_evolutionary_theory_crafter',
+        name: 'Evolutionary Archive',
+        description: 'Traces Entropic variation accumulating in Memory over time to produce Theory: Evolutionary Theory.',
+        targetIdeaId: 'theory_evolutionary_theory',
+        baseCost: { thought: 125000, insight_entropy: 2, insight_memory: 2 },
+        costScale: 1.8, outputAmount: 0.005, outputScale: 1.1, maxLevel: 30,
+        unlocksWith: ['theory_evolutionary_theory']
+    },
+    theory_wave_mechanics_crafter: {
+        id: 'theory_wave_mechanics_crafter',
+        name: 'Wave Propagation Array',
+        description: 'Models Signal propagating through dynamic media to produce Theory: Wave Mechanics.',
+        targetIdeaId: 'theory_wave_mechanics',
+        baseCost: { thought: 150000, insight_signal: 2, insight_dynamics: 2 },
+        costScale: 1.8, outputAmount: 0.005, outputScale: 1.1, maxLevel: 30,
+        unlocksWith: ['theory_wave_mechanics']
+    },
+    theory_cognitive_science_crafter: {
+        id: 'theory_cognitive_science_crafter',
+        name: 'Mind Mapping Institute',
+        description: 'Studies how Signal is stored as Memory to produce Theory: Cognitive Science.',
+        targetIdeaId: 'theory_cognitive_science',
+        baseCost: { thought: 155000, insight_signal: 2, insight_memory: 2 },
+        costScale: 1.8, outputAmount: 0.005, outputScale: 1.1, maxLevel: 30,
+        unlocksWith: ['theory_cognitive_science']
+    },
+    theory_historiography_crafter: {
+        id: 'theory_historiography_crafter',
+        name: 'Historical Dynamics Centre',
+        description: 'Reconstructs Memory from the traces left by Dynamics to produce Theory: Historiography.',
+        targetIdeaId: 'theory_historiography',
+        baseCost: { thought: 105000, insight_dynamics: 2, insight_memory: 2 },
+        costScale: 1.8, outputAmount: 0.005, outputScale: 1.1, maxLevel: 30,
+        unlocksWith: ['theory_historiography']
     },
 
-    // --- Paradigm Crafters (105 total) ---
-    // Note: These costs and outputs are placeholders and will require significant balancing for endgame progression.
-    paradigm_structural_design_crafter: { id: 'paradigm_structural_design_crafter', name: 'Structural Design Matrix', description: 'Automates Paradigm: Structural Design.', targetIdeaId: 'paradigm_structural_design', baseCost: { fleeting_thought: 5000000, theory_framework: 3, theory_architecture: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_structural_design']},
-    paradigm_foundational_reality_crafter: { id: 'paradigm_foundational_reality_crafter', name: 'Reality Fabricator Core', description: 'Automates Paradigm: Foundational Reality.', targetIdeaId: 'paradigm_foundational_reality', baseCost: { fleeting_thought: 5100000, theory_framework: 3, theory_metaphysics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_foundational_reality']},
-    paradigm_control_theory_synthesis_crafter: { id: 'paradigm_control_theory_synthesis_crafter', name: 'Control Synthesis Nexus', description: 'Automates Paradigm: Control Theory Synthesis.', targetIdeaId: 'paradigm_control_theory_synthesis', baseCost: { fleeting_thought: 5200000, theory_framework: 3, theory_cybernetics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_control_theory_synthesis']},
-    paradigm_cosmic_blueprint_crafter: { id: 'paradigm_cosmic_blueprint_crafter', name: 'Cosmic Blueprint Weaver', description: 'Automates Paradigm: Cosmic Blueprint.', targetIdeaId: 'paradigm_cosmic_blueprint', baseCost: { fleeting_thought: 5300000, theory_framework: 3, theory_cosmology: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_cosmic_blueprint']},
-    paradigm_existential_framework_crafter: { id: 'paradigm_existential_framework_crafter', name: 'Existential Framework Engine', description: 'Automates Paradigm: Existential Framework.', targetIdeaId: 'paradigm_existential_framework', baseCost: { fleeting_thought: 5400000, theory_framework: 3, theory_ontology: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_existential_framework']},
-    paradigm_energetic_systems_analysis_crafter: { id: 'paradigm_energetic_systems_analysis_crafter', name: 'Energetic Systems Analyzer', description: 'Automates Paradigm: Energetic Systems Analysis.', targetIdeaId: 'paradigm_energetic_systems_analysis', baseCost: { fleeting_thought: 5500000, theory_framework: 3, theory_thermodynamics: 3 }, costScale: 2.5, outputAmount: 0.00018, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_energetic_systems_analysis']},
-    paradigm_applied_mechanics_principles_crafter: { id: 'paradigm_applied_mechanics_principles_crafter', name: 'Applied Mechanics Forge', description: 'Automates Paradigm: Applied Mechanics Principles.', targetIdeaId: 'paradigm_applied_mechanics_principles', baseCost: { fleeting_thought: 5600000, theory_framework: 3, theory_engineering: 3 }, costScale: 2.5, outputAmount: 0.00018, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_applied_mechanics_principles']},
-    paradigm_unified_field_exploration_crafter: { id: 'paradigm_unified_field_exploration_crafter', name: 'Unified Field Explorer', description: 'Automates Paradigm: Unified Field Exploration.', targetIdeaId: 'paradigm_unified_field_exploration', baseCost: { fleeting_thought: 5700000, theory_framework: 3, theory_physics: 3 }, costScale: 2.5, outputAmount: 0.00017, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_unified_field_exploration']},
-    paradigm_causal_aesthetics_crafter: { id: 'paradigm_causal_aesthetics_crafter', name: 'Causal Aesthetics Catalyst', description: 'Automates Paradigm: Causal Aesthetics.', targetIdeaId: 'paradigm_causal_aesthetics', baseCost: { fleeting_thought: 5800000, theory_framework: 3, theory_aesthetics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_causal_aesthetics']},
-    paradigm_information_architecture_crafter: { id: 'paradigm_information_architecture_crafter', name: 'Info-Architecture Assembler', description: 'Automates Paradigm: Information Architecture.', targetIdeaId: 'paradigm_information_architecture', baseCost: { fleeting_thought: 5900000, theory_framework: 3, theory_information: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_information_architecture']},
-    paradigm_logical_systems_design_crafter: { id: 'paradigm_logical_systems_design_crafter', name: 'Logical Systems Constructor', description: 'Automates Paradigm: Logical Systems Design.', targetIdeaId: 'paradigm_logical_systems_design', baseCost: { fleeting_thought: 6000000, theory_framework: 3, theory_logic: 3 }, costScale: 2.5, outputAmount: 0.00018, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_logical_systems_design']},
-    paradigm_morphogenetic_fields_crafter: { id: 'paradigm_morphogenetic_fields_crafter', name: 'Morphogenetic Field Projector', description: 'Automates Paradigm: Morphogenetic Fields.', targetIdeaId: 'paradigm_morphogenetic_fields', baseCost: { fleeting_thought: 6100000, theory_framework: 3, theory_morphology: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_morphogenetic_fields']},
-    paradigm_complex_adaptive_systems_crafter: { id: 'paradigm_complex_adaptive_systems_crafter', name: 'Complex Systems Modeler', description: 'Automates Paradigm: Complex Adaptive Systems.', targetIdeaId: 'paradigm_complex_adaptive_systems', baseCost: { fleeting_thought: 6200000, theory_framework: 3, theory_system_dynamics: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_complex_adaptive_systems']},
-    paradigm_computational_frameworks_crafter: { id: 'paradigm_computational_frameworks_crafter', name: 'Computational Framework Builder', description: 'Automates Paradigm: Computational Frameworks.', targetIdeaId: 'paradigm_computational_frameworks', baseCost: { fleeting_thought: 6300000, theory_framework: 3, theory_computation: 3 }, costScale: 2.5, outputAmount: 0.00018, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_computational_frameworks']},
-    paradigm_metaphysical_architecture_crafter: { id: 'paradigm_metaphysical_architecture_crafter', name: 'Metaphysical Architecture Spire', description: 'Automates Paradigm: Metaphysical Architecture.', targetIdeaId: 'paradigm_metaphysical_architecture', baseCost: { fleeting_thought: 6400000, theory_architecture: 3, theory_metaphysics: 3 }, costScale: 2.5, outputAmount: 0.00017, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_metaphysical_architecture']},
-    paradigm_intelligent_environments_crafter: { id: 'paradigm_intelligent_environments_crafter', name: 'Intelligent Environment Grid', description: 'Automates Paradigm: Intelligent Environments.', targetIdeaId: 'paradigm_intelligent_environments', baseCost: { fleeting_thought: 6500000, theory_architecture: 3, theory_cybernetics: 3 }, costScale: 2.5, outputAmount: 0.00017, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_intelligent_environments']},
-    paradigm_cosmic_structures_crafter: { id: 'paradigm_cosmic_structures_crafter', name: 'Cosmic Structure Weaver', description: 'Automates Paradigm: Cosmic Structures.', targetIdeaId: 'paradigm_cosmic_structures', baseCost: { fleeting_thought: 6600000, theory_architecture: 3, theory_cosmology: 3 }, costScale: 2.5, outputAmount: 0.00016, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_cosmic_structures']},
-    paradigm_phenomenological_design_crafter: { id: 'paradigm_phenomenological_design_crafter', name: 'Phenomenological Design Studio', description: 'Automates Paradigm: Phenomenological Design.', targetIdeaId: 'paradigm_phenomenological_design', baseCost: { fleeting_thought: 6700000, theory_architecture: 3, theory_ontology: 3 }, costScale: 2.5, outputAmount: 0.00016, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_phenomenological_design']},
-    paradigm_sustainable_architecture_crafter: { id: 'paradigm_sustainable_architecture_crafter', name: 'Sustainable Architecture Nexus', description: 'Automates Paradigm: Sustainable Architecture.', targetIdeaId: 'paradigm_sustainable_architecture', baseCost: { fleeting_thought: 6800000, theory_architecture: 3, theory_thermodynamics: 3 }, costScale: 2.5, outputAmount: 0.00015, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_sustainable_architecture']},
-    paradigm_structural_engineering_mastery_crafter: { id: 'paradigm_structural_engineering_mastery_crafter', name: 'Structural Mastery Forge', description: 'Automates Paradigm: Structural Engineering Mastery.', targetIdeaId: 'paradigm_structural_engineering_mastery', baseCost: { fleeting_thought: 6900000, theory_architecture: 3, theory_engineering: 3 }, costScale: 2.5, outputAmount: 0.00015, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_structural_engineering_mastery']},
-    paradigm_physical_manifestation_principles_crafter: { id: 'paradigm_physical_manifestation_principles_crafter', name: 'Physical Manifestation Engine', description: 'Automates Paradigm: Physical Manifestation.', targetIdeaId: 'paradigm_physical_manifestation_principles', baseCost: { fleeting_thought: 7000000, theory_architecture: 3, theory_physics: 3 }, costScale: 2.5, outputAmount: 0.00014, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_physical_manifestation_principles']},
-    paradigm_harmonious_design_crafter: { id: 'paradigm_harmonious_design_crafter', name: 'Harmonious Design Catalyst', description: 'Automates Paradigm: Harmonious Design.', targetIdeaId: 'paradigm_harmonious_design', baseCost: { fleeting_thought: 7100000, theory_architecture: 3, theory_aesthetics: 3 }, costScale: 2.5, outputAmount: 0.00017, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_harmonious_design']},
-    paradigm_semantic_architecture_crafter: { id: 'paradigm_semantic_architecture_crafter', name: 'Semantic Architecture Core', description: 'Automates Paradigm: Semantic Architecture.', targetIdeaId: 'paradigm_semantic_architecture', baseCost: { fleeting_thought: 7200000, theory_architecture: 3, theory_information: 3 }, costScale: 2.5, outputAmount: 0.00016, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_semantic_architecture']},
-    paradigm_rational_design_methodology_crafter: { id: 'paradigm_rational_design_methodology_crafter', name: 'Rational Design Matrix', description: 'Automates Paradigm: Rational Design Methodology.', targetIdeaId: 'paradigm_rational_design_methodology', baseCost: { fleeting_thought: 7300000, theory_architecture: 3, theory_logic: 3 }, costScale: 2.5, outputAmount: 0.00015, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_rational_design_methodology']},
-    paradigm_bio_mimetic_architecture_crafter: { id: 'paradigm_bio_mimetic_architecture_crafter', name: 'Bio-Mimetic Forge', description: 'Automates Paradigm: Bio-Mimetic Architecture.', targetIdeaId: 'paradigm_bio_mimetic_architecture', baseCost: { fleeting_thought: 7400000, theory_architecture: 3, theory_morphology: 3 }, costScale: 2.5, outputAmount: 0.00017, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_bio_mimetic_architecture']},
-    paradigm_dynamic_environments_crafter: { id: 'paradigm_dynamic_environments_crafter', name: 'Dynamic Environment Simulator', description: 'Automates Paradigm: Dynamic Environments.', targetIdeaId: 'paradigm_dynamic_environments', baseCost: { fleeting_thought: 7500000, theory_architecture: 3, theory_system_dynamics: 3 }, costScale: 2.5, outputAmount: 0.00016, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_dynamic_environments']},
-    paradigm_generative_design_crafter: { id: 'paradigm_generative_design_crafter', name: 'Generative Design Engine', description: 'Automates Paradigm: Generative Design.', targetIdeaId: 'paradigm_generative_design', baseCost: { fleeting_thought: 7600000, theory_architecture: 3, theory_computation: 3 }, costScale: 2.5, outputAmount: 0.00015, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_generative_design']},
-    paradigm_cybernetic_consciousness_crafter: { id: 'paradigm_cybernetic_consciousness_crafter', name: 'Consciousness Core', description: 'Automates Paradigm: Cybernetic Consciousness.', targetIdeaId: 'paradigm_cybernetic_consciousness', baseCost: { fleeting_thought: 7700000, theory_metaphysics: 3, theory_cybernetics: 3 }, costScale: 2.5, outputAmount: 0.00014, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_cybernetic_consciousness']},
-    paradigm_cosmic_potentiality_crafter: { id: 'paradigm_cosmic_potentiality_crafter', name: 'Cosmic Potentiality Well', description: 'Automates Paradigm: Cosmic Potentiality.', targetIdeaId: 'paradigm_cosmic_potentiality', baseCost: { fleeting_thought: 7800000, theory_metaphysics: 3, theory_cosmology: 3 }, costScale: 2.5, outputAmount: 0.00014, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_cosmic_potentiality']},
-    paradigm_ontological_potential_crafter: { id: 'paradigm_ontological_potential_crafter', name: 'Ontological Potential Matrix', description: 'Automates Paradigm: Ontological Potential.', targetIdeaId: 'paradigm_ontological_potential', baseCost: { fleeting_thought: 7900000, theory_metaphysics: 3, theory_ontology: 3 }, costScale: 2.5, outputAmount: 0.00013, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_ontological_potential']},
-    paradigm_thermodynamic_idealism_crafter: { id: 'paradigm_thermodynamic_idealism_crafter', name: 'Thermodynamic Idealism Core', description: 'Automates Paradigm: Thermodynamic Idealism.', targetIdeaId: 'paradigm_thermodynamic_idealism', baseCost: { fleeting_thought: 8000000, theory_metaphysics: 3, theory_thermodynamics: 3 }, costScale: 2.5, outputAmount: 0.00013, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_thermodynamic_idealism']},
-    paradigm_transcendental_engineering_crafter: { id: 'paradigm_transcendental_engineering_crafter', name: 'Transcendental Engineering Nexus', description: 'Automates Paradigm: Transcendental Engineering.', targetIdeaId: 'paradigm_transcendental_engineering', baseCost: { fleeting_thought: 8100000, theory_metaphysics: 3, theory_engineering: 3 }, costScale: 2.5, outputAmount: 0.00012, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_transcendental_engineering']},
-    paradigm_quantum_metaphysics_crafter: { id: 'paradigm_quantum_metaphysics_crafter', name: 'Quantum Metaphysics Engine', description: 'Automates Paradigm: Quantum Metaphysics.', targetIdeaId: 'paradigm_quantum_metaphysics', baseCost: { fleeting_thought: 8200000, theory_metaphysics: 3, theory_physics: 3 }, costScale: 2.5, outputAmount: 0.00012, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_quantum_metaphysics']},
-    paradigm_aesthetic_idealism_crafter: { id: 'paradigm_aesthetic_idealism_crafter', name: 'Aesthetic Idealism Synthesizer', description: 'Automates Paradigm: Aesthetic Idealism.', targetIdeaId: 'paradigm_aesthetic_idealism', baseCost: { fleeting_thought: 8300000, theory_metaphysics: 3, theory_aesthetics: 3 }, costScale: 2.5, outputAmount: 0.00014, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_aesthetic_idealism']},
-    paradigm_informational_potential_crafter: { id: 'paradigm_informational_potential_crafter', name: 'Informational Potential Matrix', description: 'Automates Paradigm: Informational Potential.', targetIdeaId: 'paradigm_informational_potential', baseCost: { fleeting_thought: 8400000, theory_metaphysics: 3, theory_information: 3 }, costScale: 2.5, outputAmount: 0.00013, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_informational_potential']},
-    paradigm_logical_positivism_reimagined_crafter: { id: 'paradigm_logical_positivism_reimagined_crafter', name: 'Logical Positivism Engine', description: 'Automates Paradigm: Logical Positivism Reimagined.', targetIdeaId: 'paradigm_logical_positivism_reimagined', baseCost: { fleeting_thought: 8500000, theory_metaphysics: 3, theory_logic: 3 }, costScale: 2.5, outputAmount: 0.00012, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_logical_positivism_reimagined']},
-    paradigm_developmental_metaphysics_crafter: { id: 'paradigm_developmental_metaphysics_crafter', name: 'Developmental Metaphysics Core', description: 'Automates Paradigm: Developmental Metaphysics.', targetIdeaId: 'paradigm_developmental_metaphysics', baseCost: { fleeting_thought: 8600000, theory_metaphysics: 3, theory_morphology: 3 }, costScale: 2.5, outputAmount: 0.00014, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_developmental_metaphysics']},
-    paradigm_systemic_potential_crafter: { id: 'paradigm_systemic_potential_crafter', name: 'Systemic Potential Nexus', description: 'Automates Paradigm: Systemic Potential.', targetIdeaId: 'paradigm_systemic_potential', baseCost: { fleeting_thought: 8700000, theory_metaphysics: 3, theory_system_dynamics: 3 }, costScale: 2.5, outputAmount: 0.00013, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_systemic_potential']},
-    paradigm_computational_metaphysics_crafter: { id: 'paradigm_computational_metaphysics_crafter', name: 'Computational Metaphysics Engine', description: 'Automates Paradigm: Computational Metaphysics.', targetIdeaId: 'paradigm_computational_metaphysics', baseCost: { fleeting_thought: 8800000, theory_metaphysics: 3, theory_computation: 3 }, costScale: 2.5, outputAmount: 0.00012, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_computational_metaphysics']},
-    paradigm_cosmic_cybernetics_crafter: { id: 'paradigm_cosmic_cybernetics_crafter', name: 'Cosmic Cybernetics Core', description: 'Automates Paradigm: Cosmic Cybernetics.', targetIdeaId: 'paradigm_cosmic_cybernetics', baseCost: { fleeting_thought: 8900000, theory_cybernetics: 3, theory_cosmology: 3 }, costScale: 2.5, outputAmount: 0.00011, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_cosmic_cybernetics']},
-    paradigm_ontological_cybernetics_crafter: { id: 'paradigm_ontological_cybernetics_crafter', name: 'Ontological Cybernetics Matrix', description: 'Automates Paradigm: Ontological Cybernetics.', targetIdeaId: 'paradigm_ontological_cybernetics', baseCost: { fleeting_thought: 9000000, theory_cybernetics: 3, theory_ontology: 3 }, costScale: 2.5, outputAmount: 0.00012, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_ontological_cybernetics']},
-    paradigm_thermodynamic_control_crafter: { id: 'paradigm_thermodynamic_control_crafter', name: 'Thermodynamic Control Nexus', description: 'Automates Paradigm: Thermodynamic Control.', targetIdeaId: 'paradigm_thermodynamic_control', baseCost: { fleeting_thought: 9100000, theory_cybernetics: 3, theory_thermodynamics: 3 }, costScale: 2.5, outputAmount: 0.00011, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_thermodynamic_control']},
-    paradigm_advanced_robotics_crafter: { id: 'paradigm_advanced_robotics_crafter', name: 'Advanced Robotics Fabricator', description: 'Automates Paradigm: Advanced Robotics.', targetIdeaId: 'paradigm_advanced_robotics', baseCost: { fleeting_thought: 9200000, theory_cybernetics: 3, theory_engineering: 3 }, costScale: 2.5, outputAmount: 0.00011, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_advanced_robotics']},
-    paradigm_physical_systems_control_crafter: { id: 'paradigm_physical_systems_control_crafter', name: 'Physical Systems Controller', description: 'Automates Paradigm: Physical Systems Control.', targetIdeaId: 'paradigm_physical_systems_control', baseCost: { fleeting_thought: 9300000, theory_cybernetics: 3, theory_physics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_physical_systems_control']},
-    paradigm_aesthetic_interaction_crafter: { id: 'paradigm_aesthetic_interaction_crafter', name: 'Aesthetic Interaction Core', description: 'Automates Paradigm: Aesthetic Interaction.', targetIdeaId: 'paradigm_aesthetic_interaction', baseCost: { fleeting_thought: 9400000, theory_cybernetics: 3, theory_aesthetics: 3 }, costScale: 2.5, outputAmount: 0.00013, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_aesthetic_interaction']},
-    paradigm_information_control_systems_crafter: { id: 'paradigm_information_control_systems_crafter', name: 'Info-Control Systems Grid', description: 'Automates Paradigm: Information Control Systems.', targetIdeaId: 'paradigm_information_control_systems', baseCost: { fleeting_thought: 9500000, theory_cybernetics: 3, theory_information: 3 }, costScale: 2.5, outputAmount: 0.00012, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_information_control_systems']},
-    paradigm_logical_control_crafter: { id: 'paradigm_logical_control_crafter', name: 'Logical Control Matrix', description: 'Automates Paradigm: Logical Control.', targetIdeaId: 'paradigm_logical_control', baseCost: { fleeting_thought: 9600000, theory_cybernetics: 3, theory_logic: 3 }, costScale: 2.5, outputAmount: 0.00011, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_logical_control']},
-    paradigm_bio_cybernetics_crafter: { id: 'paradigm_bio_cybernetics_crafter', name: 'Bio-Cybernetics Nexus', description: 'Automates Paradigm: Bio-Cybernetics.', targetIdeaId: 'paradigm_bio_cybernetics', baseCost: { fleeting_thought: 9700000, theory_cybernetics: 3, theory_morphology: 3 }, costScale: 2.5, outputAmount: 0.00012, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_bio_cybernetics']},
-    paradigm_socio_technical_systems_crafter: { id: 'paradigm_socio_technical_systems_crafter', name: 'Socio-Technical Systems Modeler', description: 'Automates Paradigm: Socio-Technical Systems.', targetIdeaId: 'paradigm_socio_technical_systems', baseCost: { fleeting_thought: 9800000, theory_cybernetics: 3, theory_system_dynamics: 3 }, costScale: 2.5, outputAmount: 0.00011, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_socio_technical_systems']},
-    paradigm_artificial_intelligence_foundations_crafter: { id: 'paradigm_artificial_intelligence_foundations_crafter', name: 'AI Foundation Core', description: 'Automates Paradigm: Artificial Intelligence Foundations.', targetIdeaId: 'paradigm_artificial_intelligence_foundations', baseCost: { fleeting_thought: 9900000, theory_cybernetics: 3, theory_computation: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_artificial_intelligence_foundations']},
-    paradigm_ontological_cosmology_crafter: { id: 'paradigm_ontological_cosmology_crafter', name: 'Ontological Cosmology Engine', description: 'Automates Paradigm: Ontological Cosmology.', targetIdeaId: 'paradigm_ontological_cosmology', baseCost: { fleeting_thought: 10000000, theory_cosmology: 3, theory_ontology: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_ontological_cosmology']},
-    paradigm_cosmic_thermodynamics_crafter: { id: 'paradigm_cosmic_thermodynamics_crafter', name: 'Cosmic Thermodynamics Core', description: 'Automates Paradigm: Cosmic Thermodynamics.', targetIdeaId: 'paradigm_cosmic_thermodynamics', baseCost: { fleeting_thought: 10100000, theory_cosmology: 3, theory_thermodynamics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_cosmic_thermodynamics']},
-    paradigm_astro_engineering_crafter: { id: 'paradigm_astro_engineering_crafter', name: 'Astro-Engineering Forge', description: 'Automates Paradigm: Astro-Engineering.', targetIdeaId: 'paradigm_astro_engineering', baseCost: { fleeting_thought: 10200000, theory_cosmology: 3, theory_engineering: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_astro_engineering']},
-    paradigm_grand_unification_theory_crafter: { id: 'paradigm_grand_unification_theory_crafter', name: 'Grand Unification Matrix', description: 'Automates Paradigm: Grand Unification.', targetIdeaId: 'paradigm_grand_unification_theory', baseCost: { fleeting_thought: 10300000, theory_cosmology: 3, theory_physics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_grand_unification_theory']},
-    paradigm_cosmic_aesthetics_crafter: { id: 'paradigm_cosmic_aesthetics_crafter', name: 'Cosmic Aesthetics Synthesizer', description: 'Automates Paradigm: Cosmic Aesthetics.', targetIdeaId: 'paradigm_cosmic_aesthetics', baseCost: { fleeting_thought: 10400000, theory_cosmology: 3, theory_aesthetics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_cosmic_aesthetics']},
-    paradigm_cosmic_information_density_crafter: { id: 'paradigm_cosmic_information_density_crafter', name: 'Cosmic Info-Density Core', description: 'Automates Paradigm: Cosmic Information Density.', targetIdeaId: 'paradigm_cosmic_information_density', baseCost: { fleeting_thought: 10500000, theory_cosmology: 3, theory_information: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_cosmic_information_density']},
-    paradigm_cosmological_argument_revisited_crafter: { id: 'paradigm_cosmological_argument_revisited_crafter', name: 'Cosmological Argument Engine', description: 'Automates Paradigm: Cosmological Argument.', targetIdeaId: 'paradigm_cosmological_argument_revisited', baseCost: { fleeting_thought: 10600000, theory_cosmology: 3, theory_logic: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_cosmological_argument_revisited']},
-    paradigm_astrobiology_crafter: { id: 'paradigm_astrobiology_crafter', name: 'Astrobiology Lab', description: 'Automates Paradigm: Astrobiology.', targetIdeaId: 'paradigm_astrobiology', baseCost: { fleeting_thought: 10700000, theory_cosmology: 3, theory_morphology: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_astrobiology']},
-    paradigm_universal_evolution_crafter: { id: 'paradigm_universal_evolution_crafter', name: 'Universal Evolution Simulator', description: 'Automates Paradigm: Universal Evolution.', targetIdeaId: 'paradigm_universal_evolution', baseCost: { fleeting_thought: 10800000, theory_cosmology: 3, theory_system_dynamics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_universal_evolution']},
-    paradigm_computational_cosmology_crafter: { id: 'paradigm_computational_cosmology_crafter', name: 'Computational Cosmology Engine', description: 'Automates Paradigm: Computational Cosmology.', targetIdeaId: 'paradigm_computational_cosmology', baseCost: { fleeting_thought: 10900000, theory_cosmology: 3, theory_computation: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_computational_cosmology']},
-    paradigm_thermodynamic_being_crafter: { id: 'paradigm_thermodynamic_being_crafter', name: 'Thermodynamic Being Nexus', description: 'Automates Paradigm: Thermodynamic Being.', targetIdeaId: 'paradigm_thermodynamic_being', baseCost: { fleeting_thought: 11000000, theory_ontology: 3, theory_thermodynamics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_thermodynamic_being']},
-    paradigm_existential_engineering_crafter: { id: 'paradigm_existential_engineering_crafter', name: 'Existential Engineering Core', description: 'Automates Paradigm: Existential Engineering.', targetIdeaId: 'paradigm_existential_engineering', baseCost: { fleeting_thought: 11100000, theory_ontology: 3, theory_engineering: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_existential_engineering']},
-    paradigm_physical_ontology_crafter: { id: 'paradigm_physical_ontology_crafter', name: 'Physical Ontology Matrix', description: 'Automates Paradigm: Physical Ontology.', targetIdeaId: 'paradigm_physical_ontology', baseCost: { fleeting_thought: 11200000, theory_ontology: 3, theory_physics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_physical_ontology']},
-    paradigm_ontological_aesthetics_crafter: { id: 'paradigm_ontological_aesthetics_crafter', name: 'Ontological Aesthetics Engine', description: 'Automates Paradigm: Ontological Aesthetics.', targetIdeaId: 'paradigm_ontological_aesthetics', baseCost: { fleeting_thought: 11300000, theory_ontology: 3, theory_aesthetics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_ontological_aesthetics']},
-    paradigm_informational_ontology_crafter: { id: 'paradigm_informational_ontology_crafter', name: 'Informational Ontology Core', description: 'Automates Paradigm: Informational Ontology.', targetIdeaId: 'paradigm_informational_ontology', baseCost: { fleeting_thought: 11400000, theory_ontology: 3, theory_information: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_informational_ontology']},
-    paradigm_formal_ontology_crafter: { id: 'paradigm_formal_ontology_crafter', name: 'Formal Ontology Synthesizer', description: 'Automates Paradigm: Formal Ontology.', targetIdeaId: 'paradigm_formal_ontology', baseCost: { fleeting_thought: 11500000, theory_ontology: 3, theory_logic: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_formal_ontology']},
-    paradigm_biological_ontology_crafter: { id: 'paradigm_biological_ontology_crafter', name: 'Biological Ontology Matrix', description: 'Automates Paradigm: Biological Ontology.', targetIdeaId: 'paradigm_biological_ontology', baseCost: { fleeting_thought: 11600000, theory_ontology: 3, theory_morphology: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_biological_ontology']},
-    paradigm_systemic_ontology_crafter: { id: 'paradigm_systemic_ontology_crafter', name: 'Systemic Ontology Nexus', description: 'Automates Paradigm: Systemic Ontology.', targetIdeaId: 'paradigm_systemic_ontology', baseCost: { fleeting_thought: 11700000, theory_ontology: 3, theory_system_dynamics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_systemic_ontology']},
-    paradigm_computational_ontology_crafter: { id: 'paradigm_computational_ontology_crafter', name: 'Computational Ontology Engine', description: 'Automates Paradigm: Computational Ontology.', targetIdeaId: 'paradigm_computational_ontology', baseCost: { fleeting_thought: 11800000, theory_ontology: 3, theory_computation: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_computational_ontology']},
-    paradigm_applied_thermodynamics_crafter: { id: 'paradigm_applied_thermodynamics_crafter', name: 'Applied Thermodynamics Core', description: 'Automates Paradigm: Applied Thermodynamics.', targetIdeaId: 'paradigm_applied_thermodynamics', baseCost: { fleeting_thought: 11900000, theory_thermodynamics: 3, theory_engineering: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_applied_thermodynamics']},
-    paradigm_statistical_mechanics_crafter: { id: 'paradigm_statistical_mechanics_crafter', name: 'Statistical Mechanics Matrix', description: 'Automates Paradigm: Statistical Mechanics.', targetIdeaId: 'paradigm_statistical_mechanics', baseCost: { fleeting_thought: 12000000, theory_thermodynamics: 3, theory_physics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_statistical_mechanics']},
-    paradigm_aesthetic_energy_crafter: { id: 'paradigm_aesthetic_energy_crafter', name: 'Aesthetic Energy Synthesizer', description: 'Automates Paradigm: Aesthetic Energy.', targetIdeaId: 'paradigm_aesthetic_energy', baseCost: { fleeting_thought: 12100000, theory_thermodynamics: 3, theory_aesthetics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_aesthetic_energy']},
-    paradigm_information_thermodynamics_crafter: { id: 'paradigm_information_thermodynamics_crafter', name: 'Info-Thermo Dynamics Core', description: 'Automates Paradigm: Information Thermodynamics.', targetIdeaId: 'paradigm_information_thermodynamics', baseCost: { fleeting_thought: 12200000, theory_thermodynamics: 3, theory_information: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_information_thermodynamics']},
-    paradigm_logical_foundations_of_thermo_crafter: { id: 'paradigm_logical_foundations_of_thermo_crafter', name: 'Thermo-Logic Engine', description: 'Automates Paradigm: Thermodynamic Logic.', targetIdeaId: 'paradigm_logical_foundations_of_thermo', baseCost: { fleeting_thought: 12300000, theory_thermodynamics: 3, theory_logic: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_logical_foundations_of_thermo']},
-    paradigm_bioenergetics_crafter: { id: 'paradigm_bioenergetics_crafter', name: 'Bioenergetics Matrix', description: 'Automates Paradigm: Bioenergetics.', targetIdeaId: 'paradigm_bioenergetics', baseCost: { fleeting_thought: 12400000, theory_thermodynamics: 3, theory_morphology: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_bioenergetics']},
-    paradigm_non_equilibrium_thermodynamics_crafter: { id: 'paradigm_non_equilibrium_thermodynamics_crafter', name: 'Non-Equilibrium Systems Core', description: 'Automates Paradigm: Non-Equilibrium Systems.', targetIdeaId: 'paradigm_non_equilibrium_thermodynamics', baseCost: { fleeting_thought: 12500000, theory_thermodynamics: 3, theory_system_dynamics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_non_equilibrium_thermodynamics']},
-    paradigm_computational_thermodynamics_crafter: { id: 'paradigm_computational_thermodynamics_crafter', name: 'Computational Thermo Engine', description: 'Automates Paradigm: Computational Thermodynamics.', targetIdeaId: 'paradigm_computational_thermodynamics', baseCost: { fleeting_thought: 12600000, theory_thermodynamics: 3, theory_computation: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_computational_thermodynamics']},
-    paradigm_physical_engineering_crafter: { id: 'paradigm_physical_engineering_crafter', name: 'Physical Engineering Matrix', description: 'Automates Paradigm: Physical Engineering.', targetIdeaId: 'paradigm_physical_engineering', baseCost: { fleeting_thought: 12700000, theory_engineering: 3, theory_physics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_physical_engineering']},
-    paradigm_functional_aesthetics_crafter: { id: 'paradigm_functional_aesthetics_crafter', name: 'Functional Aesthetics Synthesizer', description: 'Automates Paradigm: Functional Aesthetics.', targetIdeaId: 'paradigm_functional_aesthetics', baseCost: { fleeting_thought: 12800000, theory_engineering: 3, theory_aesthetics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_functional_aesthetics']},
-    paradigm_knowledge_engineering_crafter: { id: 'paradigm_knowledge_engineering_crafter', name: 'Knowledge Engineering Core', description: 'Automates Paradigm: Knowledge Engineering.', targetIdeaId: 'paradigm_knowledge_engineering', baseCost: { fleeting_thought: 12900000, theory_engineering: 3, theory_information: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_knowledge_engineering']},
-    paradigm_formal_methods_in_engineering_crafter: { id: 'paradigm_formal_methods_in_engineering_crafter', name: 'Formal Engineering Matrix', description: 'Automates Paradigm: Formal Engineering.', targetIdeaId: 'paradigm_formal_methods_in_engineering', baseCost: { fleeting_thought: 13000000, theory_engineering: 3, theory_logic: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_formal_methods_in_engineering']},
-    paradigm_bio_engineering_crafter: { id: 'paradigm_bio_engineering_crafter', name: 'Bio-Engineering Nexus', description: 'Automates Paradigm: Bio-Engineering.', targetIdeaId: 'paradigm_bio_engineering', baseCost: { fleeting_thought: 13100000, theory_engineering: 3, theory_morphology: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_bio_engineering']},
-    paradigm_systems_engineering_crafter: { id: 'paradigm_systems_engineering_crafter', name: 'Systems Engineering Core', description: 'Automates Paradigm: Systems Engineering.', targetIdeaId: 'paradigm_systems_engineering', baseCost: { fleeting_thought: 13200000, theory_engineering: 3, theory_system_dynamics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_systems_engineering']},
-    paradigm_software_engineering_mastery_crafter: { id: 'paradigm_software_engineering_mastery_crafter', name: 'Software Engineering Matrix', description: 'Automates Paradigm: Software Engineering.', targetIdeaId: 'paradigm_software_engineering_mastery', baseCost: { fleeting_thought: 13300000, theory_engineering: 3, theory_computation: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_software_engineering_mastery']},
-    paradigm_aesthetic_relativity_crafter: { id: 'paradigm_aesthetic_relativity_crafter', name: 'Aesthetic Relativity Engine', description: 'Automates Paradigm: Aesthetic Relativity.', targetIdeaId: 'paradigm_aesthetic_relativity', baseCost: { fleeting_thought: 13400000, theory_physics: 3, theory_aesthetics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_aesthetic_relativity']},
-    paradigm_quantum_information_science_crafter: { id: 'paradigm_quantum_information_science_crafter', name: 'Quantum Information Core', description: 'Automates Paradigm: Quantum Information.', targetIdeaId: 'paradigm_quantum_information_science', baseCost: { fleeting_thought: 13500000, theory_physics: 3, theory_information: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_quantum_information_science']},
-    paradigm_logical_foundations_of_physics_crafter: { id: 'paradigm_logical_foundations_of_physics_crafter', name: 'Physical Logic Synthesizer', description: 'Automates Paradigm: Physical Logic.', targetIdeaId: 'paradigm_logical_foundations_of_physics', baseCost: { fleeting_thought: 13600000, theory_physics: 3, theory_logic: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_logical_foundations_of_physics']},
-    paradigm_biophysics_crafter: { id: 'paradigm_biophysics_crafter', name: 'Biophysics Matrix', description: 'Automates Paradigm: Biophysics.', targetIdeaId: 'paradigm_biophysics', baseCost: { fleeting_thought: 13700000, theory_physics: 3, theory_morphology: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_biophysics']},
-    paradigm_chaotic_systems_physics_crafter: { id: 'paradigm_chaotic_systems_physics_crafter', name: 'Chaotic Systems Nexus', description: 'Automates Paradigm: Chaotic Systems.', targetIdeaId: 'paradigm_chaotic_systems_physics', baseCost: { fleeting_thought: 13800000, theory_physics: 3, theory_system_dynamics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_chaotic_systems_physics']},
-    paradigm_computational_physics_crafter: { id: 'paradigm_computational_physics_crafter', name: 'Computational Physics Engine', description: 'Automates Paradigm: Computational Physics.', targetIdeaId: 'paradigm_computational_physics', baseCost: { fleeting_thought: 13900000, theory_physics: 3, theory_computation: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_computational_physics']},
-    paradigm_informational_aesthetics_crafter: { id: 'paradigm_informational_aesthetics_crafter', name: 'Informational Aesthetics Core', description: 'Automates Paradigm: Informational Aesthetics.', targetIdeaId: 'paradigm_informational_aesthetics', baseCost: { fleeting_thought: 14000000, theory_aesthetics: 3, theory_information: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_informational_aesthetics']},
-    paradigm_logical_aesthetics_crafter: { id: 'paradigm_logical_aesthetics_crafter', name: 'Logical Aesthetics Synthesizer', description: 'Automates Paradigm: Logical Aesthetics.', targetIdeaId: 'paradigm_logical_aesthetics', baseCost: { fleeting_thought: 14100000, theory_aesthetics: 3, theory_logic: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_logical_aesthetics']},
-    paradigm_morphological_beauty_crafter: { id: 'paradigm_morphological_beauty_crafter', name: 'Morphological Beauty Matrix', description: 'Automates Paradigm: Morphological Beauty.', targetIdeaId: 'paradigm_morphological_beauty', baseCost: { fleeting_thought: 14200000, theory_aesthetics: 3, theory_morphology: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_morphological_beauty']},
-    paradigm_dynamic_art_forms_crafter: { id: 'paradigm_dynamic_art_forms_crafter', name: 'Dynamic Art Forms Nexus', description: 'Automates Paradigm: Dynamic Art Forms.', targetIdeaId: 'paradigm_dynamic_art_forms', baseCost: { fleeting_thought: 14300000, theory_aesthetics: 3, theory_system_dynamics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_dynamic_art_forms']},
-    paradigm_computational_aesthetics_crafter: { id: 'paradigm_computational_aesthetics_crafter', name: 'Computational Aesthetics Engine', description: 'Automates Paradigm: Computational Aesthetics.', targetIdeaId: 'paradigm_computational_aesthetics', baseCost: { fleeting_thought: 14400000, theory_aesthetics: 3, theory_computation: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_computational_aesthetics']},
-    paradigm_logical_information_theory_crafter: { id: 'paradigm_logical_information_theory_crafter', name: 'Logical Information Core', description: 'Automates Paradigm: Logical Information Theory.', targetIdeaId: 'paradigm_logical_information_theory', baseCost: { fleeting_thought: 14500000, theory_information: 3, theory_logic: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_logical_information_theory']},
-    paradigm_bio_informatics_crafter: { id: 'paradigm_bio_informatics_crafter', name: 'Bio-Informatics Matrix', description: 'Automates Paradigm: Bio-Informatics.', targetIdeaId: 'paradigm_bio_informatics', baseCost: { fleeting_thought: 14600000, theory_information: 3, theory_morphology: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_bio_informatics']},
-    paradigm_information_systems_dynamics_crafter: { id: 'paradigm_information_systems_dynamics_crafter', name: 'Info-Systems Dynamics Nexus', description: 'Automates Paradigm: Information Systems Dynamics.', targetIdeaId: 'paradigm_information_systems_dynamics', baseCost: { fleeting_thought: 14700000, theory_information: 3, theory_system_dynamics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_information_systems_dynamics']},
-    paradigm_theoretical_computer_science_crafter: { id: 'paradigm_theoretical_computer_science_crafter', name: 'Theoretical CS Engine', description: 'Automates Paradigm: Theoretical Computer Science.', targetIdeaId: 'paradigm_theoretical_computer_science', baseCost: { fleeting_thought: 14800000, theory_information: 3, theory_computation: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_theoretical_computer_science']},
-    paradigm_morphological_logic_crafter: { id: 'paradigm_morphological_logic_crafter', name: 'Morphological Logic Core', description: 'Automates Paradigm: Morphological Logic.', targetIdeaId: 'paradigm_morphological_logic', baseCost: { fleeting_thought: 14900000, theory_logic: 3, theory_morphology: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_morphological_logic']},
-    paradigm_formal_systems_theory_crafter: { id: 'paradigm_formal_systems_theory_crafter', name: 'Formal Systems Matrix', description: 'Automates Paradigm: Formal Systems Theory.', targetIdeaId: 'paradigm_formal_systems_theory', baseCost: { fleeting_thought: 15000000, theory_logic: 3, theory_system_dynamics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_formal_systems_theory']},
-    paradigm_computational_logic_crafter: { id: 'paradigm_computational_logic_crafter', name: 'Computational Logic Engine', description: 'Automates Paradigm: Computational Logic.', targetIdeaId: 'paradigm_computational_logic', baseCost: { fleeting_thought: 15100000, theory_logic: 3, theory_computation: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_computational_logic']},
-    paradigm_dynamic_morphogenesis_crafter: { id: 'paradigm_dynamic_morphogenesis_crafter', name: 'Dynamic Morphogenesis Core', description: 'Automates Paradigm: Dynamic Morphogenesis.', targetIdeaId: 'paradigm_dynamic_morphogenesis', baseCost: { fleeting_thought: 15200000, theory_morphology: 3, theory_system_dynamics: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_dynamic_morphogenesis']},
-    paradigm_computational_morphology_crafter: { id: 'paradigm_computational_morphology_crafter', name: 'Computational Morphology Engine', description: 'Automates Paradigm: Computational Morphology.', targetIdeaId: 'paradigm_computational_morphology', baseCost: { fleeting_thought: 15300000, theory_morphology: 3, theory_computation: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_computational_morphology']},
-    paradigm_large_scale_simulation_crafter: { id: 'paradigm_large_scale_simulation_crafter', name: 'Large-Scale Simulation Matrix', description: 'Automates Paradigm: Large-Scale Simulation.', targetIdeaId: 'paradigm_large_scale_simulation', baseCost: { fleeting_thought: 15400000, theory_system_dynamics: 3, theory_computation: 3 }, costScale: 2.5, outputAmount: 0.0001, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_large_scale_simulation']}
+    // =========================================================================
+    // Paradigm Crafters (105)
+    // Each consumes two Theories to produce one Paradigm.
+    // =========================================================================
+
+    // --- Materials Science pairings ---
+    paradigm_condensed_matter_physics_crafter: { id: 'paradigm_condensed_matter_physics_crafter', name: 'Condensed Matter Institute', description: 'Automates Paradigm: Condensed Matter Physics.', targetIdeaId: 'paradigm_condensed_matter_physics', baseCost: { thought: 5000000, theory_materials_science: 3, theory_statistical_mechanics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_condensed_matter_physics'] },
+    paradigm_photonics_crafter: { id: 'paradigm_photonics_crafter', name: 'Photonics Research Lab', description: 'Automates Paradigm: Photonics.', targetIdeaId: 'paradigm_photonics', baseCost: { thought: 5100000, theory_materials_science: 3, theory_electromagnetic_theory: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_photonics'] },
+    paradigm_structural_engineering_crafter: { id: 'paradigm_structural_engineering_crafter', name: 'Structural Engineering Academy', description: 'Automates Paradigm: Structural Engineering.', targetIdeaId: 'paradigm_structural_engineering', baseCost: { thought: 5000000, theory_materials_science: 3, theory_classical_mechanics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_structural_engineering'] },
+    paradigm_metallurgy_crafter: { id: 'paradigm_metallurgy_crafter', name: 'Metallurgical Forge', description: 'Automates Paradigm: Metallurgy.', targetIdeaId: 'paradigm_metallurgy', baseCost: { thought: 5000000, theory_materials_science: 3, theory_chemical_kinetics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_metallurgy'] },
+    paradigm_geomaterials_crafter: { id: 'paradigm_geomaterials_crafter', name: 'Geomaterials Survey Station', description: 'Automates Paradigm: Geomaterials.', targetIdeaId: 'paradigm_geomaterials', baseCost: { thought: 5000000, theory_materials_science: 3, theory_geology: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_geomaterials'] },
+    paradigm_solid_state_physics_crafter: { id: 'paradigm_solid_state_physics_crafter', name: 'Solid State Physics Laboratory', description: 'Automates Paradigm: Solid State Physics.', targetIdeaId: 'paradigm_solid_state_physics', baseCost: { thought: 5200000, theory_materials_science: 3, theory_crystallography: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_solid_state_physics'] },
+    paradigm_rheology_crafter: { id: 'paradigm_rheology_crafter', name: 'Rheological Flow Rig', description: 'Automates Paradigm: Rheology.', targetIdeaId: 'paradigm_rheology', baseCost: { thought: 5000000, theory_materials_science: 3, theory_fluid_dynamics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_rheology'] },
+    paradigm_archaeomaterials_crafter: { id: 'paradigm_archaeomaterials_crafter', name: 'Archaeomaterials Analysis Suite', description: 'Automates Paradigm: Archaeomaterials.', targetIdeaId: 'paradigm_archaeomaterials', baseCost: { thought: 5000000, theory_materials_science: 3, theory_archaeology: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_archaeomaterials'] },
+    paradigm_data_storage_crafter: { id: 'paradigm_data_storage_crafter', name: 'Data Substrate Foundry', description: 'Automates Paradigm: Data Storage.', targetIdeaId: 'paradigm_data_storage', baseCost: { thought: 5300000, theory_materials_science: 3, theory_information_theory: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_data_storage'] },
+    paradigm_fracture_mechanics_crafter: { id: 'paradigm_fracture_mechanics_crafter', name: 'Fracture Mechanics Testing Rig', description: 'Automates Paradigm: Fracture Mechanics.', targetIdeaId: 'paradigm_fracture_mechanics', baseCost: { thought: 5100000, theory_materials_science: 3, theory_chaos_theory: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_fracture_mechanics'] },
+    paradigm_biomimetics_crafter: { id: 'paradigm_biomimetics_crafter', name: 'Biomimetics Design Studio', description: 'Automates Paradigm: Biomimetics.', targetIdeaId: 'paradigm_biomimetics', baseCost: { thought: 5200000, theory_materials_science: 3, theory_evolutionary_theory: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_biomimetics'] },
+    paradigm_acoustics_engineering_crafter: { id: 'paradigm_acoustics_engineering_crafter', name: 'Acoustics Engineering Workshop', description: 'Automates Paradigm: Acoustics Engineering.', targetIdeaId: 'paradigm_acoustics_engineering', baseCost: { thought: 5100000, theory_materials_science: 3, theory_wave_mechanics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_acoustics_engineering'] },
+    paradigm_neuroprosthetics_crafter: { id: 'paradigm_neuroprosthetics_crafter', name: 'Neural Interface Laboratory', description: 'Automates Paradigm: Neuroprosthetics.', targetIdeaId: 'paradigm_neuroprosthetics', baseCost: { thought: 5400000, theory_materials_science: 3, theory_cognitive_science: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_neuroprosthetics'] },
+    paradigm_industrial_heritage_crafter: { id: 'paradigm_industrial_heritage_crafter', name: 'Industrial Heritage Archive', description: 'Automates Paradigm: Industrial Heritage.', targetIdeaId: 'paradigm_industrial_heritage', baseCost: { thought: 5000000, theory_materials_science: 3, theory_historiography: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_industrial_heritage'] },
+
+    // --- Statistical Mechanics pairings ---
+    paradigm_plasma_physics_crafter: { id: 'paradigm_plasma_physics_crafter', name: 'Plasma Confinement Facility', description: 'Automates Paradigm: Plasma Physics.', targetIdeaId: 'paradigm_plasma_physics', baseCost: { thought: 5500000, theory_statistical_mechanics: 3, theory_electromagnetic_theory: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_plasma_physics'] },
+    paradigm_kinetic_theory_crafter: { id: 'paradigm_kinetic_theory_crafter', name: 'Kinetic Theory Simulator', description: 'Automates Paradigm: Kinetic Theory.', targetIdeaId: 'paradigm_kinetic_theory', baseCost: { thought: 5200000, theory_statistical_mechanics: 3, theory_classical_mechanics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_kinetic_theory'] },
+    paradigm_physical_chemistry_crafter: { id: 'paradigm_physical_chemistry_crafter', name: 'Physical Chemistry Institute', description: 'Automates Paradigm: Physical Chemistry.', targetIdeaId: 'paradigm_physical_chemistry', baseCost: { thought: 5200000, theory_statistical_mechanics: 3, theory_chemical_kinetics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_physical_chemistry'] },
+    paradigm_geophysics_crafter: { id: 'paradigm_geophysics_crafter', name: 'Geophysical Survey Array', description: 'Automates Paradigm: Geophysics.', targetIdeaId: 'paradigm_geophysics', baseCost: { thought: 5200000, theory_statistical_mechanics: 3, theory_geology: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_geophysics'] },
+    paradigm_lattice_dynamics_crafter: { id: 'paradigm_lattice_dynamics_crafter', name: 'Lattice Dynamics Modeller', description: 'Automates Paradigm: Lattice Dynamics.', targetIdeaId: 'paradigm_lattice_dynamics', baseCost: { thought: 5300000, theory_statistical_mechanics: 3, theory_crystallography: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_lattice_dynamics'] },
+    paradigm_turbulence_theory_crafter: { id: 'paradigm_turbulence_theory_crafter', name: 'Turbulence Research Wind Tunnel', description: 'Automates Paradigm: Turbulence Theory.', targetIdeaId: 'paradigm_turbulence_theory', baseCost: { thought: 5400000, theory_statistical_mechanics: 3, theory_fluid_dynamics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_turbulence_theory'] },
+    paradigm_geochronology_crafter: { id: 'paradigm_geochronology_crafter', name: 'Isotopic Dating Laboratory', description: 'Automates Paradigm: Geochronology.', targetIdeaId: 'paradigm_geochronology', baseCost: { thought: 5100000, theory_statistical_mechanics: 3, theory_archaeology: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_geochronology'] },
+    paradigm_algorithmic_complexity_crafter: { id: 'paradigm_algorithmic_complexity_crafter', name: 'Complexity Theory Engine', description: 'Automates Paradigm: Algorithmic Complexity.', targetIdeaId: 'paradigm_algorithmic_complexity', baseCost: { thought: 5600000, theory_statistical_mechanics: 3, theory_information_theory: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_algorithmic_complexity'] },
+    paradigm_non_equilibrium_systems_crafter: { id: 'paradigm_non_equilibrium_systems_crafter', name: 'Dissipative Structures Laboratory', description: 'Automates Paradigm: Non-Equilibrium Systems.', targetIdeaId: 'paradigm_non_equilibrium_systems', baseCost: { thought: 5500000, theory_statistical_mechanics: 3, theory_chaos_theory: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_non_equilibrium_systems'] },
+    paradigm_population_genetics_crafter: { id: 'paradigm_population_genetics_crafter', name: 'Population Genomics Centre', description: 'Automates Paradigm: Population Genetics.', targetIdeaId: 'paradigm_population_genetics', baseCost: { thought: 5300000, theory_statistical_mechanics: 3, theory_evolutionary_theory: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_population_genetics'] },
+    paradigm_quantum_mechanics_crafter: { id: 'paradigm_quantum_mechanics_crafter', name: 'Quantum State Laboratory', description: 'Automates Paradigm: Quantum Mechanics.', targetIdeaId: 'paradigm_quantum_mechanics', baseCost: { thought: 7000000, theory_statistical_mechanics: 3, theory_wave_mechanics: 3 }, costScale: 2.5, outputAmount: 0.00017, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_quantum_mechanics'] },
+    paradigm_stochastic_cognition_crafter: { id: 'paradigm_stochastic_cognition_crafter', name: 'Bayesian Inference Engine', description: 'Automates Paradigm: Stochastic Cognition.', targetIdeaId: 'paradigm_stochastic_cognition', baseCost: { thought: 5500000, theory_statistical_mechanics: 3, theory_cognitive_science: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_stochastic_cognition'] },
+    paradigm_cliodynamics_crafter: { id: 'paradigm_cliodynamics_crafter', name: 'Historical Dynamics Modeller', description: 'Automates Paradigm: Cliodynamics.', targetIdeaId: 'paradigm_cliodynamics', baseCost: { thought: 5200000, theory_statistical_mechanics: 3, theory_historiography: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_cliodynamics'] },
+
+    // --- Electromagnetism pairings ---
+    paradigm_electrodynamics_crafter: { id: 'paradigm_electrodynamics_crafter', name: 'Field Theory Laboratory', description: 'Automates Paradigm: Electrodynamics.', targetIdeaId: 'paradigm_electrodynamics', baseCost: { thought: 5500000, theory_electromagnetic_theory: 3, theory_classical_mechanics: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_electrodynamics'] },
+    paradigm_electrochemistry_crafter: { id: 'paradigm_electrochemistry_crafter', name: 'Electrochemical Cell Array', description: 'Automates Paradigm: Electrochemistry.', targetIdeaId: 'paradigm_electrochemistry', baseCost: { thought: 5300000, theory_electromagnetic_theory: 3, theory_chemical_kinetics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_electrochemistry'] },
+    paradigm_magnetotellurics_crafter: { id: 'paradigm_magnetotellurics_crafter', name: 'Magnetotelluric Survey Station', description: 'Automates Paradigm: Magnetotellurics.', targetIdeaId: 'paradigm_magnetotellurics', baseCost: { thought: 5100000, theory_electromagnetic_theory: 3, theory_geology: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_magnetotellurics'] },
+    paradigm_xray_crystallography_crafter: { id: 'paradigm_xray_crystallography_crafter', name: 'X-Ray Diffraction Suite', description: 'Automates Paradigm: X-Ray Crystallography.', targetIdeaId: 'paradigm_xray_crystallography', baseCost: { thought: 5400000, theory_electromagnetic_theory: 3, theory_crystallography: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_xray_crystallography'] },
+    paradigm_magnetohydrodynamics_crafter: { id: 'paradigm_magnetohydrodynamics_crafter', name: 'MHD Plasma Reactor', description: 'Automates Paradigm: Magnetohydrodynamics.', targetIdeaId: 'paradigm_magnetohydrodynamics', baseCost: { thought: 5500000, theory_electromagnetic_theory: 3, theory_fluid_dynamics: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_magnetohydrodynamics'] },
+    paradigm_remote_sensing_crafter: { id: 'paradigm_remote_sensing_crafter', name: 'Remote Sensing Observatory', description: 'Automates Paradigm: Remote Sensing.', targetIdeaId: 'paradigm_remote_sensing', baseCost: { thought: 5200000, theory_electromagnetic_theory: 3, theory_archaeology: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_remote_sensing'] },
+    paradigm_radio_astronomy_crafter: { id: 'paradigm_radio_astronomy_crafter', name: 'Radio Telescope Array', description: 'Automates Paradigm: Radio Astronomy.', targetIdeaId: 'paradigm_radio_astronomy', baseCost: { thought: 5700000, theory_electromagnetic_theory: 3, theory_information_theory: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_radio_astronomy'] },
+    paradigm_nonlinear_optics_crafter: { id: 'paradigm_nonlinear_optics_crafter', name: 'Nonlinear Optics Bench', description: 'Automates Paradigm: Nonlinear Optics.', targetIdeaId: 'paradigm_nonlinear_optics', baseCost: { thought: 5600000, theory_electromagnetic_theory: 3, theory_chaos_theory: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_nonlinear_optics'] },
+    paradigm_biophotonics_crafter: { id: 'paradigm_biophotonics_crafter', name: 'Biophotonics Imaging Suite', description: 'Automates Paradigm: Biophotonics.', targetIdeaId: 'paradigm_biophotonics', baseCost: { thought: 5300000, theory_electromagnetic_theory: 3, theory_evolutionary_theory: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_biophotonics'] },
+    paradigm_quantum_electrodynamics_crafter: { id: 'paradigm_quantum_electrodynamics_crafter', name: 'QED Calculation Centre', description: 'Automates Paradigm: Quantum Electrodynamics.', targetIdeaId: 'paradigm_quantum_electrodynamics', baseCost: { thought: 7200000, theory_electromagnetic_theory: 3, theory_wave_mechanics: 3 }, costScale: 2.5, outputAmount: 0.00016, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_quantum_electrodynamics'] },
+    paradigm_neural_signalling_crafter: { id: 'paradigm_neural_signalling_crafter', name: 'Neural Electrophysiology Rig', description: 'Automates Paradigm: Neural Signalling.', targetIdeaId: 'paradigm_neural_signalling', baseCost: { thought: 5600000, theory_electromagnetic_theory: 3, theory_cognitive_science: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_neural_signalling'] },
+    paradigm_archaeomagnetism_crafter: { id: 'paradigm_archaeomagnetism_crafter', name: 'Palaeomagnetic Dating Suite', description: 'Automates Paradigm: Archaeomagnetism.', targetIdeaId: 'paradigm_archaeomagnetism', baseCost: { thought: 5100000, theory_electromagnetic_theory: 3, theory_historiography: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_archaeomagnetism'] },
+
+    // --- Classical Mechanics pairings ---
+    paradigm_reaction_dynamics_crafter: { id: 'paradigm_reaction_dynamics_crafter', name: 'Reaction Trajectory Simulator', description: 'Automates Paradigm: Reaction Dynamics.', targetIdeaId: 'paradigm_reaction_dynamics', baseCost: { thought: 5200000, theory_classical_mechanics: 3, theory_chemical_kinetics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_reaction_dynamics'] },
+    paradigm_plate_tectonics_crafter: { id: 'paradigm_plate_tectonics_crafter', name: 'Tectonic Dynamics Laboratory', description: 'Automates Paradigm: Plate Tectonics.', targetIdeaId: 'paradigm_plate_tectonics', baseCost: { thought: 5300000, theory_classical_mechanics: 3, theory_geology: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_plate_tectonics'] },
+    paradigm_crystalline_mechanics_crafter: { id: 'paradigm_crystalline_mechanics_crafter', name: 'Crystal Deformation Testing Rig', description: 'Automates Paradigm: Crystalline Mechanics.', targetIdeaId: 'paradigm_crystalline_mechanics', baseCost: { thought: 5200000, theory_classical_mechanics: 3, theory_crystallography: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_crystalline_mechanics'] },
+    paradigm_aerodynamics_crafter: { id: 'paradigm_aerodynamics_crafter', name: 'Aerodynamic Wind Tunnel', description: 'Automates Paradigm: Aerodynamics.', targetIdeaId: 'paradigm_aerodynamics', baseCost: { thought: 5400000, theory_classical_mechanics: 3, theory_fluid_dynamics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_aerodynamics'] },
+    paradigm_experimental_archaeology_crafter: { id: 'paradigm_experimental_archaeology_crafter', name: 'Experimental Reconstruction Workshop', description: 'Automates Paradigm: Experimental Archaeology.', targetIdeaId: 'paradigm_experimental_archaeology', baseCost: { thought: 5000000, theory_classical_mechanics: 3, theory_archaeology: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_experimental_archaeology'] },
+    paradigm_control_theory_crafter: { id: 'paradigm_control_theory_crafter', name: 'Control Systems Laboratory', description: 'Automates Paradigm: Control Theory.', targetIdeaId: 'paradigm_control_theory', baseCost: { thought: 5600000, theory_classical_mechanics: 3, theory_information_theory: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_control_theory'] },
+    paradigm_orbital_mechanics_crafter: { id: 'paradigm_orbital_mechanics_crafter', name: 'Celestial Mechanics Observatory', description: 'Automates Paradigm: Orbital Mechanics.', targetIdeaId: 'paradigm_orbital_mechanics', baseCost: { thought: 5500000, theory_classical_mechanics: 3, theory_chaos_theory: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_orbital_mechanics'] },
+    paradigm_biomechanics_crafter: { id: 'paradigm_biomechanics_crafter', name: 'Biomechanics Motion Laboratory', description: 'Automates Paradigm: Biomechanics.', targetIdeaId: 'paradigm_biomechanics', baseCost: { thought: 5300000, theory_classical_mechanics: 3, theory_evolutionary_theory: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_biomechanics'] },
+    paradigm_acoustics_crafter: { id: 'paradigm_acoustics_crafter', name: 'Acoustic Research Chamber', description: 'Automates Paradigm: Acoustics.', targetIdeaId: 'paradigm_acoustics', baseCost: { thought: 5200000, theory_classical_mechanics: 3, theory_wave_mechanics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_acoustics'] },
+    paradigm_embodied_cognition_crafter: { id: 'paradigm_embodied_cognition_crafter', name: 'Embodied Cognition Research Hub', description: 'Automates Paradigm: Embodied Cognition.', targetIdeaId: 'paradigm_embodied_cognition', baseCost: { thought: 5300000, theory_classical_mechanics: 3, theory_cognitive_science: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_embodied_cognition'] },
+    paradigm_archaeoastronomy_crafter: { id: 'paradigm_archaeoastronomy_crafter', name: 'Archaeoastronomy Survey Centre', description: 'Automates Paradigm: Archaeoastronomy.', targetIdeaId: 'paradigm_archaeoastronomy', baseCost: { thought: 5100000, theory_classical_mechanics: 3, theory_historiography: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_archaeoastronomy'] },
+
+    // --- Chemical Kinetics pairings ---
+    paradigm_geochemistry_crafter: { id: 'paradigm_geochemistry_crafter', name: 'Geochemical Analysis Laboratory', description: 'Automates Paradigm: Geochemistry.', targetIdeaId: 'paradigm_geochemistry', baseCost: { thought: 5200000, theory_chemical_kinetics: 3, theory_geology: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_geochemistry'] },
+    paradigm_crystal_growth_crafter: { id: 'paradigm_crystal_growth_crafter', name: 'Crystal Nucleation Furnace', description: 'Automates Paradigm: Crystal Growth.', targetIdeaId: 'paradigm_crystal_growth', baseCost: { thought: 5200000, theory_chemical_kinetics: 3, theory_crystallography: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_crystal_growth'] },
+    paradigm_chemical_engineering_crafter: { id: 'paradigm_chemical_engineering_crafter', name: 'Industrial Reactor Plant', description: 'Automates Paradigm: Chemical Engineering.', targetIdeaId: 'paradigm_chemical_engineering', baseCost: { thought: 5400000, theory_chemical_kinetics: 3, theory_fluid_dynamics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_chemical_engineering'] },
+    paradigm_archaeochemistry_crafter: { id: 'paradigm_archaeochemistry_crafter', name: 'Ancient Residue Analysis Suite', description: 'Automates Paradigm: Archaeochemistry.', targetIdeaId: 'paradigm_archaeochemistry', baseCost: { thought: 5000000, theory_chemical_kinetics: 3, theory_archaeology: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_archaeochemistry'] },
+    paradigm_molecular_computing_crafter: { id: 'paradigm_molecular_computing_crafter', name: 'DNA Computing Substrate', description: 'Automates Paradigm: Molecular Computing.', targetIdeaId: 'paradigm_molecular_computing', baseCost: { thought: 5600000, theory_chemical_kinetics: 3, theory_information_theory: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_molecular_computing'] },
+    paradigm_reaction_diffusion_systems_crafter: { id: 'paradigm_reaction_diffusion_systems_crafter', name: 'Turing Pattern Generator', description: 'Automates Paradigm: Reaction-Diffusion Systems.', targetIdeaId: 'paradigm_reaction_diffusion_systems', baseCost: { thought: 5500000, theory_chemical_kinetics: 3, theory_chaos_theory: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_reaction_diffusion_systems'] },
+    paradigm_biochemistry_crafter: { id: 'paradigm_biochemistry_crafter', name: 'Biochemical Pathway Synthesiser', description: 'Automates Paradigm: Biochemistry.', targetIdeaId: 'paradigm_biochemistry', baseCost: { thought: 5500000, theory_chemical_kinetics: 3, theory_evolutionary_theory: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_biochemistry'] },
+    paradigm_spectroscopy_crafter: { id: 'paradigm_spectroscopy_crafter', name: 'Spectroscopic Analysis Array', description: 'Automates Paradigm: Spectroscopy.', targetIdeaId: 'paradigm_spectroscopy', baseCost: { thought: 5400000, theory_chemical_kinetics: 3, theory_wave_mechanics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_spectroscopy'] },
+    paradigm_neuropharmacology_crafter: { id: 'paradigm_neuropharmacology_crafter', name: 'Neuropharmacology Research Wing', description: 'Automates Paradigm: Neuropharmacology.', targetIdeaId: 'paradigm_neuropharmacology', baseCost: { thought: 5500000, theory_chemical_kinetics: 3, theory_cognitive_science: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_neuropharmacology'] },
+    paradigm_palaeochemistry_crafter: { id: 'paradigm_palaeochemistry_crafter', name: 'Isotopic Palaeo-Environment Suite', description: 'Automates Paradigm: Palaeochemistry.', targetIdeaId: 'paradigm_palaeochemistry', baseCost: { thought: 5100000, theory_chemical_kinetics: 3, theory_historiography: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_palaeochemistry'] },
+
+    // --- Geology pairings ---
+    paradigm_mineralogy_crafter: { id: 'paradigm_mineralogy_crafter', name: 'Mineral Classification Laboratory', description: 'Automates Paradigm: Mineralogy.', targetIdeaId: 'paradigm_mineralogy', baseCost: { thought: 5100000, theory_geology: 3, theory_crystallography: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_mineralogy'] },
+    paradigm_hydrogeology_crafter: { id: 'paradigm_hydrogeology_crafter', name: 'Aquifer Monitoring Network', description: 'Automates Paradigm: Hydrogeology.', targetIdeaId: 'paradigm_hydrogeology', baseCost: { thought: 5200000, theory_geology: 3, theory_fluid_dynamics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_hydrogeology'] },
+    paradigm_geoarchaeology_crafter: { id: 'paradigm_geoarchaeology_crafter', name: 'Geoarchaeological Survey Unit', description: 'Automates Paradigm: Geoarchaeology.', targetIdeaId: 'paradigm_geoarchaeology', baseCost: { thought: 5000000, theory_geology: 3, theory_archaeology: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_geoarchaeology'] },
+    paradigm_geoinformatics_crafter: { id: 'paradigm_geoinformatics_crafter', name: 'GIS Data Processing Centre', description: 'Automates Paradigm: Geoinformatics.', targetIdeaId: 'paradigm_geoinformatics', baseCost: { thought: 5300000, theory_geology: 3, theory_information_theory: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_geoinformatics'] },
+    paradigm_seismology_crafter: { id: 'paradigm_seismology_crafter', name: 'Seismographic Monitoring Array', description: 'Automates Paradigm: Seismology.', targetIdeaId: 'paradigm_seismology', baseCost: { thought: 5400000, theory_geology: 3, theory_chaos_theory: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_seismology'] },
+    paradigm_palaeontology_crafter: { id: 'paradigm_palaeontology_crafter', name: 'Fossil Excavation and Analysis Site', description: 'Automates Paradigm: Palaeontology.', targetIdeaId: 'paradigm_palaeontology', baseCost: { thought: 5300000, theory_geology: 3, theory_evolutionary_theory: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_palaeontology'] },
+    paradigm_seismic_imaging_crafter: { id: 'paradigm_seismic_imaging_crafter', name: 'Seismic Reflection Survey Platform', description: 'Automates Paradigm: Seismic Imaging.', targetIdeaId: 'paradigm_seismic_imaging', baseCost: { thought: 5300000, theory_geology: 3, theory_wave_mechanics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_seismic_imaging'] },
+    paradigm_landscape_cognition_crafter: { id: 'paradigm_landscape_cognition_crafter', name: 'Landscape Cognition Research Institute', description: 'Automates Paradigm: Landscape Cognition.', targetIdeaId: 'paradigm_landscape_cognition', baseCost: { thought: 5100000, theory_geology: 3, theory_cognitive_science: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_landscape_cognition'] },
+    paradigm_geohistory_crafter: { id: 'paradigm_geohistory_crafter', name: 'Stratigraphic Narrative Archive', description: 'Automates Paradigm: Geohistory.', targetIdeaId: 'paradigm_geohistory', baseCost: { thought: 5100000, theory_geology: 3, theory_historiography: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_geohistory'] },
+
+    // --- Crystallography pairings ---
+    paradigm_liquid_crystals_crafter: { id: 'paradigm_liquid_crystals_crafter', name: 'Liquid Crystal Phase Laboratory', description: 'Automates Paradigm: Liquid Crystals.', targetIdeaId: 'paradigm_liquid_crystals', baseCost: { thought: 5300000, theory_crystallography: 3, theory_fluid_dynamics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_liquid_crystals'] },
+    paradigm_petrology_crafter: { id: 'paradigm_petrology_crafter', name: 'Petrographic Thin Section Laboratory', description: 'Automates Paradigm: Petrology.', targetIdeaId: 'paradigm_petrology', baseCost: { thought: 5100000, theory_crystallography: 3, theory_archaeology: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_petrology'] },
+    paradigm_lattice_cryptography_crafter: { id: 'paradigm_lattice_cryptography_crafter', name: 'Post-Quantum Cryptography Engine', description: 'Automates Paradigm: Lattice Cryptography.', targetIdeaId: 'paradigm_lattice_cryptography', baseCost: { thought: 5700000, theory_crystallography: 3, theory_information_theory: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_lattice_cryptography'] },
+    paradigm_quasicrystals_crafter: { id: 'paradigm_quasicrystals_crafter', name: 'Quasicrystal Synthesis Chamber', description: 'Automates Paradigm: Quasicrystals.', targetIdeaId: 'paradigm_quasicrystals', baseCost: { thought: 5600000, theory_crystallography: 3, theory_chaos_theory: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_quasicrystals'] },
+    paradigm_biomineralisation_crafter: { id: 'paradigm_biomineralisation_crafter', name: 'Biomineralisation Research Suite', description: 'Automates Paradigm: Biomineralisation.', targetIdeaId: 'paradigm_biomineralisation', baseCost: { thought: 5300000, theory_crystallography: 3, theory_evolutionary_theory: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_biomineralisation'] },
+    paradigm_diffraction_theory_crafter: { id: 'paradigm_diffraction_theory_crafter', name: 'Wave Diffraction Analysis Bench', description: 'Automates Paradigm: Diffraction Theory.', targetIdeaId: 'paradigm_diffraction_theory', baseCost: { thought: 5400000, theory_crystallography: 3, theory_wave_mechanics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_diffraction_theory'] },
+    paradigm_pattern_recognition_crafter: { id: 'paradigm_pattern_recognition_crafter', name: 'Pattern Recognition Engine', description: 'Automates Paradigm: Pattern Recognition.', targetIdeaId: 'paradigm_pattern_recognition', baseCost: { thought: 5500000, theory_crystallography: 3, theory_cognitive_science: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_pattern_recognition'] },
+    paradigm_provenance_studies_crafter: { id: 'paradigm_provenance_studies_crafter', name: 'Artefact Provenance Laboratory', description: 'Automates Paradigm: Provenance Studies.', targetIdeaId: 'paradigm_provenance_studies', baseCost: { thought: 5100000, theory_crystallography: 3, theory_historiography: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_provenance_studies'] },
+
+    // --- Fluid Dynamics pairings ---
+    paradigm_maritime_archaeology_crafter: { id: 'paradigm_maritime_archaeology_crafter', name: 'Underwater Excavation Platform', description: 'Automates Paradigm: Maritime Archaeology.', targetIdeaId: 'paradigm_maritime_archaeology', baseCost: { thought: 5000000, theory_fluid_dynamics: 3, theory_archaeology: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_maritime_archaeology'] },
+    paradigm_network_flow_theory_crafter: { id: 'paradigm_network_flow_theory_crafter', name: 'Network Topology Optimiser', description: 'Automates Paradigm: Network Flow Theory.', targetIdeaId: 'paradigm_network_flow_theory', baseCost: { thought: 5500000, theory_fluid_dynamics: 3, theory_information_theory: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_network_flow_theory'] },
+    paradigm_strange_attractors_crafter: { id: 'paradigm_strange_attractors_crafter', name: 'Chaotic Attractor Visualiser', description: 'Automates Paradigm: Strange Attractors.', targetIdeaId: 'paradigm_strange_attractors', baseCost: { thought: 5600000, theory_fluid_dynamics: 3, theory_chaos_theory: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_strange_attractors'] },
+    paradigm_morphogenesis_crafter: { id: 'paradigm_morphogenesis_crafter', name: 'Developmental Biology Laboratory', description: 'Automates Paradigm: Morphogenesis.', targetIdeaId: 'paradigm_morphogenesis', baseCost: { thought: 5500000, theory_fluid_dynamics: 3, theory_evolutionary_theory: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_morphogenesis'] },
+    paradigm_hydrodynamics_crafter: { id: 'paradigm_hydrodynamics_crafter', name: 'Wave Tank and Flow Basin', description: 'Automates Paradigm: Hydrodynamics.', targetIdeaId: 'paradigm_hydrodynamics', baseCost: { thought: 5300000, theory_fluid_dynamics: 3, theory_wave_mechanics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_hydrodynamics'] },
+    paradigm_swarm_intelligence_crafter: { id: 'paradigm_swarm_intelligence_crafter', name: 'Collective Behaviour Simulation Hub', description: 'Automates Paradigm: Swarm Intelligence.', targetIdeaId: 'paradigm_swarm_intelligence', baseCost: { thought: 5600000, theory_fluid_dynamics: 3, theory_cognitive_science: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_swarm_intelligence'] },
+    paradigm_climate_history_crafter: { id: 'paradigm_climate_history_crafter', name: 'Palaeoclimate Reconstruction Centre', description: 'Automates Paradigm: Climate History.', targetIdeaId: 'paradigm_climate_history', baseCost: { thought: 5300000, theory_fluid_dynamics: 3, theory_historiography: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_climate_history'] },
+
+    // --- Archaeology pairings ---
+    paradigm_digital_humanities_crafter: { id: 'paradigm_digital_humanities_crafter', name: 'Digital Heritage Archive', description: 'Automates Paradigm: Digital Humanities.', targetIdeaId: 'paradigm_digital_humanities', baseCost: { thought: 5300000, theory_archaeology: 3, theory_information_theory: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_digital_humanities'] },
+    paradigm_collapse_theory_crafter: { id: 'paradigm_collapse_theory_crafter', name: 'Civilisation Collapse Analysis Unit', description: 'Automates Paradigm: Collapse Theory.', targetIdeaId: 'paradigm_collapse_theory', baseCost: { thought: 5400000, theory_archaeology: 3, theory_chaos_theory: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_collapse_theory'] },
+    paradigm_palaeoanthropology_crafter: { id: 'paradigm_palaeoanthropology_crafter', name: 'Hominin Evolution Research Centre', description: 'Automates Paradigm: Palaeoanthropology.', targetIdeaId: 'paradigm_palaeoanthropology', baseCost: { thought: 5400000, theory_archaeology: 3, theory_evolutionary_theory: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_palaeoanthropology'] },
+    paradigm_acoustic_archaeology_crafter: { id: 'paradigm_acoustic_archaeology_crafter', name: 'Ancient Soundscape Laboratory', description: 'Automates Paradigm: Acoustic Archaeology.', targetIdeaId: 'paradigm_acoustic_archaeology', baseCost: { thought: 5200000, theory_archaeology: 3, theory_wave_mechanics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_acoustic_archaeology'] },
+    paradigm_cognitive_archaeology_crafter: { id: 'paradigm_cognitive_archaeology_crafter', name: 'Prehistoric Mind Research Institute', description: 'Automates Paradigm: Cognitive Archaeology.', targetIdeaId: 'paradigm_cognitive_archaeology', baseCost: { thought: 5400000, theory_archaeology: 3, theory_cognitive_science: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_cognitive_archaeology'] },
+    paradigm_historical_archaeology_crafter: { id: 'paradigm_historical_archaeology_crafter', name: 'Historical Period Excavation Unit', description: 'Automates Paradigm: Historical Archaeology.', targetIdeaId: 'paradigm_historical_archaeology', baseCost: { thought: 5100000, theory_archaeology: 3, theory_historiography: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_historical_archaeology'] },
+
+    // --- Information Theory pairings ---
+    paradigm_cryptography_crafter: { id: 'paradigm_cryptography_crafter', name: 'Cryptographic Protocol Engine', description: 'Automates Paradigm: Cryptography.', targetIdeaId: 'paradigm_cryptography', baseCost: { thought: 5800000, theory_information_theory: 3, theory_chaos_theory: 3 }, costScale: 2.5, outputAmount: 0.00018, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_cryptography'] },
+    paradigm_evolutionary_computation_crafter: { id: 'paradigm_evolutionary_computation_crafter', name: 'Genetic Algorithm Processor', description: 'Automates Paradigm: Evolutionary Computation.', targetIdeaId: 'paradigm_evolutionary_computation', baseCost: { thought: 5800000, theory_information_theory: 3, theory_evolutionary_theory: 3 }, costScale: 2.5, outputAmount: 0.00018, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_evolutionary_computation'] },
+    paradigm_signal_processing_crafter: { id: 'paradigm_signal_processing_crafter', name: 'Digital Signal Processing Array', description: 'Automates Paradigm: Signal Processing.', targetIdeaId: 'paradigm_signal_processing', baseCost: { thought: 5700000, theory_information_theory: 3, theory_wave_mechanics: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_signal_processing'] },
+    paradigm_artificial_intelligence_crafter: { id: 'paradigm_artificial_intelligence_crafter', name: 'Artificial Intelligence Research Cluster', description: 'Automates Paradigm: Artificial Intelligence.', targetIdeaId: 'paradigm_artificial_intelligence', baseCost: { thought: 7200000, theory_information_theory: 3, theory_cognitive_science: 3 }, costScale: 2.5, outputAmount: 0.00016, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_artificial_intelligence'] },
+    paradigm_archival_science_crafter: { id: 'paradigm_archival_science_crafter', name: 'Long-Term Knowledge Preservation Vault', description: 'Automates Paradigm: Archival Science.', targetIdeaId: 'paradigm_archival_science', baseCost: { thought: 5300000, theory_information_theory: 3, theory_historiography: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_archival_science'] },
+
+    // --- Chaos Theory pairings ---
+    paradigm_complex_adaptive_systems_crafter: { id: 'paradigm_complex_adaptive_systems_crafter', name: 'Complex Systems Modelling Centre', description: 'Automates Paradigm: Complex Adaptive Systems.', targetIdeaId: 'paradigm_complex_adaptive_systems', baseCost: { thought: 5900000, theory_chaos_theory: 3, theory_evolutionary_theory: 3 }, costScale: 2.5, outputAmount: 0.00018, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_complex_adaptive_systems'] },
+    paradigm_soliton_theory_crafter: { id: 'paradigm_soliton_theory_crafter', name: 'Nonlinear Wave Research Laboratory', description: 'Automates Paradigm: Soliton Theory.', targetIdeaId: 'paradigm_soliton_theory', baseCost: { thought: 5700000, theory_chaos_theory: 3, theory_wave_mechanics: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_soliton_theory'] },
+    paradigm_emergence_crafter: { id: 'paradigm_emergence_crafter', name: 'Emergence and Complexity Institute', description: 'Automates Paradigm: Emergence.', targetIdeaId: 'paradigm_emergence', baseCost: { thought: 5900000, theory_chaos_theory: 3, theory_cognitive_science: 3 }, costScale: 2.5, outputAmount: 0.00018, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_emergence'] },
+    paradigm_catastrophism_crafter: { id: 'paradigm_catastrophism_crafter', name: 'Mass Extinction Research Centre', description: 'Automates Paradigm: Catastrophism.', targetIdeaId: 'paradigm_catastrophism', baseCost: { thought: 5500000, theory_chaos_theory: 3, theory_historiography: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_catastrophism'] },
+
+    // --- Evolutionary Theory pairings ---
+    paradigm_bioacoustics_crafter: { id: 'paradigm_bioacoustics_crafter', name: 'Bioacoustics Field Recording Suite', description: 'Automates Paradigm: Bioacoustics.', targetIdeaId: 'paradigm_bioacoustics', baseCost: { thought: 5400000, theory_evolutionary_theory: 3, theory_wave_mechanics: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_bioacoustics'] },
+    paradigm_evolutionary_psychology_crafter: { id: 'paradigm_evolutionary_psychology_crafter', name: 'Evolutionary Cognition Laboratory', description: 'Automates Paradigm: Evolutionary Psychology.', targetIdeaId: 'paradigm_evolutionary_psychology', baseCost: { thought: 5600000, theory_evolutionary_theory: 3, theory_cognitive_science: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_evolutionary_psychology'] },
+    paradigm_cultural_evolution_crafter: { id: 'paradigm_cultural_evolution_crafter', name: 'Cultural Transmission Research Hub', description: 'Automates Paradigm: Cultural Evolution.', targetIdeaId: 'paradigm_cultural_evolution', baseCost: { thought: 5500000, theory_evolutionary_theory: 3, theory_historiography: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_cultural_evolution'] },
+
+    // --- Wave Mechanics pairings ---
+    paradigm_psychoacoustics_crafter: { id: 'paradigm_psychoacoustics_crafter', name: 'Auditory Perception Laboratory', description: 'Automates Paradigm: Psychoacoustics.', targetIdeaId: 'paradigm_psychoacoustics', baseCost: { thought: 5500000, theory_wave_mechanics: 3, theory_cognitive_science: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_psychoacoustics'] },
+    paradigm_archaeoacoustics_crafter: { id: 'paradigm_archaeoacoustics_crafter', name: 'Ancient Acoustic Environment Rig', description: 'Automates Paradigm: Archaeoacoustics.', targetIdeaId: 'paradigm_archaeoacoustics', baseCost: { thought: 5300000, theory_wave_mechanics: 3, theory_historiography: 3 }, costScale: 2.5, outputAmount: 0.0002, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_archaeoacoustics'] },
+
+    // --- Cognitive Science pairings ---
+    paradigm_historiography_of_mind_crafter: { id: 'paradigm_historiography_of_mind_crafter', name: 'History of Consciousness Archive', description: 'Automates Paradigm: Historiography of Mind.', targetIdeaId: 'paradigm_historiography_of_mind', baseCost: { thought: 5600000, theory_cognitive_science: 3, theory_historiography: 3 }, costScale: 2.5, outputAmount: 0.00019, outputScale: 1.05, maxLevel: 15, unlocksWith: ['paradigm_historiography_of_mind'] }
+
 };

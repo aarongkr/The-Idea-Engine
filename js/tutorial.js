@@ -6,13 +6,13 @@
 const Tutorial = {
     steps: [
         {
-            text: "Welcome to The Idea Engine! Your journey begins with a single spark. Click 'Spark Fleeting Thought' until you have 20 FT.",
+            text: "Welcome to The Idea Engine! Your journey begins with a single spark. Click 'Spark Thought' until you have 20 FT.",
             target: '#spark-button',
-            isComplete: () => gameState.resources.fleeting_thought >= 20,
+            isComplete: () => gameState.resources.thought >= 20,
             before: () => {}
         },
         {
-            text: "Excellent! Fleeting Thoughts are the raw material for everything. Now, let's turn them into something useful. Click the 'Base Refinement' tab.",
+            text: "Excellent! Thoughts are the raw material for everything. Now, let's turn them into something useful. Click the 'Base Refinement' tab.",
             target: '.nav-button[data-panel="refinement-panel"]',
             // isComplete for this step will be handled by the click action
             action: (e) => e.target.closest('.nav-button')?.dataset.panel === 'refinement-panel',
@@ -31,7 +31,7 @@ const Tutorial = {
             }
         },
         {
-            text: "Great! Your Mind Palace will now generate Fleeting Thoughts automatically. You've learned the basics. The rest is up to you to discover. Good luck!",
+            text: "Great! Your Mind Palace will now generate Thoughts automatically. You've learned the basics. The rest is up to you to discover. Good luck!",
             target: null, // No specific element to highlight
             isComplete: () => false, // This step is only advanced by clicking "Finish"
             before: () => {}

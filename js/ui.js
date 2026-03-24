@@ -107,7 +107,7 @@ const UI = {
     },
 
     updateResourceDisplay() {
-        this.elements.ftCount.textContent = Utils.formatNumber(gameState.resources.fleeting_thought);
+        this.elements.ftCount.textContent = Utils.formatNumber(gameState.resources.thought);
         this.elements.wsCount.textContent = Utils.formatNumber(gameState.resources.wisdom_shards);
         const ftPerSecRate = GameLogic.calculateCurrentFtPerSec();
         this.elements.ftPerSecCount.textContent = Utils.formatNumber(ftPerSecRate) + "/sec";
@@ -145,7 +145,7 @@ const UI = {
         }
 
         let upgradesPerformed = 0;
-        let totalCost = { fleeting_thought: 0 };
+        let totalCost = { thought: 0 };
 
         // Calculate total cost for all paradigm crafters
         Object.keys(CRAFTERS_DATA).forEach(crafterId => {
@@ -260,7 +260,7 @@ const UI = {
             outputString = `Effect: +${totalBonus.toFixed(0)}% to all FT generation`;
         } else if (itemData.output) {
             Object.entries(itemData.output).forEach(([outRes, outVal]) => {
-                if (outRes === 'fleeting_thought') {
+                if (outRes === 'thought') {
                     const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = itemData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : "";
                     const ftOutputValue = (outVal * (outputScale ** scalePower) * displayLevel);
                     outputString += `${Utils.formatNumber(ftOutputValue)} FT/sec${prefix}<br>`;
@@ -300,7 +300,7 @@ const UI = {
         const genLevels = Object.keys(GENERATORS_DATA).map(id => `${id}:${gameState.generators[id]?.level || 0}`).join(',');
         // Round FT to nearest 10 to avoid re-rendering on every single FT gain,
         // while still updating affordability indicators reasonably promptly.
-        const ftBucket = Math.floor((gameState.resources.fleeting_thought || 0) / 10);
+        const ftBucket = Math.floor((gameState.resources.thought || 0) / 10);
         const ideaBucket = Object.entries(gameState.ideas).map(([id, v]) => `${id}:${Math.floor((v||0)/5)}`).join(',');
         return `${genLevels}|${ftBucket}|${ideaBucket}|${gameState.purchaseMultiplier}`;
     },
@@ -310,7 +310,7 @@ const UI = {
             .filter(id => id.startsWith(prefix + '_'))
             .map(id => `${id}:${gameState.crafters[id]?.level || 0}`)
             .join(',');
-        const ftBucket = Math.floor((gameState.resources.fleeting_thought || 0) / 10);
+        const ftBucket = Math.floor((gameState.resources.thought || 0) / 10);
         const ideaBucket = Object.entries(gameState.ideas).map(([id, v]) => `${id}:${Math.floor((v||0)/5)}`).join(',');
         const bulkUnlocked = gameState.wisdomShop.paradigm_bulk_manager?.level || 0;
         return `${crafterLevels}|${ftBucket}|${ideaBucket}|${gameState.purchaseMultiplier}|bulk:${bulkUnlocked}`;
@@ -598,7 +598,7 @@ const UI = {
     },
 
     updateDetailsView(ideaData) {
-         if (!ideaData || ideaData.id === 'fleeting_thought') {
+         if (!ideaData || ideaData.id === 'thought') {
              this.elements.selectedIdeaName.textContent = 'Nothing Selected';
              this.elements.selectedIdeaDescription.textContent = 'Click an idea node in the Noosphere.';
              this.elements.selectedIdeaAttributes.innerHTML = '';

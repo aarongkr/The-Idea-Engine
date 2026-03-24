@@ -2,64 +2,80 @@
 
 /**
  * Defines all purchasable upgrades in the Wisdom Shard shop.
- * Each upgrade can be a single purchase or have multiple levels.
+ *
+ * Naming philosophy:
+ *   - Names should feel like genuine intellectual or cognitive advancements.
+ *   - QoL upgrades are named after organisational or methodological breakthroughs.
+ *   - Click bonuses reflect deepening personal discipline.
+ *   - Global multipliers represent expanding schools of thought.
+ *   - Offline upgrades evoke subconscious or contemplative processing.
  */
 const WISDOM_SHOP_DATA = {
-    // Core Quality of Life Upgrades
+
+    // =========================================================================
+    // Quality of Life
+    // =========================================================================
+
     multi_buy_unlock: {
         id: 'multi_buy_unlock',
-        name: 'Bulk Purchasing',
-        description: 'Unlock the ability to buy multiple upgrades at once (x1, x10, x100, Max)',
+        name: 'Mass Production Theory',
+        description: 'Formalises the principle of economies of scale, unlocking bulk purchasing (x1, x10, x100, Max).',
         cost: 5,
         maxLevel: 1,
         category: 'quality_of_life',
         icon: '📦',
         unlockCondition: () => true,
         applyEffect: () => {
-            // This will be handled in UI logic to show/hide the multiplier button
+            // Handled in UI logic to show/hide the multiplier button
         }
     },
 
     paradigm_bulk_manager: {
         id: 'paradigm_bulk_manager',
-        name: 'Paradigm Automation',
-        description: 'Adds "Upgrade All Paradigm Crafters" button to manage all 105 crafters at once',
+        name: 'Paradigmatic Administration',
+        description: 'Establishes an administrative framework to manage all Paradigm Crafters simultaneously, adding a bulk-upgrade button.',
         cost: 15,
         maxLevel: 1,
         category: 'quality_of_life',
-        icon: '🏭',
+        icon: '🏛️',
         unlockCondition: () => gameState.wisdomShop.multi_buy_unlock?.level >= 1,
         applyEffect: () => {
-            // This will be handled in UI logic to show/hide bulk upgrade buttons
+            // Handled in UI logic to show/hide the bulk upgrade button
         }
     },
 
-    // Tap/Click Bonuses (upgradeable branch)
+    // =========================================================================
+    // Enhanced Focus — Tap/Click Bonuses
+    // =========================================================================
+
     tap_ft_bonus: {
         id: 'tap_ft_bonus',
-        name: 'Enhanced Focus',
-        description: 'Each manual spark earns additional FT equal to a percentage of your FT/sec',
+        name: 'Deep Contemplation',
+        description: 'Each deliberate spark of thought draws on your passive mental output, earning bonus Thoughts equal to a percentage of your Thoughts/sec.',
         baseCost: 10,
         costScale: 2.0,
         maxLevel: 10,
         category: 'tap_bonuses',
-        icon: '👆',
+        icon: '🧘',
         unlockCondition: () => true,
-        getEffectValue: (level) => level * 5, // 5% per level, max 50%
+        getEffectValue: (level) => level * 5,   // 5% per level, max 50%
         applyEffect: (level) => {
-            // Applied in GameLogic.sparkFleetingThought()
+            // Applied in GameLogic.sparkThought()
         }
     },
 
-    // Global Multipliers (upgradeable branch)
+    // =========================================================================
+    // Cognitive Enhancements — Global FT Multipliers
+    // =========================================================================
+
     global_ft_multiplier_25: {
         id: 'global_ft_multiplier_25',
-        name: 'Cognitive Enhancement I',
-        description: 'Increases all Fleeting Thought generation by 25%',
+        name: 'School of Thought I',
+        description: 'Establishes a coherent intellectual tradition, increasing all Thought generation by 25%.',
         cost: 25,
         maxLevel: 1,
         category: 'global_multipliers',
-        icon: '🧠',
+        icon: '🎓',
         unlockCondition: () => true,
         getEffectValue: () => 0.25,
         applyEffect: () => {
@@ -69,76 +85,71 @@ const WISDOM_SHOP_DATA = {
 
     global_ft_multiplier_50: {
         id: 'global_ft_multiplier_50',
-        name: 'Cognitive Enhancement II',
-        description: 'Increases all Fleeting Thought generation by 50%',
+        name: 'School of Thought II',
+        description: 'Expands the intellectual tradition into a broader academy, increasing all Thought generation by a further 50%.',
         cost: 50,
         maxLevel: 1,
         category: 'global_multipliers',
-        icon: '🧠',
+        icon: '🎓',
         unlockCondition: () => gameState.wisdomShop.global_ft_multiplier_25?.level >= 1,
         getEffectValue: () => 0.50,
-        applyEffect: () => {
-            // Applied as global multiplier in GameLogic.tick()
-        }
+        applyEffect: () => {}
     },
 
     global_ft_multiplier_75: {
         id: 'global_ft_multiplier_75',
-        name: 'Cognitive Enhancement III',
-        description: 'Increases all Fleeting Thought generation by 75%',
+        name: 'School of Thought III',
+        description: 'The academy grows into a renowned institute, increasing all Thought generation by a further 75%.',
         cost: 100,
         maxLevel: 1,
         category: 'global_multipliers',
-        icon: '🧠',
+        icon: '🎓',
         unlockCondition: () => gameState.wisdomShop.global_ft_multiplier_50?.level >= 1,
         getEffectValue: () => 0.75,
-        applyEffect: () => {
-            // Applied as global multiplier in GameLogic.tick()
-        }
+        applyEffect: () => {}
     },
 
     global_ft_multiplier_100: {
         id: 'global_ft_multiplier_100',
-        name: 'Cognitive Enhancement IV',
-        description: 'Increases all Fleeting Thought generation by 100%',
+        name: 'School of Thought IV',
+        description: 'The institute achieves international recognition, doubling all Thought generation (+100%).',
         cost: 200,
         maxLevel: 1,
         category: 'global_multipliers',
-        icon: '🧠',
+        icon: '🎓',
         unlockCondition: () => gameState.wisdomShop.global_ft_multiplier_75?.level >= 1,
         getEffectValue: () => 1.0,
-        applyEffect: () => {
-            // Applied as global multiplier in GameLogic.tick()
-        }
+        applyEffect: () => {}
     },
 
     global_ft_multiplier_150: {
         id: 'global_ft_multiplier_150',
-        name: 'Cognitive Enhancement V',
-        description: 'Increases all Fleeting Thought generation by 150%',
+        name: 'School of Thought V',
+        description: 'A paradigm-shifting intellectual movement, increasing all Thought generation by a further 150%.',
         cost: 400,
         maxLevel: 1,
         category: 'global_multipliers',
-        icon: '🧠',
+        icon: '🎓',
         unlockCondition: () => gameState.wisdomShop.global_ft_multiplier_100?.level >= 1,
         getEffectValue: () => 1.5,
-        applyEffect: () => {
-            // Applied as global multiplier in GameLogic.tick()
-        }
+        applyEffect: () => {}
     },
 
-    // Offline Earnings Improvements
+    // =========================================================================
+    // Persistent Contemplation — Offline Earnings
+    // =========================================================================
+
     offline_effectiveness: {
         id: 'offline_effectiveness',
-        name: 'Persistent Thoughts',
-        description: 'Increase offline earnings effectiveness (base: offline earns percentage of online rate)',
+        name: 'Subconscious Processing',
+        description: 'Trains the mind to continue working during rest, increasing the effectiveness of offline Thought accumulation.',
         baseCost: 30,
         costScale: 2.5,
         maxLevel: 5,
         category: 'offline',
         icon: '💤',
         unlockCondition: () => gameState.transcendenceCount >= 1,
-        getEffectValue: (level) => Math.min(100, 20 + (level * 15)), // 35%, 50%, 65%, 80%, 95%
+        getEffectValue: (level) => Math.min(100, 20 + (level * 15)),  // 35%, 50%, 65%, 80%, 95%
         applyEffect: (level) => {
             // Applied in GameLogic.calculateOfflineProgress()
         }
@@ -146,15 +157,15 @@ const WISDOM_SHOP_DATA = {
 
     offline_time_cap: {
         id: 'offline_time_cap',
-        name: 'Extended Contemplation',
-        description: 'Increase the time cap for offline earnings',
+        name: 'Extended Incubation',
+        description: 'Extends the window of productive offline contemplation — ideas need time to incubate.',
         baseCost: 20,
         costScale: 2.0,
         maxLevel: 8,
         category: 'offline',
-        icon: '⏰',
+        icon: '⏳',
         unlockCondition: () => gameState.transcendenceCount >= 1,
-        getEffectValue: (level) => 24 + (level * 12), // 36h, 48h, 60h, 72h, 84h, 96h, 108h, 120h (5 days max)
+        getEffectValue: (level) => 24 + (level * 12),  // 36h, 48h ... up to 120h
         applyEffect: (level) => {
             // Applied in GameLogic.calculateOfflineProgress()
         }

@@ -171,7 +171,7 @@ const Noosphere = {
      */
     addNode(ideaId) {
         const ideaData = IDEAS_DATA[ideaId];
-        if (!ideaData || ideaId === 'fleeting_thought' || this.nodes.get(ideaId)) return;
+        if (!ideaData || ideaId === 'thought' || this.nodes.get(ideaId)) return;
 
         const nodeLabel = ideaData.name.replace(/Concept: |Insight: |Theory: |Paradigm: /g, '');
         let value;
@@ -230,12 +230,12 @@ const Noosphere = {
         this.edges.clear();
 
         gameState.discoveredIdeas.forEach(ideaId => {
-            if (ideaId === 'fleeting_thought') return;
+            if (ideaId === 'thought') return;
             this.addNode(ideaId);
         });
 
         Object.values(IDEAS_DATA).forEach(idea => {
-            if (idea.id === 'fleeting_thought' || !idea.recipe) return;
+            if (idea.id === 'thought' || !idea.recipe) return;
             if (gameState.discoveredIdeas.has(idea.id) && idea.recipe.every(ing => gameState.discoveredIdeas.has(ing))) {
                 idea.recipe.forEach(ingredientId => {
                     this.addEdge(ingredientId, idea.id);

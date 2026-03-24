@@ -1,929 +1,977 @@
 // js/config/ideasData.js
 
 /**
- * Defines all discoverable ideas in the game, including their properties,
- * recipes for creation, and any passive effects they provide.
+ * Defines all discoverable ideas in the game.
+ *
+ * Tier 0 : Thoughts          — the base currency
+ * Tier 1 : Concepts (4)      — Matter, Energy, Information, Time
+ * Tier 2 : Insights (6)      — all C(4,2) pairs of concepts
+ * Tier 3 : Theories (15)     — all C(6,2) pairs of insights
+ * Tier 4 : Paradigms (105)   — all C(15,2) pairs of theories
  */
 const IDEAS_DATA = {
-    // Tier 0: Base Currency
-    fleeting_thought: {
-        id: 'fleeting_thought', name: 'Fleeting Thought', tier: 0, color: '#cccccc', shape: 'dot',
-        description: 'A raw, unrefined spark of potential.'
+
+    // =========================================================================
+    // Tier 0 — Base Currency
+    // =========================================================================
+    thought: {
+        id: 'thought', name: 'Thought', tier: 0,
+        color: '#cccccc', shape: 'dot',
+        description: 'A raw, unrefined spark of mental potential. The seed of all understanding.'
     },
 
-    // Tier 1: Base Concepts
-    concept_duality: {
-        id: 'concept_duality', name: 'Concept: Duality', tier: 1, group: 'concept',
-        color: { background: '#29b6f6', border: '#01579b' }, shape: 'ellipse',
-        description: 'The notion of two contrasting aspects. (e.g., light/dark, order/chaos).',
-        attributes: { ft_bonus_per_sec: 0.01 }
-    },
-    concept_pattern: {
-        id: 'concept_pattern', name: 'Concept: Pattern', tier: 1, group: 'concept',
-        color: { background: '#66bb6a', border: '#2e7d32' }, shape: 'ellipse',
-        description: 'A discernible regularity or sequence.',
-        attributes: { ft_bonus_per_sec: 0.01 }
-    },
+    // =========================================================================
+    // Tier 1 — Base Concepts
+    // =========================================================================
     concept_matter: {
         id: 'concept_matter', name: 'Concept: Matter', tier: 1, group: 'concept',
-        color: { background: '#ffa726', border: '#ef6c00' }, shape: 'ellipse',
-        description: 'The physical substance of the universe.',
-        attributes: { ft_bonus_per_sec: 0.015 }
+        color: { background: '#ef5350', border: '#b71c1c' }, shape: 'ellipse',
+        description: 'The substance of the universe — atoms, molecules, and everything with mass and volume.',
+        attributes: { ft_bonus_per_sec: 0.01 }
     },
     concept_energy: {
         id: 'concept_energy', name: 'Concept: Energy', tier: 1, group: 'concept',
-        color: { background: '#ef5350', border: '#c62828' }, shape: 'ellipse',
-        description: 'The capacity to perform work or produce heat.',
-        attributes: { ft_bonus_per_sec: 0.015 }
+        color: { background: '#ffa726', border: '#e65100' }, shape: 'ellipse',
+        description: 'The capacity to do work or cause change — heat, light, motion, and force.',
+        attributes: { ft_bonus_per_sec: 0.01 }
+    },
+    concept_information: {
+        id: 'concept_information', name: 'Concept: Information', tier: 1, group: 'concept',
+        color: { background: '#29b6f6', border: '#01579b' }, shape: 'ellipse',
+        description: 'Patterns, signals, and structure that carry meaning — the fabric of knowledge itself.',
+        attributes: { ft_bonus_per_sec: 0.01 }
+    },
+    concept_time: {
+        id: 'concept_time', name: 'Concept: Time', tier: 1, group: 'concept',
+        color: { background: '#66bb6a', border: '#1b5e20' }, shape: 'ellipse',
+        description: 'The dimension through which change unfolds — the arrow that gives causality its direction.',
+        attributes: { ft_bonus_per_sec: 0.01 }
     },
 
-    // Tier 2: Insights
+    // =========================================================================
+    // Tier 2 — Insights   (C(4,2) = 6 pairs)
+    // Matter+Energy, Matter+Information, Matter+Time,
+    // Energy+Information, Energy+Time, Information+Time
+    // =========================================================================
+    insight_thermodynamics: {
+        id: 'insight_thermodynamics', name: 'Insight: Thermodynamics', tier: 2, group: 'insight',
+        color: { background: '#ffee58', border: '#f57f17', highlight: { background: '#fff59d', border: '#f57f17' } }, shape: 'diamond',
+        description: 'The laws governing the exchange of energy and matter — heat flow, work, and the universal drive toward equilibrium.',
+        recipe: ['concept_matter', 'concept_energy'],
+        attributes: { ft_bonus_per_sec: 0.10 }
+    },
     insight_structure: {
         id: 'insight_structure', name: 'Insight: Structure', tier: 2, group: 'insight',
-        color: { background: '#ffee58', border: '#f57f17', highlight: { background: '#fff59d', border: '#f57f17'} }, shape: 'diamond',
-        description: 'Understanding how elements are arranged and organized based on underlying dualities and patterns.',
-        recipe: ['concept_duality', 'concept_pattern'],
-        attributes: { ft_bonus_per_sec: 0.1 }
+        color: { background: '#ffee58', border: '#f57f17', highlight: { background: '#fff59d', border: '#f57f17' } }, shape: 'diamond',
+        description: 'The realisation that information is always encoded in a physical substrate — form and data are inseparable.',
+        recipe: ['concept_matter', 'concept_information'],
+        attributes: { ft_bonus_per_sec: 0.10 }
     },
-    insight_substance: {
-        id: 'insight_substance', name: 'Insight: Substance', tier: 2, group: 'insight',
-        color: { background: '#ffee58', border: '#f57f17', highlight: { background: '#fff59d', border: '#f57f17'} }, shape: 'diamond',
-        description: 'A fundamental understanding of physical existence combining matter and energy.',
-        recipe: ['concept_matter', 'concept_energy'],
-        attributes: { ft_bonus_per_sec: 0.12 }
+    insight_entropy: {
+        id: 'insight_entropy', name: 'Insight: Entropy', tier: 2, group: 'insight',
+        color: { background: '#ffee58', border: '#f57f17', highlight: { background: '#fff59d', border: '#f57f17' } }, shape: 'diamond',
+        description: 'The tendency of matter to disperse and disorder as time progresses — the measure of irreversible change.',
+        recipe: ['concept_matter', 'concept_time'],
+        attributes: { ft_bonus_per_sec: 0.10 }
     },
-    insight_causality: {
-        id: 'insight_causality', name: 'Insight: Causality', tier: 2, group: 'insight',
-        color: { background: '#ffee58', border: '#f57f17', highlight: { background: '#fff59d', border: '#f57f17'} }, shape: 'diamond',
-        description: 'The relationship between cause and effect, derived from observing patterns in energy transformation.',
-        recipe: ['concept_pattern', 'concept_energy'],
-        attributes: { ft_bonus_per_sec: 0.11 }
+    insight_signal: {
+        id: 'insight_signal', name: 'Insight: Signal', tier: 2, group: 'insight',
+        color: { background: '#ffee58', border: '#f57f17', highlight: { background: '#fff59d', border: '#f57f17' } }, shape: 'diamond',
+        description: 'Energy harnessed to carry information — the principle behind every wave, transmission, and communication.',
+        recipe: ['concept_energy', 'concept_information'],
+        attributes: { ft_bonus_per_sec: 0.10 }
     },
-    insight_form: {
-        id: 'insight_form', name: 'Insight: Form', tier: 2, group: 'insight',
-        color: { background: '#ffee58', border: '#f57f17', highlight: { background: '#fff59d', border: '#f57f17'} }, shape: 'diamond',
-        description: 'The understanding that matter takes on distinct forms and boundaries, often defined by contrasting properties.',
-        recipe: ['concept_duality', 'concept_matter'],
-        attributes: { ft_bonus_per_sec: 0.09 }
+    insight_dynamics: {
+        id: 'insight_dynamics', name: 'Insight: Dynamics', tier: 2, group: 'insight',
+        color: { background: '#ffee58', border: '#f57f17', highlight: { background: '#fff59d', border: '#f57f17' } }, shape: 'diamond',
+        description: 'Energy expressed across time — the study of motion, force, and how systems evolve from one state to another.',
+        recipe: ['concept_energy', 'concept_time'],
+        attributes: { ft_bonus_per_sec: 0.10 }
     },
-    insight_potential: {
-        id: 'insight_potential', name: 'Insight: Potential', tier: 2, group: 'insight',
-        color: { background: '#ffee58', border: '#f57f17', highlight: { background: '#fff59d', border: '#f57f17'} }, shape: 'diamond',
-        description: 'The recognition that energy exists in states of potential and kinetic expression, a fundamental duality.',
-        recipe: ['concept_duality', 'concept_energy'],
-        attributes: { ft_bonus_per_sec: 0.1 }
-    },
-    insight_mechanism: {
-        id: 'insight_mechanism', name: 'Insight: Mechanism', tier: 2, group: 'insight',
-        color: { background: '#ffee58', border: '#f57f17', highlight: { background: '#fff59d', border: '#f57f17'} }, shape: 'diamond',
-        description: 'The realization that patterns in the arrangement of matter give rise to functional mechanisms and systems.',
-        recipe: ['concept_pattern', 'concept_matter'],
-        attributes: { ft_bonus_per_sec: 0.11 }
+    insight_memory: {
+        id: 'insight_memory', name: 'Insight: Memory', tier: 2, group: 'insight',
+        color: { background: '#ffee58', border: '#f57f17', highlight: { background: '#fff59d', border: '#f57f17' } }, shape: 'diamond',
+        description: 'Information that persists through time — the foundation of learning, history, and identity.',
+        recipe: ['concept_information', 'concept_time'],
+        attributes: { ft_bonus_per_sec: 0.10 }
     },
 
-    // Tier 3: Theories (15 unique combinations of 6 insights)
-    theory_framework: {
-        id: 'theory_framework', name: 'Theory: Framework', tier: 3, group: 'theory',
+    // =========================================================================
+    // Tier 3 — Theories   (C(6,2) = 15 pairs)
+    // =========================================================================
+    theory_materials_science: {
+        id: 'theory_materials_science', name: 'Theory: Materials Science', tier: 3, group: 'theory',
         color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
-        description: 'A foundational set of ideas used to develop more complex systems, built upon structure and causality.',
-        recipe: ['insight_structure', 'insight_causality'],
-        attributes: { ft_bonus_per_sec: 0.5 }
+        description: 'The study of how physical structure and thermal properties together determine the behaviour of materials.',
+        recipe: ['insight_thermodynamics', 'insight_structure'],
+        attributes: { ft_bonus_per_sec: 0.50 }
     },
-    theory_architecture: {
-        id: 'theory_architecture', name: 'Theory: Architecture', tier: 3, group: 'theory',
+    theory_statistical_mechanics: {
+        id: 'theory_statistical_mechanics', name: 'Theory: Statistical Mechanics', tier: 3, group: 'theory',
         color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
-        description: 'The art and science of designing and constructing coherent forms within defined structures.',
-        recipe: ['insight_structure', 'insight_form'],
-        attributes: { ft_bonus_per_sec: 0.51 }
-    },
-    theory_metaphysics: {
-        id: 'theory_metaphysics', name: 'Theory: Metaphysics', tier: 3, group: 'theory',
-        color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
-        description: 'Exploring the fundamental nature of reality, potential, and existence within defined structures.',
-        recipe: ['insight_structure', 'insight_potential'],
+        description: 'Bridging thermodynamic laws and entropy by describing macroscopic phenomena through the statistical behaviour of vast numbers of particles.',
+        recipe: ['insight_thermodynamics', 'insight_entropy'],
         attributes: { ft_bonus_per_sec: 0.52 }
     },
-    theory_cybernetics: {
-        id: 'theory_cybernetics', name: 'Theory: Cybernetics', tier: 3, group: 'theory',
+    theory_electromagnetic_theory: {
+        id: 'theory_electromagnetic_theory', name: 'Theory: Electromagnetism', tier: 3, group: 'theory',
         color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
-        description: 'The study of control and communication in complex systems, linking structure to functional mechanisms.',
-        recipe: ['insight_structure', 'insight_mechanism'],
+        description: 'The unified framework in which thermal radiation and signal propagation are understood as manifestations of the same electromagnetic field.',
+        recipe: ['insight_thermodynamics', 'insight_signal'],
         attributes: { ft_bonus_per_sec: 0.55 }
     },
-    theory_cosmology: {
-        id: 'theory_cosmology', name: 'Theory: Cosmology', tier: 3, group: 'theory',
+    theory_classical_mechanics: {
+        id: 'theory_classical_mechanics', name: 'Theory: Classical Mechanics', tier: 3, group: 'theory',
         color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
-        description: 'The study of the origin, evolution, and eventual fate of the universe, built upon its substance and structure.',
-        recipe: ['insight_structure', 'insight_substance'],
-        attributes: { ft_bonus_per_sec: 0.6 }
-    },
-    theory_ontology: {
-        id: 'theory_ontology', name: 'Theory: Ontology', tier: 3, group: 'theory',
-        color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
-        description: 'The philosophical study of being, existence, and reality, considering the forms substance can take.',
-        recipe: ['insight_substance', 'insight_form'],
-        attributes: { ft_bonus_per_sec: 0.58 }
-    },
-    theory_thermodynamics: {
-        id: 'theory_thermodynamics', name: 'Theory: Thermodynamics', tier: 3, group: 'theory',
-        color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
-        description: 'The science of the relationships between heat and other forms of energy (potential) within material substance.',
-        recipe: ['insight_substance', 'insight_potential'],
-        attributes: { ft_bonus_per_sec: 0.62 }
-    },
-    theory_engineering: {
-        id: 'theory_engineering', name: 'Theory: Engineering', tier: 3, group: 'theory',
-        color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
-        description: 'The application of scientific and material (substance) principles to design and build mechanisms.',
-        recipe: ['insight_substance', 'insight_mechanism'],
-        attributes: { ft_bonus_per_sec: 0.65 }
-    },
-    theory_physics: {
-        id: 'theory_physics', name: 'Theory: Physics', tier: 3, group: 'theory',
-        color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
-        description: 'The systematic study of matter, energy, and their interactions, grounded in substance and causality.',
-        recipe: ['insight_substance', 'insight_causality'],
-        attributes: { ft_bonus_per_sec: 0.68 }
-    },
-    theory_aesthetics: {
-        id: 'theory_aesthetics', name: 'Theory: Aesthetics', tier: 3, group: 'theory',
-        color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
-        description: 'The principles concerned with the nature and appreciation of beauty, emerging from the causal impact of form.',
-        recipe: ['insight_causality', 'insight_form'],
-        attributes: { ft_bonus_per_sec: 0.53 }
-    },
-    theory_information: {
-        id: 'theory_information', name: 'Theory: Information', tier: 3, group: 'theory',
-        color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
-        description: 'Understanding information as patterns of potential, capable of being encoded, transmitted, and interpreted through causal chains.',
-        recipe: ['insight_causality', 'insight_potential'],
-        attributes: { ft_bonus_per_sec: 0.56 }
-    },
-    theory_logic: {
-        id: 'theory_logic', name: 'Theory: Logic', tier: 3, group: 'theory',
-        color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
-        description: 'The systematic principles of valid reasoning and inference, derived from the causal operations of defined mechanisms.',
-        recipe: ['insight_causality', 'insight_mechanism'],
-        attributes: { ft_bonus_per_sec: 0.59 }
-    },
-    theory_morphology: {
-        id: 'theory_morphology', name: 'Theory: Morphology', tier: 3, group: 'theory',
-        color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
-        description: 'The study of the form and structure of organisms and their specific features, considering their developmental potential.',
-        recipe: ['insight_form', 'insight_potential'],
+        description: 'The laws governing energy and dynamics — motion, force, and the predictable trajectories of bodies through time.',
+        recipe: ['insight_thermodynamics', 'insight_dynamics'],
         attributes: { ft_bonus_per_sec: 0.54 }
     },
-    theory_system_dynamics: {
-        id: 'theory_system_dynamics', name: 'Theory: System Dynamics', tier: 3, group: 'theory',
+    theory_chemical_kinetics: {
+        id: 'theory_chemical_kinetics', name: 'Theory: Chemical Kinetics', tier: 3, group: 'theory',
         color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
-        description: 'The study of how interconnected forms and mechanisms behave and evolve over time.',
-        recipe: ['insight_form', 'insight_mechanism'],
+        description: 'How thermodynamic energy drives reactions whose rates and pathways are recorded in molecular memory over time.',
+        recipe: ['insight_thermodynamics', 'insight_memory'],
+        attributes: { ft_bonus_per_sec: 0.51 }
+    },
+    theory_geology: {
+        id: 'theory_geology', name: 'Theory: Geology', tier: 3, group: 'theory',
+        color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
+        description: 'The structured record of Earth\'s entropic history — rocks as information written by deep time.',
+        recipe: ['insight_structure', 'insight_entropy'],
+        attributes: { ft_bonus_per_sec: 0.50 }
+    },
+    theory_crystallography: {
+        id: 'theory_crystallography', name: 'Theory: Crystallography', tier: 3, group: 'theory',
+        color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
+        description: 'The science of how physical structure encodes information in repeating atomic lattices — the language of minerals.',
+        recipe: ['insight_structure', 'insight_signal'],
+        attributes: { ft_bonus_per_sec: 0.53 }
+    },
+    theory_fluid_dynamics: {
+        id: 'theory_fluid_dynamics', name: 'Theory: Fluid Dynamics', tier: 3, group: 'theory',
+        color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
+        description: 'The dynamic behaviour of structured matter in motion — how form and flow interact in liquids and gases.',
+        recipe: ['insight_structure', 'insight_dynamics'],
+        attributes: { ft_bonus_per_sec: 0.56 }
+    },
+    theory_archaeology: {
+        id: 'theory_archaeology', name: 'Theory: Archaeology', tier: 3, group: 'theory',
+        color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
+        description: 'Reading the structured memory of humanity — recovering information about the past from physical remains.',
+        recipe: ['insight_structure', 'insight_memory'],
+        attributes: { ft_bonus_per_sec: 0.50 }
+    },
+    theory_information_theory: {
+        id: 'theory_information_theory', name: 'Theory: Information Theory', tier: 3, group: 'theory',
+        color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
+        description: 'Shannon\'s formal treatment of signal and entropy — quantifying the capacity to communicate in the face of noise.',
+        recipe: ['insight_entropy', 'insight_signal'],
+        attributes: { ft_bonus_per_sec: 0.60 }
+    },
+    theory_chaos_theory: {
+        id: 'theory_chaos_theory', name: 'Theory: Chaos Theory', tier: 3, group: 'theory',
+        color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
+        description: 'The study of entropic dynamics — how deterministic systems produce unpredictable, sensitive-to-initial-conditions behaviour.',
+        recipe: ['insight_entropy', 'insight_dynamics'],
+        attributes: { ft_bonus_per_sec: 0.58 }
+    },
+    theory_evolutionary_theory: {
+        id: 'theory_evolutionary_theory', name: 'Theory: Evolutionary Theory', tier: 3, group: 'theory',
+        color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
+        description: 'How entropic variation accumulates in biological memory over time, driving the diversification of life.',
+        recipe: ['insight_entropy', 'insight_memory'],
         attributes: { ft_bonus_per_sec: 0.57 }
     },
-    theory_computation: {
-        id: 'theory_computation', name: 'Theory: Computation', tier: 3, group: 'theory',
+    theory_wave_mechanics: {
+        id: 'theory_wave_mechanics', name: 'Theory: Wave Mechanics', tier: 3, group: 'theory',
         color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
-        description: 'The study of what can be efficiently automated, harnessing the potential of defined mechanisms to process information.',
-        recipe: ['insight_potential', 'insight_mechanism'],
+        description: 'The mathematics of signals propagating dynamically through media — unifying sound, light, and quantum wavefunctions.',
+        recipe: ['insight_signal', 'insight_dynamics'],
         attributes: { ft_bonus_per_sec: 0.61 }
     },
+    theory_cognitive_science: {
+        id: 'theory_cognitive_science', name: 'Theory: Cognitive Science', tier: 3, group: 'theory',
+        color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
+        description: 'The interdisciplinary study of how signals are processed and stored as memory — the science of the mind.',
+        recipe: ['insight_signal', 'insight_memory'],
+        attributes: { ft_bonus_per_sec: 0.62 }
+    },
+    theory_historiography: {
+        id: 'theory_historiography', name: 'Theory: Historiography', tier: 3, group: 'theory',
+        color: { background: '#ab47bc', border: '#4a148c' }, shape: 'star',
+        description: 'The study of how dynamic processes leave memory — the methodology of constructing historical narrative from evidence.',
+        recipe: ['insight_dynamics', 'insight_memory'],
+        attributes: { ft_bonus_per_sec: 0.51 }
+    },
 
-    // Tier 4: Paradigms (105 unique combinations of 15 theories)
-    paradigm_structural_design: {
-        id: 'paradigm_structural_design', name: 'Paradigm: Structural Design', tier: 4, group: 'paradigm',
+    // =========================================================================
+    // Tier 4 — Paradigms   (C(15,2) = 105 pairs)
+    // =========================================================================
+
+    // --- Materials Science pairings (14) ---
+    paradigm_condensed_matter_physics: {
+        id: 'paradigm_condensed_matter_physics', name: 'Paradigm: Condensed Matter Physics', tier: 4, group: 'paradigm',
         color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'A paradigm uniting foundational frameworks with architectural principles to create robust and elegant designs.',
-        recipe: ['theory_framework', 'theory_architecture'],
+        description: 'The quantum statistical framework describing how matter organises at high density — superconductors, magnets, and phase transitions.',
+        recipe: ['theory_materials_science', 'theory_statistical_mechanics'],
         attributes: { ft_bonus_per_sec: 2.0 }
     },
-    paradigm_foundational_reality: {
-        id: 'paradigm_foundational_reality', name: 'Paradigm: Foundational Reality', tier: 4, group: 'paradigm',
+    paradigm_photonics: {
+        id: 'paradigm_photonics', name: 'Paradigm: Photonics', tier: 4, group: 'paradigm',
         color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'A comprehensive understanding of existence based on logical frameworks and metaphysical potential.',
-        recipe: ['theory_framework', 'theory_metaphysics'],
+        description: 'Engineering the interaction of light with matter — lasers, fibre optics, and photonic crystals.',
+        recipe: ['theory_materials_science', 'theory_electromagnetic_theory'],
         attributes: { ft_bonus_per_sec: 2.1 }
     },
-    paradigm_control_theory_synthesis: {
-        id: 'paradigm_control_theory_synthesis', name: 'Paradigm: Control Theory Synthesis', tier: 4, group: 'paradigm',
+    paradigm_structural_engineering: {
+        id: 'paradigm_structural_engineering', name: 'Paradigm: Structural Engineering', tier: 4, group: 'paradigm',
         color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Integrating system control with foundational frameworks for advanced automation.',
-        recipe: ['theory_framework', 'theory_cybernetics'],
+        description: 'Applying the mechanical laws of materials science to design structures that safely bear loads.',
+        recipe: ['theory_materials_science', 'theory_classical_mechanics'],
+        attributes: { ft_bonus_per_sec: 2.0 }
+    },
+    paradigm_metallurgy: {
+        id: 'paradigm_metallurgy', name: 'Paradigm: Metallurgy', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The science of extracting, alloying, and shaping metals by mastering their chemical and material properties.',
+        recipe: ['theory_materials_science', 'theory_chemical_kinetics'],
+        attributes: { ft_bonus_per_sec: 2.0 }
+    },
+    paradigm_geomaterials: {
+        id: 'paradigm_geomaterials', name: 'Paradigm: Geomaterials', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Understanding the material properties of rocks, soils, and minerals that compose the Earth.',
+        recipe: ['theory_materials_science', 'theory_geology'],
+        attributes: { ft_bonus_per_sec: 2.0 }
+    },
+    paradigm_solid_state_physics: {
+        id: 'paradigm_solid_state_physics', name: 'Paradigm: Solid State Physics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The physics of crystalline and amorphous solids — the foundation of semiconductors and modern electronics.',
+        recipe: ['theory_materials_science', 'theory_crystallography'],
         attributes: { ft_bonus_per_sec: 2.2 }
     },
-    paradigm_cosmic_blueprint: {
-        id: 'paradigm_cosmic_blueprint', name: 'Paradigm: Cosmic Blueprint', tier: 4, group: 'paradigm',
+    paradigm_rheology: {
+        id: 'paradigm_rheology', name: 'Paradigm: Rheology', tier: 4, group: 'paradigm',
         color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Understanding the universe through its fundamental structural rules and cosmological evolution.',
-        recipe: ['theory_framework', 'theory_cosmology'],
-        attributes: { ft_bonus_per_sec: 2.5 }
+        description: 'The science of flow and deformation in complex materials — bridging solid mechanics and fluid dynamics.',
+        recipe: ['theory_materials_science', 'theory_fluid_dynamics'],
+        attributes: { ft_bonus_per_sec: 2.0 }
     },
-    paradigm_existential_framework: {
-        id: 'paradigm_existential_framework', name: 'Paradigm: Existential Framework', tier: 4, group: 'paradigm',
+    paradigm_archaeomaterials: {
+        id: 'paradigm_archaeomaterials', name: 'Paradigm: Archaeomaterials', tier: 4, group: 'paradigm',
         color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Defining the nature of being within logical and causal structures.',
-        recipe: ['theory_framework', 'theory_ontology'],
+        description: 'Analysing the physical and chemical composition of ancient artefacts to reconstruct past technologies.',
+        recipe: ['theory_materials_science', 'theory_archaeology'],
+        attributes: { ft_bonus_per_sec: 2.0 }
+    },
+    paradigm_data_storage: {
+        id: 'paradigm_data_storage', name: 'Paradigm: Data Storage', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Encoding information in physical substrates — from magnetic tape to solid-state drives and DNA.',
+        recipe: ['theory_materials_science', 'theory_information_theory'],
         attributes: { ft_bonus_per_sec: 2.3 }
     },
-    paradigm_energetic_systems_analysis: {
-        id: 'paradigm_energetic_systems_analysis', name: 'Paradigm: Energetic Systems Analysis', tier: 4, group: 'paradigm',
+    paradigm_fracture_mechanics: {
+        id: 'paradigm_fracture_mechanics', name: 'Paradigm: Fracture Mechanics', tier: 4, group: 'paradigm',
         color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Applying structural frameworks to understand energy flow and transformation.',
-        recipe: ['theory_framework', 'theory_thermodynamics'],
-        attributes: { ft_bonus_per_sec: 2.6 }
-    },
-    paradigm_applied_mechanics_principles: {
-        id: 'paradigm_applied_mechanics_principles', name: 'Paradigm: Applied Mechanics Principles', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The fundamental principles of engineering derived from core structural and causal laws.',
-        recipe: ['theory_framework', 'theory_engineering'],
-        attributes: { ft_bonus_per_sec: 2.7 }
-    },
-    paradigm_unified_field_exploration: {
-        id: 'paradigm_unified_field_exploration', name: 'Paradigm: Unified Field Exploration', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'A quest to unify physical laws under a single comprehensive framework.',
-        recipe: ['theory_framework', 'theory_physics'],
-        attributes: { ft_bonus_per_sec: 2.8 }
-    },
-    paradigm_causal_aesthetics: {
-        id: 'paradigm_causal_aesthetics', name: 'Paradigm: Causal Aesthetics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Understanding beauty as an emergent property of underlying causal frameworks.',
-        recipe: ['theory_framework', 'theory_aesthetics'],
+        description: 'The chaotic propagation of cracks in materials — predicting when structures will catastrophically fail.',
+        recipe: ['theory_materials_science', 'theory_chaos_theory'],
         attributes: { ft_bonus_per_sec: 2.1 }
     },
-    paradigm_information_architecture: {
-        id: 'paradigm_information_architecture', name: 'Paradigm: Information Architecture', tier: 4, group: 'paradigm',
+    paradigm_biomimetics: {
+        id: 'paradigm_biomimetics', name: 'Paradigm: Biomimetics', tier: 4, group: 'paradigm',
         color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Designing the structural blueprint of shared information environments.',
-        recipe: ['theory_framework', 'theory_information'],
-        attributes: { ft_bonus_per_sec: 2.4 }
-    },
-    paradigm_logical_systems_design: {
-        id: 'paradigm_logical_systems_design', name: 'Paradigm: Logical Systems Design', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The creation of systems based on rigorous logical frameworks and causal reasoning.',
-        recipe: ['theory_framework', 'theory_logic'],
-        attributes: { ft_bonus_per_sec: 2.5 }
-    },
-    paradigm_morphogenetic_fields: {
-        id: 'paradigm_morphogenetic_fields', name: 'Paradigm: Morphogenetic Fields', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Hypothetical fields guiding the development of form within structural constraints.',
-        recipe: ['theory_framework', 'theory_morphology'],
+        description: 'Engineering novel materials and structures by copying solutions that evolutionary biology has already optimised.',
+        recipe: ['theory_materials_science', 'theory_evolutionary_theory'],
         attributes: { ft_bonus_per_sec: 2.2 }
     },
+    paradigm_acoustics_engineering: {
+        id: 'paradigm_acoustics_engineering', name: 'Paradigm: Acoustics Engineering', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Designing materials and spaces that control wave propagation — from concert halls to noise-cancelling foams.',
+        recipe: ['theory_materials_science', 'theory_wave_mechanics'],
+        attributes: { ft_bonus_per_sec: 2.1 }
+    },
+    paradigm_neuroprosthetics: {
+        id: 'paradigm_neuroprosthetics', name: 'Paradigm: Neuroprosthetics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Interfacing engineered materials with the nervous system to restore or augment sensory and motor function.',
+        recipe: ['theory_materials_science', 'theory_cognitive_science'],
+        attributes: { ft_bonus_per_sec: 2.4 }
+    },
+    paradigm_industrial_heritage: {
+        id: 'paradigm_industrial_heritage', name: 'Paradigm: Industrial Heritage', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Preserving the material legacy of industrialisation — understanding how past technologies shaped the modern world.',
+        recipe: ['theory_materials_science', 'theory_historiography'],
+        attributes: { ft_bonus_per_sec: 2.0 }
+    },
+
+    // --- Statistical Mechanics pairings (13) ---
+    paradigm_plasma_physics: {
+        id: 'paradigm_plasma_physics', name: 'Paradigm: Plasma Physics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The statistical mechanics of ionised gases — the fourth state of matter, governing stars and fusion reactors.',
+        recipe: ['theory_statistical_mechanics', 'theory_electromagnetic_theory'],
+        attributes: { ft_bonus_per_sec: 2.5 }
+    },
+    paradigm_kinetic_theory: {
+        id: 'paradigm_kinetic_theory', name: 'Paradigm: Kinetic Theory', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Deriving macroscopic mechanical properties from the statistical dynamics of microscopic particles.',
+        recipe: ['theory_statistical_mechanics', 'theory_classical_mechanics'],
+        attributes: { ft_bonus_per_sec: 2.2 }
+    },
+    paradigm_physical_chemistry: {
+        id: 'paradigm_physical_chemistry', name: 'Paradigm: Physical Chemistry', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Explaining chemical phenomena through statistical mechanics and thermodynamics.',
+        recipe: ['theory_statistical_mechanics', 'theory_chemical_kinetics'],
+        attributes: { ft_bonus_per_sec: 2.2 }
+    },
+    paradigm_geophysics: {
+        id: 'paradigm_geophysics', name: 'Paradigm: Geophysics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Applying statistical and physical laws to understand the Earth\'s interior, gravity, and magnetic field.',
+        recipe: ['theory_statistical_mechanics', 'theory_geology'],
+        attributes: { ft_bonus_per_sec: 2.2 }
+    },
+    paradigm_lattice_dynamics: {
+        id: 'paradigm_lattice_dynamics', name: 'Paradigm: Lattice Dynamics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The statistical mechanics of atomic vibrations in crystals — phonons, heat capacity, and thermal conductivity.',
+        recipe: ['theory_statistical_mechanics', 'theory_crystallography'],
+        attributes: { ft_bonus_per_sec: 2.3 }
+    },
+    paradigm_turbulence_theory: {
+        id: 'paradigm_turbulence_theory', name: 'Paradigm: Turbulence Theory', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The statistical description of chaotic fluid flow — one of the last unsolved problems in classical physics.',
+        recipe: ['theory_statistical_mechanics', 'theory_fluid_dynamics'],
+        attributes: { ft_bonus_per_sec: 2.4 }
+    },
+    paradigm_geochronology: {
+        id: 'paradigm_geochronology', name: 'Paradigm: Geochronology', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Using statistical decay rates of isotopes to date rocks and archaeological deposits with precision.',
+        recipe: ['theory_statistical_mechanics', 'theory_archaeology'],
+        attributes: { ft_bonus_per_sec: 2.1 }
+    },
+    paradigm_algorithmic_complexity: {
+        id: 'paradigm_algorithmic_complexity', name: 'Paradigm: Algorithmic Complexity', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Kolmogorov complexity and statistical compression — the deep link between entropy and the minimum description of information.',
+        recipe: ['theory_statistical_mechanics', 'theory_information_theory'],
+        attributes: { ft_bonus_per_sec: 2.6 }
+    },
+    paradigm_non_equilibrium_systems: {
+        id: 'paradigm_non_equilibrium_systems', name: 'Paradigm: Non-Equilibrium Systems', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Statistical mechanics extended to chaotic, driven systems far from equilibrium — dissipative structures and self-organisation.',
+        recipe: ['theory_statistical_mechanics', 'theory_chaos_theory'],
+        attributes: { ft_bonus_per_sec: 2.5 }
+    },
+    paradigm_population_genetics: {
+        id: 'paradigm_population_genetics', name: 'Paradigm: Population Genetics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The statistical mechanics of evolutionary change — allele frequencies, genetic drift, and natural selection at the population level.',
+        recipe: ['theory_statistical_mechanics', 'theory_evolutionary_theory'],
+        attributes: { ft_bonus_per_sec: 2.3 }
+    },
+    paradigm_quantum_mechanics: {
+        id: 'paradigm_quantum_mechanics', name: 'Paradigm: Quantum Mechanics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The probabilistic wave mechanics underlying all of physics — where statistical uncertainty is not ignorance but fundamental reality.',
+        recipe: ['theory_statistical_mechanics', 'theory_wave_mechanics'],
+        attributes: { ft_bonus_per_sec: 3.0 }
+    },
+    paradigm_stochastic_cognition: {
+        id: 'paradigm_stochastic_cognition', name: 'Paradigm: Stochastic Cognition', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Modelling thought and perception as statistical inference — the Bayesian brain hypothesis.',
+        recipe: ['theory_statistical_mechanics', 'theory_cognitive_science'],
+        attributes: { ft_bonus_per_sec: 2.5 }
+    },
+    paradigm_cliodynamics: {
+        id: 'paradigm_cliodynamics', name: 'Paradigm: Cliodynamics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Applying statistical mechanics and dynamical systems to detect patterns and predict cycles in historical data.',
+        recipe: ['theory_statistical_mechanics', 'theory_historiography'],
+        attributes: { ft_bonus_per_sec: 2.2 }
+    },
+
+    // --- Electromagnetism pairings (12) ---
+    paradigm_electrodynamics: {
+        id: 'paradigm_electrodynamics', name: 'Paradigm: Electrodynamics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Maxwell\'s unification of electricity and magnetism with classical mechanics — the blueprint for all field theories.',
+        recipe: ['theory_electromagnetic_theory', 'theory_classical_mechanics'],
+        attributes: { ft_bonus_per_sec: 2.5 }
+    },
+    paradigm_electrochemistry: {
+        id: 'paradigm_electrochemistry', name: 'Paradigm: Electrochemistry', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The chemical reactions driven by or producing electromagnetic energy — batteries, electrolysis, and corrosion.',
+        recipe: ['theory_electromagnetic_theory', 'theory_chemical_kinetics'],
+        attributes: { ft_bonus_per_sec: 2.3 }
+    },
+    paradigm_magnetotellurics: {
+        id: 'paradigm_magnetotellurics', name: 'Paradigm: Magnetotellurics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Probing the Earth\'s geological structure using naturally occurring electromagnetic fields.',
+        recipe: ['theory_electromagnetic_theory', 'theory_geology'],
+        attributes: { ft_bonus_per_sec: 2.1 }
+    },
+    paradigm_xray_crystallography: {
+        id: 'paradigm_xray_crystallography', name: 'Paradigm: X-Ray Crystallography', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Revealing atomic structure by analysing how crystals diffract X-ray signals — the tool that decoded DNA.',
+        recipe: ['theory_electromagnetic_theory', 'theory_crystallography'],
+        attributes: { ft_bonus_per_sec: 2.4 }
+    },
+    paradigm_magnetohydrodynamics: {
+        id: 'paradigm_magnetohydrodynamics', name: 'Paradigm: Magnetohydrodynamics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The dynamics of electrically conducting fluids in electromagnetic fields — governing stellar interiors and liquid metal reactors.',
+        recipe: ['theory_electromagnetic_theory', 'theory_fluid_dynamics'],
+        attributes: { ft_bonus_per_sec: 2.5 }
+    },
+    paradigm_remote_sensing: {
+        id: 'paradigm_remote_sensing', name: 'Paradigm: Remote Sensing', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Using electromagnetic signals to survey and reveal archaeological and geological features from a distance.',
+        recipe: ['theory_electromagnetic_theory', 'theory_archaeology'],
+        attributes: { ft_bonus_per_sec: 2.2 }
+    },
+    paradigm_radio_astronomy: {
+        id: 'paradigm_radio_astronomy', name: 'Paradigm: Radio Astronomy', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Extracting cosmological information from electromagnetic signals — mapping the universe through the radio waves that traverse it.',
+        recipe: ['theory_electromagnetic_theory', 'theory_information_theory'],
+        attributes: { ft_bonus_per_sec: 2.7 }
+    },
+    paradigm_nonlinear_optics: {
+        id: 'paradigm_nonlinear_optics', name: 'Paradigm: Nonlinear Optics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Light interacting with matter in chaotic, intensity-dependent ways — frequency doubling, solitons, and optical chaos.',
+        recipe: ['theory_electromagnetic_theory', 'theory_chaos_theory'],
+        attributes: { ft_bonus_per_sec: 2.6 }
+    },
+    paradigm_biophotonics: {
+        id: 'paradigm_biophotonics', name: 'Paradigm: Biophotonics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The electromagnetic basis of biological light emission and absorption — from bioluminescence to medical imaging.',
+        recipe: ['theory_electromagnetic_theory', 'theory_evolutionary_theory'],
+        attributes: { ft_bonus_per_sec: 2.3 }
+    },
+    paradigm_quantum_electrodynamics: {
+        id: 'paradigm_quantum_electrodynamics', name: 'Paradigm: Quantum Electrodynamics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The most precisely tested theory in science — the quantum field description of electromagnetic waves and their interactions.',
+        recipe: ['theory_electromagnetic_theory', 'theory_wave_mechanics'],
+        attributes: { ft_bonus_per_sec: 3.2 }
+    },
+    paradigm_neural_signalling: {
+        id: 'paradigm_neural_signalling', name: 'Paradigm: Neural Signalling', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The electrochemical basis of cognition — how electromagnetic signals propagate through neural networks to produce thought.',
+        recipe: ['theory_electromagnetic_theory', 'theory_cognitive_science'],
+        attributes: { ft_bonus_per_sec: 2.6 }
+    },
+    paradigm_archaeomagnetism: {
+        id: 'paradigm_archaeomagnetism', name: 'Paradigm: Archaeomagnetism', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Dating ancient kilns and hearths by reading the magnetic alignment locked into fired clay at the moment of cooling.',
+        recipe: ['theory_electromagnetic_theory', 'theory_historiography'],
+        attributes: { ft_bonus_per_sec: 2.1 }
+    },
+
+    // --- Classical Mechanics pairings (11) ---
+    paradigm_reaction_dynamics: {
+        id: 'paradigm_reaction_dynamics', name: 'Paradigm: Reaction Dynamics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The mechanical pathways of chemical reactions — tracking atomic trajectories through transition states.',
+        recipe: ['theory_classical_mechanics', 'theory_chemical_kinetics'],
+        attributes: { ft_bonus_per_sec: 2.2 }
+    },
+    paradigm_plate_tectonics: {
+        id: 'paradigm_plate_tectonics', name: 'Paradigm: Plate Tectonics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The grand mechanical theory of geological change — continents in slow collision, driven by convective forces.',
+        recipe: ['theory_classical_mechanics', 'theory_geology'],
+        attributes: { ft_bonus_per_sec: 2.3 }
+    },
+    paradigm_crystalline_mechanics: {
+        id: 'paradigm_crystalline_mechanics', name: 'Paradigm: Crystalline Mechanics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The mechanical response of crystalline solids to stress — dislocations, plasticity, and elastic limits.',
+        recipe: ['theory_classical_mechanics', 'theory_crystallography'],
+        attributes: { ft_bonus_per_sec: 2.2 }
+    },
+    paradigm_aerodynamics: {
+        id: 'paradigm_aerodynamics', name: 'Paradigm: Aerodynamics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The mechanics of bodies moving through fluids — the science that makes flight possible.',
+        recipe: ['theory_classical_mechanics', 'theory_fluid_dynamics'],
+        attributes: { ft_bonus_per_sec: 2.4 }
+    },
+    paradigm_experimental_archaeology: {
+        id: 'paradigm_experimental_archaeology', name: 'Paradigm: Experimental Archaeology', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Reconstructing ancient technologies by applying mechanical principles — building Bronze Age tools to understand them.',
+        recipe: ['theory_classical_mechanics', 'theory_archaeology'],
+        attributes: { ft_bonus_per_sec: 2.0 }
+    },
+    paradigm_control_theory: {
+        id: 'paradigm_control_theory', name: 'Paradigm: Control Theory', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Applying information feedback to mechanical systems — the mathematics of autopilots, thermostats, and servomechanisms.',
+        recipe: ['theory_classical_mechanics', 'theory_information_theory'],
+        attributes: { ft_bonus_per_sec: 2.6 }
+    },
+    paradigm_orbital_mechanics: {
+        id: 'paradigm_orbital_mechanics', name: 'Paradigm: Orbital Mechanics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The chaotic precision of celestial trajectories — n-body gravitational dynamics and the limits of long-range prediction.',
+        recipe: ['theory_classical_mechanics', 'theory_chaos_theory'],
+        attributes: { ft_bonus_per_sec: 2.5 }
+    },
+    paradigm_biomechanics: {
+        id: 'paradigm_biomechanics', name: 'Paradigm: Biomechanics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The mechanical analysis of biological structures — how evolution has engineered bone, muscle, and locomotion.',
+        recipe: ['theory_classical_mechanics', 'theory_evolutionary_theory'],
+        attributes: { ft_bonus_per_sec: 2.3 }
+    },
+    paradigm_acoustics: {
+        id: 'paradigm_acoustics', name: 'Paradigm: Acoustics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The mechanical propagation of pressure waves through matter — music, noise, and the physics of sound.',
+        recipe: ['theory_classical_mechanics', 'theory_wave_mechanics'],
+        attributes: { ft_bonus_per_sec: 2.2 }
+    },
+    paradigm_embodied_cognition: {
+        id: 'paradigm_embodied_cognition', name: 'Paradigm: Embodied Cognition', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The theory that cognition is shaped by the mechanical body — that thought is inseparable from physical action.',
+        recipe: ['theory_classical_mechanics', 'theory_cognitive_science'],
+        attributes: { ft_bonus_per_sec: 2.3 }
+    },
+    paradigm_archaeoastronomy: {
+        id: 'paradigm_archaeoastronomy', name: 'Paradigm: Archaeoastronomy', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Recovering ancient knowledge of celestial mechanics from monuments, artefacts, and historical records.',
+        recipe: ['theory_classical_mechanics', 'theory_historiography'],
+        attributes: { ft_bonus_per_sec: 2.1 }
+    },
+
+    // --- Chemical Kinetics pairings (10) ---
+    paradigm_geochemistry: {
+        id: 'paradigm_geochemistry', name: 'Paradigm: Geochemistry', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The chemical kinetics that shaped the Earth — elemental cycling, volcanic chemistry, and ocean composition.',
+        recipe: ['theory_chemical_kinetics', 'theory_geology'],
+        attributes: { ft_bonus_per_sec: 2.2 }
+    },
+    paradigm_crystal_growth: {
+        id: 'paradigm_crystal_growth', name: 'Paradigm: Crystal Growth', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The kinetic and thermodynamic processes by which ordered crystalline structures nucleate and propagate.',
+        recipe: ['theory_chemical_kinetics', 'theory_crystallography'],
+        attributes: { ft_bonus_per_sec: 2.2 }
+    },
+    paradigm_chemical_engineering: {
+        id: 'paradigm_chemical_engineering', name: 'Paradigm: Chemical Engineering', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Scaling chemical kinetics from the laboratory to industrial fluid processes — reactors, separations, and process control.',
+        recipe: ['theory_chemical_kinetics', 'theory_fluid_dynamics'],
+        attributes: { ft_bonus_per_sec: 2.4 }
+    },
+    paradigm_archaeochemistry: {
+        id: 'paradigm_archaeochemistry', name: 'Paradigm: Archaeochemistry', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Chemical analysis of ancient residues, pigments, and organic materials to reconstruct past practices.',
+        recipe: ['theory_chemical_kinetics', 'theory_archaeology'],
+        attributes: { ft_bonus_per_sec: 2.0 }
+    },
+    paradigm_molecular_computing: {
+        id: 'paradigm_molecular_computing', name: 'Paradigm: Molecular Computing', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Using chemical reactions as computational steps — DNA computing and reaction networks as logic gates.',
+        recipe: ['theory_chemical_kinetics', 'theory_information_theory'],
+        attributes: { ft_bonus_per_sec: 2.6 }
+    },
+    paradigm_reaction_diffusion_systems: {
+        id: 'paradigm_reaction_diffusion_systems', name: 'Paradigm: Reaction-Diffusion Systems', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The chaotic self-organising patterns that emerge when chemical reactions and diffusion interact — from Turing patterns to heartbeat rhythms.',
+        recipe: ['theory_chemical_kinetics', 'theory_chaos_theory'],
+        attributes: { ft_bonus_per_sec: 2.5 }
+    },
+    paradigm_biochemistry: {
+        id: 'paradigm_biochemistry', name: 'Paradigm: Biochemistry', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The chemical kinetics of life — metabolic pathways, enzyme catalysis, and the molecular machinery of evolution.',
+        recipe: ['theory_chemical_kinetics', 'theory_evolutionary_theory'],
+        attributes: { ft_bonus_per_sec: 2.5 }
+    },
+    paradigm_spectroscopy: {
+        id: 'paradigm_spectroscopy', name: 'Paradigm: Spectroscopy', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Identifying chemical composition by analysing how matter interacts with waves across the electromagnetic spectrum.',
+        recipe: ['theory_chemical_kinetics', 'theory_wave_mechanics'],
+        attributes: { ft_bonus_per_sec: 2.4 }
+    },
+    paradigm_neuropharmacology: {
+        id: 'paradigm_neuropharmacology', name: 'Paradigm: Neuropharmacology', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'How chemical kinetics in the brain alter cognition — neurotransmitters, receptors, and the molecular basis of behaviour.',
+        recipe: ['theory_chemical_kinetics', 'theory_cognitive_science'],
+        attributes: { ft_bonus_per_sec: 2.5 }
+    },
+    paradigm_palaeochemistry: {
+        id: 'paradigm_palaeochemistry', name: 'Paradigm: Palaeochemistry', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Reconstructing ancient chemical environments from isotopic and molecular signatures preserved in rocks and fossils.',
+        recipe: ['theory_chemical_kinetics', 'theory_historiography'],
+        attributes: { ft_bonus_per_sec: 2.1 }
+    },
+
+    // --- Geology pairings (9) ---
+    paradigm_mineralogy: {
+        id: 'paradigm_mineralogy', name: 'Paradigm: Mineralogy', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The classification and properties of minerals — the crystalline building blocks of geology.',
+        recipe: ['theory_geology', 'theory_crystallography'],
+        attributes: { ft_bonus_per_sec: 2.1 }
+    },
+    paradigm_hydrogeology: {
+        id: 'paradigm_hydrogeology', name: 'Paradigm: Hydrogeology', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The fluid dynamics of water moving through geological formations — aquifers, springs, and groundwater systems.',
+        recipe: ['theory_geology', 'theory_fluid_dynamics'],
+        attributes: { ft_bonus_per_sec: 2.2 }
+    },
+    paradigm_geoarchaeology: {
+        id: 'paradigm_geoarchaeology', name: 'Paradigm: Geoarchaeology', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Reading the geological context of archaeological sites to reconstruct past landscapes and depositional histories.',
+        recipe: ['theory_geology', 'theory_archaeology'],
+        attributes: { ft_bonus_per_sec: 2.0 }
+    },
+    paradigm_geoinformatics: {
+        id: 'paradigm_geoinformatics', name: 'Paradigm: Geoinformatics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Processing geological information at scale — GIS, satellite data, and computational models of the Earth.',
+        recipe: ['theory_geology', 'theory_information_theory'],
+        attributes: { ft_bonus_per_sec: 2.3 }
+    },
+    paradigm_seismology: {
+        id: 'paradigm_seismology', name: 'Paradigm: Seismology', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The chaotic rupture of geological faults — predicting earthquakes and imaging the Earth\'s interior with shock waves.',
+        recipe: ['theory_geology', 'theory_chaos_theory'],
+        attributes: { ft_bonus_per_sec: 2.4 }
+    },
+    paradigm_palaeontology: {
+        id: 'paradigm_palaeontology', name: 'Paradigm: Palaeontology', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The geological record of evolutionary history — fossils as physical documents of deep time.',
+        recipe: ['theory_geology', 'theory_evolutionary_theory'],
+        attributes: { ft_bonus_per_sec: 2.3 }
+    },
+    paradigm_seismic_imaging: {
+        id: 'paradigm_seismic_imaging', name: 'Paradigm: Seismic Imaging', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Using reflected wave mechanics to create cross-sectional images of geological structure beneath the surface.',
+        recipe: ['theory_geology', 'theory_wave_mechanics'],
+        attributes: { ft_bonus_per_sec: 2.3 }
+    },
+    paradigm_landscape_cognition: {
+        id: 'paradigm_landscape_cognition', name: 'Paradigm: Landscape Cognition', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'How geological environments shape human cognition, wayfinding, and cultural identity.',
+        recipe: ['theory_geology', 'theory_cognitive_science'],
+        attributes: { ft_bonus_per_sec: 2.1 }
+    },
+    paradigm_geohistory: {
+        id: 'paradigm_geohistory', name: 'Paradigm: Geohistory', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Reconstructing Earth\'s historical narrative from its geological record — stratigraphy as the planet\'s autobiography.',
+        recipe: ['theory_geology', 'theory_historiography'],
+        attributes: { ft_bonus_per_sec: 2.1 }
+    },
+
+    // --- Crystallography pairings (8) ---
+    paradigm_liquid_crystals: {
+        id: 'paradigm_liquid_crystals', name: 'Paradigm: Liquid Crystals', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Matter between crystalline order and fluid chaos — the phase that makes LCD screens possible.',
+        recipe: ['theory_crystallography', 'theory_fluid_dynamics'],
+        attributes: { ft_bonus_per_sec: 2.3 }
+    },
+    paradigm_petrology: {
+        id: 'paradigm_petrology', name: 'Paradigm: Petrology', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The crystallographic archaeology of rocks — reading mineral assemblages to reconstruct ancient geological conditions.',
+        recipe: ['theory_crystallography', 'theory_archaeology'],
+        attributes: { ft_bonus_per_sec: 2.1 }
+    },
+    paradigm_lattice_cryptography: {
+        id: 'paradigm_lattice_cryptography', name: 'Paradigm: Lattice Cryptography', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Post-quantum encryption based on the computational hardness of problems defined on crystalline lattice structures.',
+        recipe: ['theory_crystallography', 'theory_information_theory'],
+        attributes: { ft_bonus_per_sec: 2.7 }
+    },
+    paradigm_quasicrystals: {
+        id: 'paradigm_quasicrystals', name: 'Paradigm: Quasicrystals', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Ordered but non-periodic atomic arrangements — the chaotic edge of crystalline structure that defied classical theory.',
+        recipe: ['theory_crystallography', 'theory_chaos_theory'],
+        attributes: { ft_bonus_per_sec: 2.6 }
+    },
+    paradigm_biomineralisation: {
+        id: 'paradigm_biomineralisation', name: 'Paradigm: Biomineralisation', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'How evolution discovered crystal growth — shells, bones, and teeth as biologically engineered crystalline structures.',
+        recipe: ['theory_crystallography', 'theory_evolutionary_theory'],
+        attributes: { ft_bonus_per_sec: 2.3 }
+    },
+    paradigm_diffraction_theory: {
+        id: 'paradigm_diffraction_theory', name: 'Paradigm: Diffraction Theory', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The wave mechanics of interference patterns — how crystal lattices bend and scatter waves to reveal atomic geometry.',
+        recipe: ['theory_crystallography', 'theory_wave_mechanics'],
+        attributes: { ft_bonus_per_sec: 2.4 }
+    },
+    paradigm_pattern_recognition: {
+        id: 'paradigm_pattern_recognition', name: 'Paradigm: Pattern Recognition', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The cognitive ability to identify crystalline regularities in noisy data — the foundation of perception and machine learning.',
+        recipe: ['theory_crystallography', 'theory_cognitive_science'],
+        attributes: { ft_bonus_per_sec: 2.5 }
+    },
+    paradigm_provenance_studies: {
+        id: 'paradigm_provenance_studies', name: 'Paradigm: Provenance Studies', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Tracing the historical origin of artefacts through crystallographic and geochemical fingerprinting.',
+        recipe: ['theory_crystallography', 'theory_historiography'],
+        attributes: { ft_bonus_per_sec: 2.1 }
+    },
+
+    // --- Fluid Dynamics pairings (7) ---
+    paradigm_maritime_archaeology: {
+        id: 'paradigm_maritime_archaeology', name: 'Paradigm: Maritime Archaeology', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Excavating submerged archaeological sites — recovering ships, ports, and cargo preserved by fluid dynamics.',
+        recipe: ['theory_fluid_dynamics', 'theory_archaeology'],
+        attributes: { ft_bonus_per_sec: 2.0 }
+    },
+    paradigm_network_flow_theory: {
+        id: 'paradigm_network_flow_theory', name: 'Paradigm: Network Flow Theory', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Treating information routing as a fluid dynamics problem — optimising flow through networks, pipes, and traffic systems.',
+        recipe: ['theory_fluid_dynamics', 'theory_information_theory'],
+        attributes: { ft_bonus_per_sec: 2.5 }
+    },
+    paradigm_strange_attractors: {
+        id: 'paradigm_strange_attractors', name: 'Paradigm: Strange Attractors', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The fractal geometry of chaotic fluid trajectories — Lorenz attractors and the hidden order within turbulent flow.',
+        recipe: ['theory_fluid_dynamics', 'theory_chaos_theory'],
+        attributes: { ft_bonus_per_sec: 2.6 }
+    },
+    paradigm_morphogenesis: {
+        id: 'paradigm_morphogenesis', name: 'Paradigm: Morphogenesis', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The fluid dynamic and evolutionary processes that generate biological form — how a single cell becomes an organism.',
+        recipe: ['theory_fluid_dynamics', 'theory_evolutionary_theory'],
+        attributes: { ft_bonus_per_sec: 2.5 }
+    },
+    paradigm_hydrodynamics: {
+        id: 'paradigm_hydrodynamics', name: 'Paradigm: Hydrodynamics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The wave mechanics of water — surface waves, tsunamis, and the deep mathematics of incompressible flow.',
+        recipe: ['theory_fluid_dynamics', 'theory_wave_mechanics'],
+        attributes: { ft_bonus_per_sec: 2.3 }
+    },
+    paradigm_swarm_intelligence: {
+        id: 'paradigm_swarm_intelligence', name: 'Paradigm: Swarm Intelligence', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Collective cognition emerging from fluid-like interaction rules — ant colonies, bird flocks, and distributed AI.',
+        recipe: ['theory_fluid_dynamics', 'theory_cognitive_science'],
+        attributes: { ft_bonus_per_sec: 2.6 }
+    },
+    paradigm_climate_history: {
+        id: 'paradigm_climate_history', name: 'Paradigm: Climate History', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Reconstructing the historical record of atmospheric and oceanic fluid dynamics — ice cores, tree rings, and palaeoclimate proxies.',
+        recipe: ['theory_fluid_dynamics', 'theory_historiography'],
+        attributes: { ft_bonus_per_sec: 2.3 }
+    },
+
+    // --- Archaeology pairings (6) ---
+    paradigm_digital_humanities: {
+        id: 'paradigm_digital_humanities', name: 'Paradigm: Digital Humanities', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Applying information theory to the archaeological and historical record — digitising, analysing, and preserving human heritage.',
+        recipe: ['theory_archaeology', 'theory_information_theory'],
+        attributes: { ft_bonus_per_sec: 2.3 }
+    },
+    paradigm_collapse_theory: {
+        id: 'paradigm_collapse_theory', name: 'Paradigm: Collapse Theory', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The chaotic archaeology of civilisation decline — understanding why complex societies abruptly fail.',
+        recipe: ['theory_archaeology', 'theory_chaos_theory'],
+        attributes: { ft_bonus_per_sec: 2.4 }
+    },
+    paradigm_palaeoanthropology: {
+        id: 'paradigm_palaeoanthropology', name: 'Paradigm: Palaeoanthropology', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The evolutionary archaeology of humanity — stone tools, hominin fossils, and the long prehistory of our species.',
+        recipe: ['theory_archaeology', 'theory_evolutionary_theory'],
+        attributes: { ft_bonus_per_sec: 2.4 }
+    },
+    paradigm_acoustic_archaeology: {
+        id: 'paradigm_acoustic_archaeology', name: 'Paradigm: Acoustic Archaeology', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Recovering the soundscapes of the past — studying wave mechanics in ancient spaces from Stonehenge to cave paintings.',
+        recipe: ['theory_archaeology', 'theory_wave_mechanics'],
+        attributes: { ft_bonus_per_sec: 2.2 }
+    },
+    paradigm_cognitive_archaeology: {
+        id: 'paradigm_cognitive_archaeology', name: 'Paradigm: Cognitive Archaeology', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Inferring the cognitive capacities of past peoples from the material record — symbolic behaviour, planning, and social cognition.',
+        recipe: ['theory_archaeology', 'theory_cognitive_science'],
+        attributes: { ft_bonus_per_sec: 2.4 }
+    },
+    paradigm_historical_archaeology: {
+        id: 'paradigm_historical_archaeology', name: 'Paradigm: Historical Archaeology', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The archaeology of literate societies — combining material evidence with written historical records.',
+        recipe: ['theory_archaeology', 'theory_historiography'],
+        attributes: { ft_bonus_per_sec: 2.1 }
+    },
+
+    // --- Information Theory pairings (5) ---
+    paradigm_cryptography: {
+        id: 'paradigm_cryptography', name: 'Paradigm: Cryptography', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Exploiting computational complexity and chaos to protect information — the mathematical arms race of secrecy.',
+        recipe: ['theory_information_theory', 'theory_chaos_theory'],
+        attributes: { ft_bonus_per_sec: 2.8 }
+    },
+    paradigm_evolutionary_computation: {
+        id: 'paradigm_evolutionary_computation', name: 'Paradigm: Evolutionary Computation', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Solving computational problems using algorithms inspired by evolutionary information processing — genetic algorithms and neural evolution.',
+        recipe: ['theory_information_theory', 'theory_evolutionary_theory'],
+        attributes: { ft_bonus_per_sec: 2.8 }
+    },
+    paradigm_signal_processing: {
+        id: 'paradigm_signal_processing', name: 'Paradigm: Signal Processing', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Extracting, filtering, and transforming information from wave signals — the mathematics behind audio, imaging, and communication.',
+        recipe: ['theory_information_theory', 'theory_wave_mechanics'],
+        attributes: { ft_bonus_per_sec: 2.7 }
+    },
+    paradigm_artificial_intelligence: {
+        id: 'paradigm_artificial_intelligence', name: 'Paradigm: Artificial Intelligence', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Engineering cognitive processes from information theory — machine learning, reasoning, and the architecture of artificial minds.',
+        recipe: ['theory_information_theory', 'theory_cognitive_science'],
+        attributes: { ft_bonus_per_sec: 3.2 }
+    },
+    paradigm_archival_science: {
+        id: 'paradigm_archival_science', name: 'Paradigm: Archival Science', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The information theory of preserving historical records — encoding, redundancy, and the long-term survival of knowledge.',
+        recipe: ['theory_information_theory', 'theory_historiography'],
+        attributes: { ft_bonus_per_sec: 2.3 }
+    },
+
+    // --- Chaos Theory pairings (4) ---
     paradigm_complex_adaptive_systems: {
         id: 'paradigm_complex_adaptive_systems', name: 'Paradigm: Complex Adaptive Systems', tier: 4, group: 'paradigm',
         color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Understanding systems that adapt based on internal frameworks and dynamic interactions.',
-        recipe: ['theory_framework', 'theory_system_dynamics'],
-        attributes: { ft_bonus_per_sec: 2.4 }
-    },
-    paradigm_computational_frameworks: {
-        id: 'paradigm_computational_frameworks', name: 'Paradigm: Computational Frameworks', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The fundamental structures underlying computational processes and algorithms.',
-        recipe: ['theory_framework', 'theory_computation'],
-        attributes: { ft_bonus_per_sec: 2.6 }
-    },
-    paradigm_metaphysical_architecture: {
-        id: 'paradigm_metaphysical_architecture', name: 'Paradigm: Metaphysical Architecture', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Designing structures that embody or explore metaphysical concepts and potential.',
-        recipe: ['theory_architecture', 'theory_metaphysics'],
-        attributes: { ft_bonus_per_sec: 2.3 }
-    },
-    paradigm_intelligent_environments: {
-        id: 'paradigm_intelligent_environments', name: 'Paradigm: Intelligent Environments', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Architectures that sense, respond, and adapt through integrated control systems.',
-        recipe: ['theory_architecture', 'theory_cybernetics'],
-        attributes: { ft_bonus_per_sec: 2.4 }
-    },
-    paradigm_cosmic_structures: {
-        id: 'paradigm_cosmic_structures', name: 'Paradigm: Cosmic Structures', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The grand architecture of the universe, from galaxies to large-scale filaments.',
-        recipe: ['theory_architecture', 'theory_cosmology'],
-        attributes: { ft_bonus_per_sec: 2.7 }
-    },
-    paradigm_phenomenological_design: {
-        id: 'paradigm_phenomenological_design', name: 'Paradigm: Phenomenological Design', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Architectural design focused on the subjective experience and perception of being.',
-        recipe: ['theory_architecture', 'theory_ontology'],
-        attributes: { ft_bonus_per_sec: 2.5 }
-    },
-    paradigm_sustainable_architecture: {
-        id: 'paradigm_sustainable_architecture', name: 'Paradigm: Sustainable Architecture', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Designing buildings and structures with optimal energy efficiency and environmental harmony.',
-        recipe: ['theory_architecture', 'theory_thermodynamics'],
-        attributes: { ft_bonus_per_sec: 2.8 }
-    },
-    paradigm_structural_engineering_mastery: {
-        id: 'paradigm_structural_engineering_mastery', name: 'Paradigm: Structural Engineering Mastery', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The pinnacle of designing and constructing complex, resilient engineered structures.',
-        recipe: ['theory_architecture', 'theory_engineering'],
+        description: 'Systems where evolutionary agents interacting under chaos rules produce emergent, adaptive global behaviour — ecosystems, economies, immune systems.',
+        recipe: ['theory_chaos_theory', 'theory_evolutionary_theory'],
         attributes: { ft_bonus_per_sec: 2.9 }
     },
-    paradigm_physical_manifestation_principles: {
-        id: 'paradigm_physical_manifestation_principles', name: 'Paradigm: Physical Manifestation', tier: 4, group: 'paradigm',
+    paradigm_soliton_theory: {
+        id: 'paradigm_soliton_theory', name: 'Paradigm: Soliton Theory', tier: 4, group: 'paradigm',
         color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Understanding how physical laws govern the forms and structures that can be architected.',
-        recipe: ['theory_architecture', 'theory_physics'],
-        attributes: { ft_bonus_per_sec: 3.0 }
-    },
-    paradigm_harmonious_design: {
-        id: 'paradigm_harmonious_design', name: 'Paradigm: Harmonious Design', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The convergence of architectural principles and aesthetic theory to create beauty.',
-        recipe: ['theory_architecture', 'theory_aesthetics'],
-        attributes: { ft_bonus_per_sec: 2.2 }
-    },
-    paradigm_semantic_architecture: {
-        id: 'paradigm_semantic_architecture', name: 'Paradigm: Semantic Architecture', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Designing structures that convey meaning and organize information effectively.',
-        recipe: ['theory_architecture', 'theory_information'],
-        attributes: { ft_bonus_per_sec: 2.6 }
-    },
-    paradigm_rational_design_methodology: {
-        id: 'paradigm_rational_design_methodology', name: 'Paradigm: Rational Design Methodology', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'A systematic, logic-driven approach to architectural and structural design.',
-        recipe: ['theory_architecture', 'theory_logic'],
+        description: 'Self-reinforcing solitary waves that propagate without dispersion through chaotic nonlinear media — from water canals to optical fibres.',
+        recipe: ['theory_chaos_theory', 'theory_wave_mechanics'],
         attributes: { ft_bonus_per_sec: 2.7 }
     },
-    paradigm_bio_mimetic_architecture: {
-        id: 'paradigm_bio_mimetic_architecture', name: 'Paradigm: Bio-Mimetic Architecture', tier: 4, group: 'paradigm',
+    paradigm_emergence: {
+        id: 'paradigm_emergence', name: 'Paradigm: Emergence', tier: 4, group: 'paradigm',
         color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Architectural design inspired by the forms and processes found in biological systems.',
-        recipe: ['theory_architecture', 'theory_morphology'],
+        description: 'How cognition and consciousness arise from chaotic low-level interactions — the hardest problem in science.',
+        recipe: ['theory_chaos_theory', 'theory_cognitive_science'],
+        attributes: { ft_bonus_per_sec: 2.9 }
+    },
+    paradigm_catastrophism: {
+        id: 'paradigm_catastrophism', name: 'Paradigm: Catastrophism', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The historical role of chaotic catastrophic events — mass extinctions, volcanic winters, and the punctuation of deep history.',
+        recipe: ['theory_chaos_theory', 'theory_historiography'],
+        attributes: { ft_bonus_per_sec: 2.5 }
+    },
+
+    // --- Evolutionary Theory pairings (3) ---
+    paradigm_bioacoustics: {
+        id: 'paradigm_bioacoustics', name: 'Paradigm: Bioacoustics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The evolution of sound production and reception — whale song, echolocation, and the origins of language.',
+        recipe: ['theory_evolutionary_theory', 'theory_wave_mechanics'],
         attributes: { ft_bonus_per_sec: 2.4 }
     },
-    paradigm_dynamic_environments: {
-        id: 'paradigm_dynamic_environments', name: 'Paradigm: Dynamic Environments', tier: 4, group: 'paradigm',
+    paradigm_evolutionary_psychology: {
+        id: 'paradigm_evolutionary_psychology', name: 'Paradigm: Evolutionary Psychology', tier: 4, group: 'paradigm',
         color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Creating architectural spaces that evolve and respond to changing conditions and user needs.',
-        recipe: ['theory_architecture', 'theory_system_dynamics'],
+        description: 'Understanding cognition as an evolved adaptation — how ancestral selection pressures shape modern minds.',
+        recipe: ['theory_evolutionary_theory', 'theory_cognitive_science'],
         attributes: { ft_bonus_per_sec: 2.6 }
     },
-    paradigm_generative_design: {
-        id: 'paradigm_generative_design', name: 'Paradigm: Generative Design', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Using computational algorithms to explore and generate novel architectural forms and structures.',
-        recipe: ['theory_architecture', 'theory_computation'],
-        attributes: { ft_bonus_per_sec: 2.8 }
-    },
-    paradigm_cybernetic_consciousness: { 
-        id: 'paradigm_cybernetic_consciousness', name: 'Paradigm: Cybernetic Consciousness', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Exploring the nature of consciousness through control systems and metaphysical potential.',
-        recipe: ['theory_metaphysics', 'theory_cybernetics'],
-        attributes: { ft_bonus_per_sec: 2.5 } 
-    },
-    paradigm_cosmic_potentiality: { 
-        id: 'paradigm_cosmic_potentiality', name: 'Paradigm: Cosmic Potentiality', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The universe as a realm of infinite potential governed by metaphysical and cosmological laws.',
-        recipe: ['theory_metaphysics', 'theory_cosmology'],
-        attributes: { ft_bonus_per_sec: 2.8 } 
-    },
-    paradigm_ontological_potential: { 
-        id: 'paradigm_ontological_potential', name: 'Paradigm: Ontological Potential', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The inherent potential within being and existence, a core metaphysical inquiry.',
-        recipe: ['theory_metaphysics', 'theory_ontology'],
-        attributes: { ft_bonus_per_sec: 2.6 } 
-    },
-    paradigm_thermodynamic_idealism: { 
-        id: 'paradigm_thermodynamic_idealism', name: 'Paradigm: Thermodynamic Idealism', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'A worldview where energy and potential are primary, governed by thermodynamic and metaphysical laws.',
-        recipe: ['theory_metaphysics', 'theory_thermodynamics'],
-        attributes: { ft_bonus_per_sec: 2.9 } 
-    },
-    paradigm_transcendental_engineering: { 
-        id: 'paradigm_transcendental_engineering', name: 'Paradigm: Transcendental Engineering', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Engineering creations that tap into or reflect deeper metaphysical potentials.',
-        recipe: ['theory_metaphysics', 'theory_engineering'],
-        attributes: { ft_bonus_per_sec: 3.0 } 
-    },
-    paradigm_quantum_metaphysics: { 
-        id: 'paradigm_quantum_metaphysics', name: 'Paradigm: Quantum Metaphysics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The intersection of quantum physics and metaphysical inquiries into reality and potential.',
-        recipe: ['theory_metaphysics', 'theory_physics'],
-        attributes: { ft_bonus_per_sec: 3.1 } 
-    },
-    paradigm_aesthetic_idealism: { 
-        id: 'paradigm_aesthetic_idealism', name: 'Paradigm: Aesthetic Idealism', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Beauty as a manifestation of underlying metaphysical truths and potentials.',
-        recipe: ['theory_metaphysics', 'theory_aesthetics'],
-        attributes: { ft_bonus_per_sec: 2.4 } 
-    },
-    paradigm_informational_potential: { 
-        id: 'paradigm_informational_potential', name: 'Paradigm: Informational Potential', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The universe of information as a realm of untapped metaphysical potential.',
-        recipe: ['theory_metaphysics', 'theory_information'],
-        attributes: { ft_bonus_per_sec: 2.7 } 
-    },
-    paradigm_logical_positivism_reimagined: { 
-        id: 'paradigm_logical_positivism_reimagined', name: 'Paradigm: Logical Positivism Reimagined', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'A fusion of logical rigor with the exploration of metaphysical potential.',
-        recipe: ['theory_metaphysics', 'theory_logic'],
-        attributes: { ft_bonus_per_sec: 2.8 } 
-    },
-    paradigm_developmental_metaphysics: { 
-        id: 'paradigm_developmental_metaphysics', name: 'Paradigm: Developmental Metaphysics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Understanding form development through the lens of inherent potential and metaphysical principles.',
-        recipe: ['theory_metaphysics', 'theory_morphology'],
-        attributes: { ft_bonus_per_sec: 2.5 } 
-    },
-    paradigm_systemic_potential: { 
-        id: 'paradigm_systemic_potential', name: 'Paradigm: Systemic Potential', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The inherent potential for change and evolution within complex dynamic systems.',
-        recipe: ['theory_metaphysics', 'theory_system_dynamics'],
-        attributes: { ft_bonus_per_sec: 2.7 } 
-    },
-    paradigm_computational_metaphysics: { 
-        id: 'paradigm_computational_metaphysics', name: 'Paradigm: Computational Metaphysics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Using computation to explore and model metaphysical concepts and potentials.',
-        recipe: ['theory_metaphysics', 'theory_computation'],
-        attributes: { ft_bonus_per_sec: 2.9 } 
-    },
-    paradigm_cosmic_cybernetics: { 
-        id: 'paradigm_cosmic_cybernetics', name: 'Paradigm: Cosmic Cybernetics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The universe as a vast, self-regulating cybernetic system.',
-        recipe: ['theory_cybernetics', 'theory_cosmology'],
-        attributes: { ft_bonus_per_sec: 2.9 } 
-    },
-    paradigm_ontological_cybernetics: { 
-        id: 'paradigm_ontological_cybernetics', name: 'Paradigm: Ontological Cybernetics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The study of being and existence through the lens of control and communication systems.',
-        recipe: ['theory_cybernetics', 'theory_ontology'],
-        attributes: { ft_bonus_per_sec: 2.7 } 
-    },
-    paradigm_thermodynamic_control: { 
-        id: 'paradigm_thermodynamic_control', name: 'Paradigm: Thermodynamic Control', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Applying cybernetic principles to manage and optimize energy systems.',
-        recipe: ['theory_cybernetics', 'theory_thermodynamics'],
-        attributes: { ft_bonus_per_sec: 3.0 } 
-    },
-    paradigm_advanced_robotics: { 
-        id: 'paradigm_advanced_robotics', name: 'Paradigm: Advanced Robotics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The pinnacle of engineering autonomous systems with sophisticated control.',
-        recipe: ['theory_cybernetics', 'theory_engineering'],
-        attributes: { ft_bonus_per_sec: 3.1 } 
-    },
-    paradigm_physical_systems_control: { 
-        id: 'paradigm_physical_systems_control', name: 'Paradigm: Physical Systems Control', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Controlling physical phenomena through cybernetic understanding of underlying laws.',
-        recipe: ['theory_cybernetics', 'theory_physics'],
-        attributes: { ft_bonus_per_sec: 3.2 } 
-    },
-    paradigm_aesthetic_interaction: { 
-        id: 'paradigm_aesthetic_interaction', name: 'Paradigm: Aesthetic Interaction', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Designing interactive systems where control and feedback contribute to aesthetic experience.',
-        recipe: ['theory_cybernetics', 'theory_aesthetics'],
-        attributes: { ft_bonus_per_sec: 2.6 } 
-    },
-    paradigm_information_control_systems: { 
-        id: 'paradigm_information_control_systems', name: 'Paradigm: Information Control Systems', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The design and management of systems that control the flow and processing of information.',
-        recipe: ['theory_cybernetics', 'theory_information'],
-        attributes: { ft_bonus_per_sec: 2.8 } 
-    },
-    paradigm_logical_control: { 
-        id: 'paradigm_logical_control', name: 'Paradigm: Logical Control', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Applying formal logic to the design and verification of control systems.',
-        recipe: ['theory_cybernetics', 'theory_logic'],
-        attributes: { ft_bonus_per_sec: 2.9 } 
-    },
-    paradigm_bio_cybernetics: { 
-        id: 'paradigm_bio_cybernetics', name: 'Paradigm: Bio-Cybernetics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The study of control systems in living organisms and the application of biological principles to cybernetics.',
-        recipe: ['theory_cybernetics', 'theory_morphology'],
-        attributes: { ft_bonus_per_sec: 2.7 } 
-    },
-    paradigm_socio_technical_systems: { 
-        id: 'paradigm_socio_technical_systems', name: 'Paradigm: Socio-Technical Systems', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Understanding complex systems involving interactions between social structures and technological controls.',
-        recipe: ['theory_cybernetics', 'theory_system_dynamics'],
-        attributes: { ft_bonus_per_sec: 2.8 } 
-    },
-    paradigm_artificial_intelligence_foundations: { 
-        id: 'paradigm_artificial_intelligence_foundations', name: 'Paradigm: Artificial Intelligence Foundations', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The core principles of AI, rooted in computational control and feedback systems.',
-        recipe: ['theory_cybernetics', 'theory_computation'],
-        attributes: { ft_bonus_per_sec: 3.0 } 
-    },
-    paradigm_ontological_cosmology: { 
-        id: 'paradigm_ontological_cosmology', name: 'Paradigm: Ontological Cosmology', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Exploring the nature of being within the context of the universe\'s origin and evolution.',
-        recipe: ['theory_cosmology', 'theory_ontology'],
-        attributes: { ft_bonus_per_sec: 3.1 } 
-    },
-    paradigm_cosmic_thermodynamics: { 
-        id: 'paradigm_cosmic_thermodynamics', name: 'Paradigm: Cosmic Thermodynamics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The application of thermodynamic laws to the universe as a whole, including its heat death.',
-        recipe: ['theory_cosmology', 'theory_thermodynamics'],
-        attributes: { ft_bonus_per_sec: 3.4 } 
-    },
-    paradigm_astro_engineering: { 
-        id: 'paradigm_astro_engineering', name: 'Paradigm: Astro-Engineering', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The hypothetical engineering of structures and systems on a cosmic scale.',
-        recipe: ['theory_cosmology', 'theory_engineering'],
-        attributes: { ft_bonus_per_sec: 3.5 } 
-    },
-    paradigm_grand_unification_theory: { 
-        id: 'paradigm_grand_unification_theory', name: 'Paradigm: Grand Unification', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'A model in which the three gauge interactions of the Standard Model are merged into one single force.',
-        recipe: ['theory_cosmology', 'theory_physics'],
-        attributes: { ft_bonus_per_sec: 3.6 } 
-    },
-    paradigm_cosmic_aesthetics: { 
-        id: 'paradigm_cosmic_aesthetics', name: 'Paradigm: Cosmic Aesthetics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The appreciation of beauty and order on a universal, cosmological scale.',
-        recipe: ['theory_cosmology', 'theory_aesthetics'],
-        attributes: { ft_bonus_per_sec: 2.8 } 
-    },
-    paradigm_cosmic_information_density: { 
-        id: 'paradigm_cosmic_information_density', name: 'Paradigm: Cosmic Information Density', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Exploring the information content of the universe and its evolution.',
-        recipe: ['theory_cosmology', 'theory_information'],
-        attributes: { ft_bonus_per_sec: 3.2 } 
-    },
-    paradigm_cosmological_argument_revisited: { 
-        id: 'paradigm_cosmological_argument_revisited', name: 'Paradigm: Cosmological Argument', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'A logical re-examination of arguments for the existence of a first cause, based on modern cosmology.',
-        recipe: ['theory_cosmology', 'theory_logic'],
-        attributes: { ft_bonus_per_sec: 3.3 } 
-    },
-    paradigm_astrobiology: { 
-        id: 'paradigm_astrobiology', name: 'Paradigm: Astrobiology', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The study of the origin, evolution, distribution, and future of life in the universe.',
-        recipe: ['theory_cosmology', 'theory_morphology'],
-        attributes: { ft_bonus_per_sec: 3.0 } 
-    },
-    paradigm_universal_evolution: { 
-        id: 'paradigm_universal_evolution', name: 'Paradigm: Universal Evolution', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Viewing the universe as a dynamically evolving system from the Big Bang to the present.',
-        recipe: ['theory_cosmology', 'theory_system_dynamics'],
-        attributes: { ft_bonus_per_sec: 3.2 } 
-    },
-    paradigm_computational_cosmology: { 
-        id: 'paradigm_computational_cosmology', name: 'Paradigm: Computational Cosmology', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Using large-scale simulations to model the formation and evolution of cosmic structures.',
-        recipe: ['theory_cosmology', 'theory_computation'],
-        attributes: { ft_bonus_per_sec: 3.4 } 
-    },
-    paradigm_thermodynamic_being: { 
-        id: 'paradigm_thermodynamic_being', name: 'Paradigm: Thermodynamic Being', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Exploring existence through the lens of energy, entropy, and thermodynamic principles.',
-        recipe: ['theory_ontology', 'theory_thermodynamics'],
-        attributes: { ft_bonus_per_sec: 3.2 } 
-    },
-    paradigm_existential_engineering: { 
-        id: 'paradigm_existential_engineering', name: 'Paradigm: Existential Engineering', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Engineering systems or experiences that engage with fundamental questions of being.',
-        recipe: ['theory_ontology', 'theory_engineering'],
-        attributes: { ft_bonus_per_sec: 3.3 } 
-    },
-    paradigm_physical_ontology: { 
-        id: 'paradigm_physical_ontology', name: 'Paradigm: Physical Ontology', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The study of the fundamental constituents of physical reality.',
-        recipe: ['theory_ontology', 'theory_physics'],
-        attributes: { ft_bonus_per_sec: 3.4 } 
-    },
-    paradigm_ontological_aesthetics: { 
-        id: 'paradigm_ontological_aesthetics', name: 'Paradigm: Ontological Aesthetics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The nature of beauty as it relates to the fundamental nature of being.',
-        recipe: ['theory_ontology', 'theory_aesthetics'],
-        attributes: { ft_bonus_per_sec: 2.9 } 
-    },
-    paradigm_informational_ontology: { 
-        id: 'paradigm_informational_ontology', name: 'Paradigm: Informational Ontology', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The study of information as a fundamental aspect of existence.',
-        recipe: ['theory_ontology', 'theory_information'],
-        attributes: { ft_bonus_per_sec: 3.1 } 
-    },
-    paradigm_formal_ontology: { 
-        id: 'paradigm_formal_ontology', name: 'Paradigm: Formal Ontology', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Applying formal logic to categorize and define the types of entities that exist.',
-        recipe: ['theory_ontology', 'theory_logic'],
-        attributes: { ft_bonus_per_sec: 3.2 } 
-    },
-    paradigm_biological_ontology: { 
-        id: 'paradigm_biological_ontology', name: 'Paradigm: Biological Ontology', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Classifying and defining the forms and types of being within the biological realm.',
-        recipe: ['theory_ontology', 'theory_morphology'],
-        attributes: { ft_bonus_per_sec: 3.0 } 
-    },
-    paradigm_systemic_ontology: { 
-        id: 'paradigm_systemic_ontology', name: 'Paradigm: Systemic Ontology', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Understanding existence as emergent from the interactions within dynamic systems.',
-        recipe: ['theory_ontology', 'theory_system_dynamics'],
-        attributes: { ft_bonus_per_sec: 3.1 } 
-    },
-    paradigm_computational_ontology: { 
-        id: 'paradigm_computational_ontology', name: 'Paradigm: Computational Ontology', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Using computational models to represent and reason about categories of being.',
-        recipe: ['theory_ontology', 'theory_computation'],
-        attributes: { ft_bonus_per_sec: 3.3 } 
-    },
-    paradigm_applied_thermodynamics: { 
-        id: 'paradigm_applied_thermodynamics', name: 'Paradigm: Applied Thermodynamics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The practical application of thermodynamic principles in engineering design and processes.',
-        recipe: ['theory_thermodynamics', 'theory_engineering'],
-        attributes: { ft_bonus_per_sec: 3.6 } 
-    },
-    paradigm_statistical_mechanics: { 
-        id: 'paradigm_statistical_mechanics', name: 'Paradigm: Statistical Mechanics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Deriving macroscopic thermodynamic properties from the statistical behavior of microscopic physical constituents.',
-        recipe: ['theory_thermodynamics', 'theory_physics'],
-        attributes: { ft_bonus_per_sec: 3.7 } 
-    },
-    paradigm_aesthetic_energy: { 
-        id: 'paradigm_aesthetic_energy', name: 'Paradigm: Aesthetic Energy', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The perception of energy and flow as components of aesthetic experience.',
-        recipe: ['theory_thermodynamics', 'theory_aesthetics'],
-        attributes: { ft_bonus_per_sec: 3.1 } 
-    },
-    paradigm_information_thermodynamics: { 
-        id: 'paradigm_information_thermodynamics', name: 'Paradigm: Information Thermodynamics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The study of the connections between information theory and thermodynamics, including Maxwell\'s Demon.',
-        recipe: ['theory_thermodynamics', 'theory_information'],
-        attributes: { ft_bonus_per_sec: 3.5 } 
-    },
-    paradigm_logical_foundations_of_thermo: { 
-        id: 'paradigm_logical_foundations_of_thermo', name: 'Paradigm: Thermodynamic Logic', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'A rigorous, logical axiomatization of the laws of thermodynamics.',
-        recipe: ['theory_thermodynamics', 'theory_logic'],
-        attributes: { ft_bonus_per_sec: 3.6 } 
-    },
-    paradigm_bioenergetics: { 
-        id: 'paradigm_bioenergetics', name: 'Paradigm: Bioenergetics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The study of energy transformations in living organisms and their forms.',
-        recipe: ['theory_thermodynamics', 'theory_morphology'],
-        attributes: { ft_bonus_per_sec: 3.4 } 
-    },
-    paradigm_non_equilibrium_thermodynamics: { 
-        id: 'paradigm_non_equilibrium_thermodynamics', name: 'Paradigm: Non-Equilibrium Systems', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The study of thermodynamic systems that are not in thermodynamic equilibrium but evolve dynamically.',
-        recipe: ['theory_thermodynamics', 'theory_system_dynamics'],
-        attributes: { ft_bonus_per_sec: 3.5 } 
-    },
-    paradigm_computational_thermodynamics: { 
-        id: 'paradigm_computational_thermodynamics', name: 'Paradigm: Computational Thermodynamics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Using computational methods to model and predict thermodynamic properties and phase equilibria.',
-        recipe: ['theory_thermodynamics', 'theory_computation'],
-        attributes: { ft_bonus_per_sec: 3.7 } 
-    },
-    paradigm_physical_engineering: { 
-        id: 'paradigm_physical_engineering', name: 'Paradigm: Physical Engineering', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Engineering disciplines directly applying principles of physics, like mechanical or electrical engineering.',
-        recipe: ['theory_engineering', 'theory_physics'],
-        attributes: { ft_bonus_per_sec: 3.8 } 
-    },
-    paradigm_functional_aesthetics: { 
-        id: 'paradigm_functional_aesthetics', name: 'Paradigm: Functional Aesthetics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The design philosophy where the aesthetic appeal of an object is derived from its fitness for purpose.',
-        recipe: ['theory_engineering', 'theory_aesthetics'],
-        attributes: { ft_bonus_per_sec: 3.2 } 
-    },
-    paradigm_knowledge_engineering: { 
-        id: 'paradigm_knowledge_engineering', name: 'Paradigm: Knowledge Engineering', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The discipline of building and maintaining knowledge-based systems by applying engineering principles.',
-        recipe: ['theory_engineering', 'theory_information'],
-        attributes: { ft_bonus_per_sec: 3.6 } 
-    },
-    paradigm_formal_methods_in_engineering: { 
-        id: 'paradigm_formal_methods_in_engineering', name: 'Paradigm: Formal Engineering', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Mathematically rigorous techniques for the specification, development, and verification of engineered systems.',
-        recipe: ['theory_engineering', 'theory_logic'],
-        attributes: { ft_bonus_per_sec: 3.7 } 
-    },
-    paradigm_bio_engineering: { 
-        id: 'paradigm_bio_engineering', name: 'Paradigm: Bio-Engineering', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Applying engineering principles to biological systems and forms, including prosthetics and tissue engineering.',
-        recipe: ['theory_engineering', 'theory_morphology'],
-        attributes: { ft_bonus_per_sec: 3.5 } 
-    },
-    paradigm_systems_engineering: { 
-        id: 'paradigm_systems_engineering', name: 'Paradigm: Systems Engineering', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'An interdisciplinary field of engineering focusing on how to design and manage complex engineering systems over their life cycles.',
-        recipe: ['theory_engineering', 'theory_system_dynamics'],
-        attributes: { ft_bonus_per_sec: 3.6 } 
-    },
-    paradigm_software_engineering_mastery: { 
-        id: 'paradigm_software_engineering_mastery', name: 'Paradigm: Software Engineering', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The systematic application of engineering principles to the design, development, and maintenance of software.',
-        recipe: ['theory_engineering', 'theory_computation'],
-        attributes: { ft_bonus_per_sec: 3.8 } 
-    },
-    paradigm_aesthetic_relativity: { 
-        id: 'paradigm_aesthetic_relativity', name: 'Paradigm: Aesthetic Relativity', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Exploring the beauty and elegance found within the laws of physics, particularly relativity.',
-        recipe: ['theory_physics', 'theory_aesthetics'],
-        attributes: { ft_bonus_per_sec: 3.3 } 
-    },
-    paradigm_quantum_information_science: { 
-        id: 'paradigm_quantum_information_science', name: 'Paradigm: Quantum Information', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'An interdisciplinary field that seeks to understand how information can be processed using quantum mechanical systems.',
-        recipe: ['theory_physics', 'theory_information'],
-        attributes: { ft_bonus_per_sec: 3.7 } 
-    },
-    paradigm_logical_foundations_of_physics: { 
-        id: 'paradigm_logical_foundations_of_physics', name: 'Paradigm: Physical Logic', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Investigating the logical and mathematical underpinnings of physical theories.',
-        recipe: ['theory_physics', 'theory_logic'],
-        attributes: { ft_bonus_per_sec: 3.8 } 
-    },
-    paradigm_biophysics: { 
-        id: 'paradigm_biophysics', name: 'Paradigm: Biophysics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Applying the theories and methods of physics to understand biological systems and their forms.',
-        recipe: ['theory_physics', 'theory_morphology'],
-        attributes: { ft_bonus_per_sec: 3.6 } 
-    },
-    paradigm_chaotic_systems_physics: { 
-        id: 'paradigm_chaotic_systems_physics', name: 'Paradigm: Chaotic Systems', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The study of dynamic systems highly sensitive to initial conditions, governed by physical laws.',
-        recipe: ['theory_physics', 'theory_system_dynamics'],
-        attributes: { ft_bonus_per_sec: 3.7 } 
-    },
-    paradigm_computational_physics: { 
-        id: 'paradigm_computational_physics', name: 'Paradigm: Computational Physics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The study and implementation of numerical analysis to solve problems in physics for which a quantitative theory already exists.',
-        recipe: ['theory_physics', 'theory_computation'],
-        attributes: { ft_bonus_per_sec: 3.9 } 
-    },
-    paradigm_informational_aesthetics: { 
-        id: 'paradigm_informational_aesthetics', name: 'Paradigm: Informational Aesthetics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The study of aesthetic properties of information, data visualization, and communication.',
-        recipe: ['theory_aesthetics', 'theory_information'],
-        attributes: { ft_bonus_per_sec: 2.9 } 
-    },
-    paradigm_logical_aesthetics: { 
-        id: 'paradigm_logical_aesthetics', name: 'Paradigm: Logical Aesthetics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Exploring the beauty inherent in logical structures, mathematical proofs, and elegant arguments.',
-        recipe: ['theory_aesthetics', 'theory_logic'],
-        attributes: { ft_bonus_per_sec: 3.0 } 
-    },
-    paradigm_morphological_beauty: { 
-        id: 'paradigm_morphological_beauty', name: 'Paradigm: Morphological Beauty', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The aesthetic appreciation of natural forms and the principles governing their development.',
-        recipe: ['theory_aesthetics', 'theory_morphology'],
-        attributes: { ft_bonus_per_sec: 2.8 } 
-    },
-    paradigm_dynamic_art_forms: { 
-        id: 'paradigm_dynamic_art_forms', name: 'Paradigm: Dynamic Art Forms', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Art that incorporates change, evolution, and interaction over time, governed by systemic principles.',
-        recipe: ['theory_aesthetics', 'theory_system_dynamics'],
-        attributes: { ft_bonus_per_sec: 2.9 } 
-    },
-    paradigm_computational_aesthetics: { 
-        id: 'paradigm_computational_aesthetics', name: 'Paradigm: Computational Aesthetics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Using computational methods to generate, analyze, and understand aesthetic phenomena.',
-        recipe: ['theory_aesthetics', 'theory_computation'],
-        attributes: { ft_bonus_per_sec: 3.1 } 
-    },
-    paradigm_logical_information_theory: { 
-        id: 'paradigm_logical_information_theory', name: 'Paradigm: Logical Information Theory', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'A formal, logical approach to the quantification and manipulation of information.',
-        recipe: ['theory_information', 'theory_logic'],
-        attributes: { ft_bonus_per_sec: 3.4 } 
-    },
-    paradigm_bio_informatics: { 
-        id: 'paradigm_bio_informatics', name: 'Paradigm: Bio-Informatics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Applying information science to understand biological data, including genetic sequences and protein structures.',
-        recipe: ['theory_information', 'theory_morphology'],
-        attributes: { ft_bonus_per_sec: 3.2 } 
-    },
-    paradigm_information_systems_dynamics: { 
-        id: 'paradigm_information_systems_dynamics', name: 'Paradigm: Information Systems Dynamics', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Modeling the flow and transformation of information within complex, evolving systems.',
-        recipe: ['theory_information', 'theory_system_dynamics'],
-        attributes: { ft_bonus_per_sec: 3.3 } 
-    },
-    paradigm_theoretical_computer_science: { 
-        id: 'paradigm_theoretical_computer_science', name: 'Paradigm: Theoretical Computer Science', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The mathematical foundations of computation and information processing.',
-        recipe: ['theory_information', 'theory_computation'],
-        attributes: { ft_bonus_per_sec: 3.5 } 
-    },
-    paradigm_morphological_logic: { 
-        id: 'paradigm_morphological_logic', name: 'Paradigm: Morphological Logic', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Applying logical principles to analyze and categorize forms and their development.',
-        recipe: ['theory_logic', 'theory_morphology'],
-        attributes: { ft_bonus_per_sec: 3.1 } 
-    },
-    paradigm_formal_systems_theory: { 
-        id: 'paradigm_formal_systems_theory', name: 'Paradigm: Formal Systems Theory', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'A rigorous, logic-based approach to understanding the behavior of dynamic systems.',
-        recipe: ['theory_logic', 'theory_system_dynamics'],
-        attributes: { ft_bonus_per_sec: 3.2 } 
-    },
-    paradigm_computational_logic: { 
-        id: 'paradigm_computational_logic', name: 'Paradigm: Computational Logic', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The use of logic in computer science, including automated reasoning and program verification.',
-        recipe: ['theory_logic', 'theory_computation'],
-        attributes: { ft_bonus_per_sec: 3.4 } 
-    },
-    paradigm_dynamic_morphogenesis: { 
-        id: 'paradigm_dynamic_morphogenesis', name: 'Paradigm: Dynamic Morphogenesis', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The study of how biological forms develop and change through dynamic systemic interactions.',
-        recipe: ['theory_morphology', 'theory_system_dynamics'],
-        attributes: { ft_bonus_per_sec: 3.1 } 
-    },
-    paradigm_computational_morphology: { 
-        id: 'paradigm_computational_morphology', name: 'Paradigm: Computational Morphology', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'Using computational models to simulate and understand the development of form.',
-        recipe: ['theory_morphology', 'theory_computation'],
-        attributes: { ft_bonus_per_sec: 3.3 } 
-    },
-    paradigm_large_scale_simulation: { 
-        id: 'paradigm_large_scale_simulation', name: 'Paradigm: Large-Scale Simulation', tier: 4, group: 'paradigm',
-        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
-        description: 'The use of high-performance computing to model and predict the behavior of vast, complex dynamic systems.',
-        recipe: ['theory_system_dynamics', 'theory_computation'],
-        attributes: { ft_bonus_per_sec: 3.5 } 
+    paradigm_cultural_evolution: {
+        id: 'paradigm_cultural_evolution', name: 'Paradigm: Cultural Evolution', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Applying evolutionary theory to the historical transmission of ideas, technologies, and social norms.',
+        recipe: ['theory_evolutionary_theory', 'theory_historiography'],
+        attributes: { ft_bonus_per_sec: 2.5 }
+    },
+
+    // --- Wave Mechanics pairings (2) ---
+    paradigm_psychoacoustics: {
+        id: 'paradigm_psychoacoustics', name: 'Paradigm: Psychoacoustics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'The cognitive perception of acoustic waves — how the brain interprets sound, pitch, and music.',
+        recipe: ['theory_wave_mechanics', 'theory_cognitive_science'],
+        attributes: { ft_bonus_per_sec: 2.5 }
+    },
+    paradigm_archaeoacoustics: {
+        id: 'paradigm_archaeoacoustics', name: 'Paradigm: Archaeoacoustics', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Studying wave propagation in ancient sites to understand how past peoples designed and used sound environments.',
+        recipe: ['theory_wave_mechanics', 'theory_historiography'],
+        attributes: { ft_bonus_per_sec: 2.3 }
+    },
+
+    // --- Cognitive Science pairings (1) ---
+    paradigm_historiography_of_mind: {
+        id: 'paradigm_historiography_of_mind', name: 'Paradigm: Historiography of Mind', tier: 4, group: 'paradigm',
+        color: { background: '#ff69b4', border: '#c71585' }, shape: 'hexagon',
+        description: 'Tracing how cognitive frameworks and theories of consciousness have evolved through intellectual history.',
+        recipe: ['theory_cognitive_science', 'theory_historiography'],
+        attributes: { ft_bonus_per_sec: 2.6 }
     }
+
 };
 
 // Ensures all ideas have a unique ID and an attributes object

@@ -3,7 +3,7 @@
 let gameState = {
     lastUpdate: 0,
     resources: {
-        fleeting_thought: 0,
+        thought: 0,
         wisdom_shards: 0
     },
     ideas: {},
@@ -25,12 +25,12 @@ let gameState = {
 function initializeGameState(isNewGame = false) {
     if (isNewGame) {
         gameState.lastUpdate = Date.now();
-        gameState.resources = { fleeting_thought: 0, wisdom_shards: 0 };
+        gameState.resources = { thought: 0, wisdom_shards: 0 };
         gameState.ideas = {};
         gameState.generators = {};
         gameState.crafters = {};
         gameState.unlockedRecipes = [];
-        gameState.discoveredIdeas = new Set(['fleeting_thought']);
+        gameState.discoveredIdeas = new Set(['thought']);
         gameState.transcendenceCount = 0;
         gameState.tutorialCompleted = false;
         gameState.purchaseMultiplier = 1;
@@ -40,8 +40,8 @@ function initializeGameState(isNewGame = false) {
     }
 
     // Sanitize Core Properties
-    if (typeof gameState.resources !== 'object' || gameState.resources === null) gameState.resources = { fleeting_thought: 0, wisdom_shards: 0 };
-    gameState.resources.fleeting_thought = Number(gameState.resources.fleeting_thought) || 0;
+    if (typeof gameState.resources !== 'object' || gameState.resources === null) gameState.resources = { thought: 0, wisdom_shards: 0 };
+    gameState.resources.thought = Number(gameState.resources.thought) || 0;
     gameState.resources.wisdom_shards = Number(gameState.resources.wisdom_shards) || 0;
 
     if (typeof gameState.ideas !== 'object' || gameState.ideas === null) gameState.ideas = {};
@@ -68,7 +68,7 @@ function initializeGameState(isNewGame = false) {
 
     if (!Array.isArray(gameState.unlockedRecipes)) gameState.unlockedRecipes = [];
     if (!(gameState.discoveredIdeas instanceof Set)) { gameState.discoveredIdeas = new Set(Array.isArray(gameState.discoveredIdeas) ? gameState.discoveredIdeas : []); }
-    gameState.discoveredIdeas.add('fleeting_thought');
+    gameState.discoveredIdeas.add('thought');
 
     gameState.transcendenceCount = Number(gameState.transcendenceCount) || 0;
     gameState.lastUpdate = Number(gameState.lastUpdate) || Date.now();
@@ -192,7 +192,7 @@ function loadGame() {
     if (timeOffline > 1000 && typeof GameLogic !== 'undefined' && GameLogic.calculateOfflineProgress) {
         const offlineGains = GameLogic.calculateOfflineProgress(timeOffline);
         if (offlineGains) {
-            if (GameLogic._isValidNumber(offlineGains.ftGained)) { if(!GameLogic._isValidNumber(gameState.resources.fleeting_thought)) gameState.resources.fleeting_thought = 0; gameState.resources.fleeting_thought += offlineGains.ftGained; }
+            if (GameLogic._isValidNumber(offlineGains.ftGained)) { if(!GameLogic._isValidNumber(gameState.resources.thought)) gameState.resources.thought = 0; gameState.resources.thought += offlineGains.ftGained; }
             if (offlineGains.ideasGained) { Object.entries(offlineGains.ideasGained).forEach(([ideaId, count]) => { if (GameLogic._isValidNumber(count) && count > 0) { if(!GameLogic._isValidNumber(gameState.ideas[ideaId])) gameState.ideas[ideaId] = 0; gameState.ideas[ideaId] += count; gameState.discoveredIdeas.add(ideaId); } }); }
             if (offlineGains.ftGained > 0.1 || Object.keys(offlineGains.ideasGained || {}).length > 0) {
                  const secondsOfflineForNotification = timeOffline / 1000;

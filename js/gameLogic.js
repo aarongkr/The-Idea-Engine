@@ -22,14 +22,14 @@ const GameLogic = {
             Tutorial.checkCompletion();
         }
 
-        if (!GameLogic._isValidNumber(gameState.resources.fleeting_thought)) {
-             gameState.resources.fleeting_thought = 0;
+        if (!GameLogic._isValidNumber(gameState.resources.thought)) {
+             gameState.resources.thought = 0;
         }
 
         const baseFtPerSec = GameLogic.calculateCurrentFtPerSec() / GameLogic.calculateGlobalFtMultiplier();
         const finalFtPerSec = baseFtPerSec * GameLogic.calculateGlobalFtMultiplier();
 
-        gameState.resources.fleeting_thought += finalFtPerSec * delta;
+        gameState.resources.thought += finalFtPerSec * delta;
 
 
         // --- Concept Generation ---
@@ -37,7 +37,7 @@ const GameLogic = {
             const genData = GENERATORS_DATA[genId];
             if (genData && genState.level > 0 && genData.output) {
                 Object.entries(genData.output).forEach(([outputIdeaId, baseChance]) => {
-                    if (outputIdeaId !== 'fleeting_thought' && GameLogic._isValidNumber(baseChance)) {
+                    if (outputIdeaId !== 'thought' && GameLogic._isValidNumber(baseChance)) {
                         const currentLevel = genState.level; const scale = genData.outputScale || 1;
                         const levelBonus = Math.pow(scale, Math.max(0, currentLevel - 1));
                         const chancePerSecond = (baseChance * currentLevel) * levelBonus;
@@ -122,7 +122,7 @@ const GameLogic = {
             const genData = GENERATORS_DATA[genId];
             if (genData && genState.level > 0 && genData.output) {
                  Object.entries(genData.output).forEach(([outputIdeaId, baseChance]) => {
-                    if (outputIdeaId !== 'fleeting_thought' && GameLogic._isValidNumber(baseChance)) {
+                    if (outputIdeaId !== 'thought' && GameLogic._isValidNumber(baseChance)) {
                         const currentLevel = genState.level; const scale = genData.outputScale || 1;
                         const levelBonus = Math.pow(scale, Math.max(0, currentLevel - 1));
                         const expectedCount = (baseChance * currentLevel) * levelBonus * secondsOffline;
@@ -151,8 +151,8 @@ const GameLogic = {
     /**
      * Handles the manual click action, now with a bonus from the 'Focused Intent' upgrade.
      */
-    sparkFleetingThought() {
-        if (!GameLogic._isValidNumber(gameState.resources.fleeting_thought)) gameState.resources.fleeting_thought = 0;
+    sparkThought() {
+        if (!GameLogic._isValidNumber(gameState.resources.thought)) gameState.resources.thought = 0;
         
         let wisdomShardsBonus = 0;
         if (GameLogic._isValidNumber(gameState.resources.wisdom_shards)) wisdomShardsBonus = gameState.resources.wisdom_shards * 0.1;
@@ -176,7 +176,7 @@ const GameLogic = {
         }
 
         const ftGained = 1 + wisdomShardsBonus + clickBonus;
-        gameState.resources.fleeting_thought += ftGained;
+        gameState.resources.thought += ftGained;
         
         if (typeof UI !== 'undefined') UI.updateResourceDisplay();
     },
@@ -186,9 +186,9 @@ const GameLogic = {
         
         Object.entries(gameState.generators).forEach(([genId, genState]) => {
             const genData = GENERATORS_DATA[genId];
-            if (genData && genState.level > 0 && genData.output?.fleeting_thought) {
+            if (genData && genState.level > 0 && genData.output?.thought) {
                 const currentLevel = genState.level;
-                const baseOutput = genData.output.fleeting_thought;
+                const baseOutput = genData.output.thought;
                 const scale = genData.outputScale || 1;
                 const levelBonus = Math.pow(scale, Math.max(0, currentLevel - 1));
                 totalFtPerSec += (baseOutput * currentLevel) * levelBonus;
@@ -351,7 +351,7 @@ const GameLogic = {
     },
 
     gainIdea(ideaId, amount = 1, fromBatch = false) {
-        if (!IDEAS_DATA[ideaId] || ideaId === 'fleeting_thought' || !GameLogic._isValidNumber(amount) || amount <= 0) return;
+        if (!IDEAS_DATA[ideaId] || ideaId === 'thought' || !GameLogic._isValidNumber(amount) || amount <= 0) return;
         const wasFirstDiscovery = !gameState.discoveredIdeas.has(ideaId);
         let currentCount = gameState.ideas[ideaId] || 0;
         if (!GameLogic._isValidNumber(currentCount)) currentCount = 0;
@@ -362,7 +362,7 @@ const GameLogic = {
              if (!fromBatch && typeof Noosphere !== 'undefined') {
                 Noosphere.addNode(ideaId); const ideaData = IDEAS_DATA[ideaId];
                  if (ideaData.recipe) { ideaData.recipe.forEach(ingId => { if (gameState.discoveredIdeas.has(ingId)) Noosphere.addEdge(ingId, ideaId);});}
-                 Object.values(IDEAS_DATA).forEach(pIdea => { if (pIdea.id === 'fleeting_thought' || pIdea.id === ideaId) return; if (pIdea.recipe?.includes(ideaId) && gameState.discoveredIdeas.has(pIdea.id)) { if (pIdea.recipe.every(ing => gameState.discoveredIdeas.has(ing))) {pIdea.recipe.forEach(ing_id => Noosphere.addEdge(ing_id, pIdea.id));}}});
+                 Object.values(IDEAS_DATA).forEach(pIdea => { if (pIdea.id === 'thought' || pIdea.id === ideaId) return; if (pIdea.recipe?.includes(ideaId) && gameState.discoveredIdeas.has(pIdea.id)) { if (pIdea.recipe.every(ing => gameState.discoveredIdeas.has(ing))) {pIdea.recipe.forEach(ing_id => Noosphere.addEdge(ing_id, pIdea.id));}}});
                 Noosphere.focusOnNode(ideaId);
              }
         }
@@ -397,9 +397,9 @@ const GameLogic = {
         const currentWS = Number(gameState.resources.wisdom_shards) || 0;
         const currentTranscendCount = Number(gameState.transcendenceCount) || 0;
         const newBaseGameState = {
-            lastUpdate: Date.now(), resources: { fleeting_thought: 0, wisdom_shards: currentWS + wsGained }, ideas: {},
+            lastUpdate: Date.now(), resources: { thought: 0, wisdom_shards: currentWS + wsGained }, ideas: {},
             generators: {}, crafters: {}, unlockedRecipes: [], noosphereState: { nodes: [], edges: [] },
-            discoveredIdeas: new Set(['fleeting_thought']), transcendenceCount: currentTranscendCount + 1, tutorialCompleted: true,
+            discoveredIdeas: new Set(['thought']), transcendenceCount: currentTranscendCount + 1, tutorialCompleted: true,
             purchaseMultiplier: gameState.purchaseMultiplier,
             gameVersion: gameState.gameVersion
         };
