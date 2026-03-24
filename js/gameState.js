@@ -216,6 +216,8 @@ function resetGameConfirm(isError = false) {
         localStorage.removeItem('ideaEngineSave'); initializeGameState(true); saveGame();
         if (typeof GameLogic !== 'undefined') GameLogic.lastTick = Date.now(); gameState.lastUIRefresh = 0;
         if (typeof Noosphere !== 'undefined') Noosphere.renderFromGameState();
+        if (typeof UI !== 'undefined') UI.invalidateAllCaches();
+        if (typeof UI !== 'undefined') UI.populateForgeSelectors();
         if (typeof UI !== 'undefined') UI.updateAllUI();
         if (typeof UI !== 'undefined') UI.switchPanel('noosphere-panel', document.querySelector('.nav-button[data-panel="noosphere-panel"]'));
         console.log("Game reset to initial state."); if (typeof UI !== 'undefined' && UI.showNotification) { UI.showNotification("Game has been reset.", "info"); }

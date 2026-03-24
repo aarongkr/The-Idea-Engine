@@ -37,6 +37,22 @@ const UI = {
         offlineUpgrades: document.getElementById('offline-upgrades'),
     },
 
+    // --- Dirty-check cache keys ---
+    // These store fingerprints of the last rendered state for each section.
+    // If the fingerprint hasn't changed, we skip the expensive innerHTML wipe+rebuild.
+    _renderCache: {
+        generators: null,
+        insightCrafters: null,
+        theoryCrafters: null,
+        paradigmCrafters: null,
+        concepts: null,
+        insights: null,
+        theories: null,
+        paradigms: null,
+        wisdomShop: null,
+        recipes: null,
+    },
+
     init() {
         this.elements.navButtons.forEach(button => {
             button.addEventListener('click', () => this.switchPanel(button.dataset.panel, button));
@@ -66,6 +82,11 @@ const UI = {
         const currentIndex = multipliers.indexOf(gameState.purchaseMultiplier);
         const nextIndex = (currentIndex + 1) % multipliers.length;
         gameState.purchaseMultiplier = multipliers[nextIndex];
+        // Purchasing multiplier affects card button text and affordability — invalidate all card caches
+        this._renderCache.generators = null;
+        this._renderCache.insightCrafters = null;
+        this._renderCache.theoryCrafters = null;
+        this._renderCache.paradigmCrafters = null;
         this.updateAllUI();
     },
 
@@ -188,6 +209,7 @@ const UI = {
         UI.showNotification(`Bulk upgraded ${upgradesPerformed} paradigm crafter levels!`, 'success');
         UI.updateAllUI();
     },
+
     /**
      * Renders a generic upgrade card with intelligent formatting for output and costs.
      */
@@ -216,7 +238,6 @@ const UI = {
         } else {
             let displayAmount;
             if (gameState.purchaseMultiplier === 'Max') {
-                // Show either affordable levels or 1 (minimum display)
                 displayAmount = Math.max(1, purchaseDetails.affordableLevels);
             } else {
                 displayAmount = gameState.purchaseMultiplier;
@@ -237,7 +258,7 @@ const UI = {
         } else if (itemData.effect?.global_ft_multiplier_bonus) {
             const totalBonus = currentLevel * itemData.effect.global_ft_multiplier_bonus * 100;
             outputString = `Effect: +${totalBonus.toFixed(0)}% to all FT generation`;
-        } else if (itemData.output) { // For base generators with chance-based output
+        } else if (itemData.output) {
             Object.entries(itemData.output).forEach(([outRes, outVal]) => {
                 if (outRes === 'fleeting_thought') {
                     const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = itemData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : "";
@@ -254,7 +275,7 @@ const UI = {
                     }
                 }
             });
-        } else if (itemData.targetIdeaId) { // For Auto-Crafters
+        } else if (itemData.targetIdeaId) {
             const targetIdea = IDEAS_DATA[itemData.targetIdeaId];
             const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = itemData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : "";
             const craftsPerSecond = (itemData.outputAmount || 0) * (outputScale ** scalePower) * displayLevel;
@@ -266,13 +287,58 @@ const UI = {
             }
         }
         outputString = outputString.replace(/<br>$/, '').trim();
-        // --- END MODIFICATION ---
 
         card.innerHTML = `<h3>${itemData.icon || ''} ${itemData.name} (Lvl ${currentLevel}${isMaxLevel ? ' - MAX' : ''})</h3> <p>${itemData.description || ''}</p> <p class="cost">Cost: ${costString}</p> <p class="output">${outputString || 'Effect: N/A'}</p> <button class="action-button ${buttonClass}" ${buttonDataAttribute}="${itemData.id}" ${!canAfford || isMaxLevel ? 'disabled' : ''}>${buttonText}</button>`;
         container.appendChild(card);
     },
 
+    /**
+     * Builds a fingerprint string representing the state that affects generator card rendering.
+     * If this string is the same as last render, we can safely skip the DOM rebuild.
+     */
+    _generatorsCacheKey() {
+        const genLevels = Object.keys(GENERATORS_DATA).map(id => `${id}:${gameState.generators[id]?.level || 0}`).join(',');
+        // Round FT to nearest 10 to avoid re-rendering on every single FT gain,
+        // while still updating affordability indicators reasonably promptly.
+        const ftBucket = Math.floor((gameState.resources.fleeting_thought || 0) / 10);
+        const ideaBucket = Object.entries(gameState.ideas).map(([id, v]) => `${id}:${Math.floor((v||0)/5)}`).join(',');
+        return `${genLevels}|${ftBucket}|${ideaBucket}|${gameState.purchaseMultiplier}`;
+    },
+
+    _craftersCacheKey(prefix) {
+        const crafterLevels = Object.keys(CRAFTERS_DATA)
+            .filter(id => id.startsWith(prefix + '_'))
+            .map(id => `${id}:${gameState.crafters[id]?.level || 0}`)
+            .join(',');
+        const ftBucket = Math.floor((gameState.resources.fleeting_thought || 0) / 10);
+        const ideaBucket = Object.entries(gameState.ideas).map(([id, v]) => `${id}:${Math.floor((v||0)/5)}`).join(',');
+        const bulkUnlocked = gameState.wisdomShop.paradigm_bulk_manager?.level || 0;
+        return `${crafterLevels}|${ftBucket}|${ideaBucket}|${gameState.purchaseMultiplier}|bulk:${bulkUnlocked}`;
+    },
+
+    _ideaListCacheKey(tier) {
+        return Array.from(gameState.discoveredIdeas)
+            .filter(id => IDEAS_DATA[id]?.tier === tier)
+            .map(id => `${id}:${gameState.ideas[id] || 0}`)
+            .sort()
+            .join(',');
+    },
+
+    _wisdomShopCacheKey() {
+        const levels = Object.keys(WISDOM_SHOP_DATA).map(id => `${id}:${gameState.wisdomShop[id]?.level || 0}`).join(',');
+        const wsBucket = Math.floor((gameState.resources.wisdom_shards || 0));
+        return `${levels}|ws:${wsBucket}|tc:${gameState.transcendenceCount}`;
+    },
+
+    _recipesCacheKey() {
+        return (gameState.unlockedRecipes || []).join(',');
+    },
+
     renderGenerators() {
+        const key = this._generatorsCacheKey();
+        if (this._renderCache.generators === key) return;
+        this._renderCache.generators = key;
+
         this.elements.generatorsList.innerHTML = '';
         Object.values(GENERATORS_DATA).forEach(genData => {
             let unlocked = true;
@@ -292,7 +358,12 @@ const UI = {
     },
 
     renderAutoCrafters(crafterTypePrefix, listElement) {
-        listElement.innerHTML = ''; 
+        const cacheKey = `${crafterTypePrefix}Crafters`;
+        const key = this._craftersCacheKey(crafterTypePrefix);
+        if (this._renderCache[cacheKey] === key) return;
+        this._renderCache[cacheKey] = key;
+
+        listElement.innerHTML = '';
         let foundAnyCrafters = false;
         if (crafterTypePrefix === 'paradigm') {
             const bulkUnlocked = gameState.wisdomShop.paradigm_bulk_manager?.level >= 1;
@@ -322,6 +393,12 @@ const UI = {
     },
 
     renderTieredIdeaList(tier, listElement) {
+        const cacheKeyMap = { 1: 'concepts', 2: 'insights', 3: 'theories', 4: 'paradigms' };
+        const cacheKey = cacheKeyMap[tier];
+        const key = this._ideaListCacheKey(tier);
+        if (cacheKey && this._renderCache[cacheKey] === key) return;
+        if (cacheKey) this._renderCache[cacheKey] = key;
+
         listElement.innerHTML = ''; let foundAny = false;
         Array.from(gameState.discoveredIdeas).map(id => IDEAS_DATA[id]).filter(ideaData => ideaData && ideaData.tier === tier).sort((a, b) => (a.name || '').localeCompare(b.name || '')).forEach(ideaData => {
                 foundAny = true; const li = document.createElement('li'); const ownedCount = gameState.ideas[ideaData.id] || 0; let ftBonusHTML = '';
@@ -340,7 +417,7 @@ const UI = {
         const upgrades = Object.values(WISDOM_SHOP_DATA).filter(upgrade => upgrade.category === category);
         
         upgrades.forEach(upgrade => {
-            if (!WisdomShop.isUnlocked(upgrade.id)) return; // Skip locked upgrades for now
+            if (!WisdomShop.isUnlocked(upgrade.id)) return;
             
             const currentLevel = gameState.wisdomShop[upgrade.id]?.level || 0;
             const maxLevel = upgrade.maxLevel || 1;
@@ -349,7 +426,6 @@ const UI = {
             const isMaxLevel = currentLevel >= maxLevel;
             const isPurchased = currentLevel > 0;
             
-            // Determine effect text
             let effectText = '';
             if (upgrade.getEffectValue) {
                 const nextLevelValue = upgrade.getEffectValue(currentLevel + 1);
@@ -378,7 +454,6 @@ const UI = {
                 }
             }
             
-            // Button text and styling
             let buttonText = 'Purchase';
             let buttonClass = 'shop-upgrade-button';
             
@@ -422,6 +497,8 @@ const UI = {
         if (button && !button.disabled) {
             const upgradeId = button.dataset.upgradeId;
             if (WisdomShop.purchase(upgradeId)) {
+                // Invalidate wisdom shop cache so it re-renders with new level
+                UI._renderCache.wisdomShop = null;
                 UI.updateWisdomShop();
                 UI.updateResourceDisplay();
                 UI.showNotification(`Purchased ${WISDOM_SHOP_DATA[upgradeId].name}!`, 'success');
@@ -437,6 +514,7 @@ const UI = {
             GameLogic.buyGenerator(button.dataset.generatorId);
         }
     },
+
     handleBuyAutoCrafterClick(e) {
         const button = e.target.closest('.buy-autocrafter');
         if (button && typeof GameLogic !== 'undefined' && GameLogic.buyAutoCrafter) {
@@ -444,19 +522,54 @@ const UI = {
         }
     },
 
+    /**
+     * Rebuilds the forge <select> dropdowns.
+     * 
+     * IMPORTANT: This must NOT be called from the tick-driven updateAllUI() path.
+     * Rebuilding the <select> elements every 200ms closes any open dropdown the player
+     * is actively interacting with, making it impossible to select an option.
+     * 
+     * This should only be called when the set of available forge options actually changes,
+     * i.e. from gainIdea() and attemptCombination() — both of which already do so.
+     */
     populateForgeSelectors() {
-        const currentSelection1 = this.elements.forgeSlot1.value; const currentSelection2 = this.elements.forgeSlot2.value;
+        const currentSelection1 = this.elements.forgeSlot1.value;
+        const currentSelection2 = this.elements.forgeSlot2.value;
         const optionsHTML = ['<option value="">Select...</option>'];
-        const sortedForgeableIdeas = Array.from(gameState.discoveredIdeas).map(id => IDEAS_DATA[id]).filter(ideaData => ideaData && (ideaData.tier >= 1 && ideaData.tier <= 3) && GameLogic._isValidNumber(gameState.ideas[ideaData.id]) && gameState.ideas[ideaData.id] > 0).sort((a,b) => { if (a.tier !== b.tier) return (a.tier||0)-(b.tier||0); return (a.name||'').localeCompare(b.name||''); });
-        sortedForgeableIdeas.forEach(ideaData => { optionsHTML.push(`<option value="${ideaData.id}">${ideaData.name} (${Utils.formatNumber(gameState.ideas[ideaData.id])})</option>`); });
-        this.elements.forgeSlot1.innerHTML = optionsHTML.join(''); this.elements.forgeSlot2.innerHTML = optionsHTML.join('');
+        const sortedForgeableIdeas = Array.from(gameState.discoveredIdeas)
+            .map(id => IDEAS_DATA[id])
+            .filter(ideaData => ideaData && (ideaData.tier >= 1 && ideaData.tier <= 3) && GameLogic._isValidNumber(gameState.ideas[ideaData.id]) && gameState.ideas[ideaData.id] > 0)
+            .sort((a,b) => {
+                if (a.tier !== b.tier) return (a.tier||0)-(b.tier||0);
+                return (a.name||'').localeCompare(b.name||'');
+            });
+        sortedForgeableIdeas.forEach(ideaData => {
+            optionsHTML.push(`<option value="${ideaData.id}">${ideaData.name} (${Utils.formatNumber(gameState.ideas[ideaData.id])})</option>`);
+        });
+        this.elements.forgeSlot1.innerHTML = optionsHTML.join('');
+        this.elements.forgeSlot2.innerHTML = optionsHTML.join('');
         if (sortedForgeableIdeas.find(i=>i.id===currentSelection1)) this.elements.forgeSlot1.value = currentSelection1;
         if (sortedForgeableIdeas.find(i=>i.id===currentSelection2)) this.elements.forgeSlot2.value = currentSelection2;
     },
 
     updateDiscoveredRecipes() {
-        this.elements.discoveredRecipesList.innerHTML = ''; if (!Array.isArray(gameState.unlockedRecipes)) return;
-        gameState.unlockedRecipes.forEach(recipeOutputId => { const outputData = IDEAS_DATA[recipeOutputId]; if(outputData?.recipe) { const inputNames = outputData.recipe.map(inputId => IDEAS_DATA[inputId]?.name || `(Unknown)`).join(' + '); const li = document.createElement('li'); li.textContent = `${inputNames} = ${outputData.name || '(Unknown)'}`; li.dataset.input1 = outputData.recipe[0]; li.dataset.input2 = outputData.recipe[1]; this.elements.discoveredRecipesList.appendChild(li); } });
+        const key = this._recipesCacheKey();
+        if (this._renderCache.recipes === key) return;
+        this._renderCache.recipes = key;
+
+        this.elements.discoveredRecipesList.innerHTML = '';
+        if (!Array.isArray(gameState.unlockedRecipes)) return;
+        gameState.unlockedRecipes.forEach(recipeOutputId => {
+            const outputData = IDEAS_DATA[recipeOutputId];
+            if(outputData?.recipe) {
+                const inputNames = outputData.recipe.map(inputId => IDEAS_DATA[inputId]?.name || `(Unknown)`).join(' + ');
+                const li = document.createElement('li');
+                li.textContent = `${inputNames} = ${outputData.name || '(Unknown)'}`;
+                li.dataset.input1 = outputData.recipe[0];
+                li.dataset.input2 = outputData.recipe[1];
+                this.elements.discoveredRecipesList.appendChild(li);
+            }
+        });
     },
 
     handleRecipeClick(e) {
@@ -470,6 +583,10 @@ const UI = {
     },
 
     updateWisdomShop() {
+        const key = this._wisdomShopCacheKey();
+        if (this._renderCache.wisdomShop === key) return;
+        this._renderCache.wisdomShop = key;
+
         if (this.elements.wsShopBalance) {
             this.elements.wsShopBalance.textContent = Utils.formatNumber(gameState.resources.wisdom_shards);
         }
@@ -481,7 +598,12 @@ const UI = {
     },
 
     updateDetailsView(ideaData) {
-         if (!ideaData || ideaData.id === 'fleeting_thought') { this.elements.selectedIdeaName.textContent = 'Nothing Selected'; this.elements.selectedIdeaDescription.textContent = 'Click an idea node in the Noosphere.'; this.elements.selectedIdeaAttributes.innerHTML = ''; return; }
+         if (!ideaData || ideaData.id === 'fleeting_thought') {
+             this.elements.selectedIdeaName.textContent = 'Nothing Selected';
+             this.elements.selectedIdeaDescription.textContent = 'Click an idea node in the Noosphere.';
+             this.elements.selectedIdeaAttributes.innerHTML = '';
+             return;
+         }
         this.elements.selectedIdeaName.textContent = ideaData.name || 'Unnamed Idea';
         this.elements.selectedIdeaDescription.textContent = ideaData.description || 'No description available.';
         let attributesHTML = '';
@@ -512,6 +634,15 @@ const UI = {
         }, 3000);
     },
 
+    /**
+     * Full UI refresh. Each sub-render has its own dirty-check and will no-op if
+     * nothing relevant to it has changed — avoiding unnecessary DOM thrashing.
+     * 
+     * NOTE: populateForgeSelectors() is intentionally excluded here.
+     * The forge dropdowns are only rebuilt when the idea inventory actually changes
+     * (handled directly in GameLogic.gainIdea and GameLogic.attemptCombination).
+     * Rebuilding them here would close open dropdowns every 200ms.
+     */
     updateAllUI() {
         this.updateResourceDisplay();
         this.renderGenerators();
@@ -522,11 +653,20 @@ const UI = {
         this.renderAutoCrafters('insight', this.elements.insightCraftersList);
         this.renderAutoCrafters('theory', this.elements.theoryCraftersList);
         this.renderAutoCrafters('paradigm', this.elements.paradigmCraftersList);
-        this.populateForgeSelectors();
+        // populateForgeSelectors() deliberately omitted — see JSDoc above
         this.updateDiscoveredRecipes();
         this.updateTranscendButton();
         this.updateMultiplierButtonText();
         this.updateWisdomShop();
+    },
+
+    /**
+     * Clears all render caches, forcing a full rebuild on the next updateAllUI() call.
+     * Use this after a transcendence, game reset, or load — events where the entire
+     * game state changes at once.
+     */
+    invalidateAllCaches() {
+        Object.keys(this._renderCache).forEach(k => { this._renderCache[k] = null; });
     },
 
      updateTranscendButton() {
@@ -546,4 +686,3 @@ const UI = {
          this.elements.transcendButton.textContent = canTranscend ? `Transcend (${wsToGain} WS)` : 'A Paradigm is Required';
      }
 };
-

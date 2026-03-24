@@ -26,10 +26,9 @@ const GameLogic = {
              gameState.resources.fleeting_thought = 0;
         }
 
-        const baseFtPerSec = GameLogic.calculateCurrentFtPerSec() / GameLogic.calculateGlobalFtMultiplier(); // Get base before multipliers
-        const finalFtPerSec = baseFtPerSec * GameLogic.calculateGlobalFtMultiplier(); // Apply all multipliers
+        const baseFtPerSec = GameLogic.calculateCurrentFtPerSec() / GameLogic.calculateGlobalFtMultiplier();
+        const finalFtPerSec = baseFtPerSec * GameLogic.calculateGlobalFtMultiplier();
 
-        // Apply total FT gain for this tick
         gameState.resources.fleeting_thought += finalFtPerSec * delta;
 
 
@@ -91,14 +90,14 @@ const GameLogic = {
         const secondsOffline = timeOfflineMs / 1000;
         
         // Calculate offline effectiveness from wisdom shop
-        let offlineEffectiveness = 1.0; // Default 100% of online rate
+        let offlineEffectiveness = 1.0;
         const offlineEffectivenessLevel = gameState.wisdomShop.offline_effectiveness?.level || 0;
         if (offlineEffectivenessLevel > 0) {
             offlineEffectiveness = WISDOM_SHOP_DATA.offline_effectiveness.getEffectValue(offlineEffectivenessLevel) / 100;
         }
 
-        // Calculate time cap from wisdom shop  
-        let maxOfflineHours = 24; // Default 24 hour cap
+        // Calculate time cap from wisdom shop
+        let maxOfflineHours = 24;
         const offlineTimeCapLevel = gameState.wisdomShop.offline_time_cap?.level || 0;
         if (offlineTimeCapLevel > 0) {
             maxOfflineHours = WISDOM_SHOP_DATA.offline_time_cap.getEffectValue(offlineTimeCapLevel);
@@ -107,12 +106,10 @@ const GameLogic = {
         const maxOfflineSeconds = Math.min(secondsOffline, maxOfflineHours * 3600);
         const effectiveOfflineSeconds = maxOfflineSeconds * offlineEffectiveness;
         
-        // Calculate FT gains with new multiplier system
         const baseFtPerSec = GameLogic.calculateCurrentFtPerSec() / GameLogic.calculateGlobalFtMultiplier();
         const finalFtPerSec = baseFtPerSec * GameLogic.calculateGlobalFtMultiplier();
         offlineGains.ftGained = finalFtPerSec * effectiveOfflineSeconds;
 
-        // ** NEW: Apply Global FT Multiplier to offline gains **
         let globalMultiplier = 1;
         const methodicalApproachLevel = gameState.generators.methodical_approach?.level || 0;
         if (methodicalApproachLevel > 0) {
@@ -121,7 +118,6 @@ const GameLogic = {
         }
         offlineGains.ftGained = baseFtPerSec * globalMultiplier * secondsOffline;
         
-        // Concept and Crafter generation (remains the same)
         Object.entries(gameState.generators).forEach(([genId, genState]) => {
             const genData = GENERATORS_DATA[genId];
             if (genData && genState.level > 0 && genData.output) {
@@ -161,7 +157,6 @@ const GameLogic = {
         let wisdomShardsBonus = 0;
         if (GameLogic._isValidNumber(gameState.resources.wisdom_shards)) wisdomShardsBonus = gameState.resources.wisdom_shards * 0.1;
         
-        
         let clickBonus = 0;
         const focusedIntentLevel = gameState.generators.focused_intent?.level || 0;
         if (focusedIntentLevel > 0) {
@@ -189,7 +184,6 @@ const GameLogic = {
     calculateCurrentFtPerSec() {
         let totalFtPerSec = 0;
         
-        // From Base Generators
         Object.entries(gameState.generators).forEach(([genId, genState]) => {
             const genData = GENERATORS_DATA[genId];
             if (genData && genState.level > 0 && genData.output?.fleeting_thought) {
@@ -201,7 +195,6 @@ const GameLogic = {
             }
         });
         
-        // From owned Ideas
         Object.entries(gameState.ideas).forEach(([ideaId, count]) => {
             const ideaData = IDEAS_DATA[ideaId];
             if (ideaData?.attributes?.ft_bonus_per_sec && GameLogic._isValidNumber(count) && count > 0) {
@@ -209,21 +202,18 @@ const GameLogic = {
             }
         });
 
-        // Apply existing multipliers (methodical approach + wisdom shop global multipliers)
         return totalFtPerSec * GameLogic.calculateGlobalFtMultiplier();
     },
 
     calculateGlobalFtMultiplier() {
         let globalMultiplier = 1;
         
-        // Existing methodical approach bonus
         const methodicalApproachLevel = gameState.generators.methodical_approach?.level || 0;
         if (methodicalApproachLevel > 0) {
             const methodicalApproachData = GENERATORS_DATA.methodical_approach;
             globalMultiplier += methodicalApproachLevel * methodicalApproachData.effect.global_ft_multiplier_bonus;
         }
 
-        // NEW: Wisdom shop global multipliers
         const wisdomMultipliers = [
             'global_ft_multiplier_25', 'global_ft_multiplier_50', 'global_ft_multiplier_75', 
             'global_ft_multiplier_100', 'global_ft_multiplier_150'
@@ -270,18 +260,17 @@ const GameLogic = {
         }
 
         if (multiplier === 'Max' && result.affordableLevels === 0) {
-        result.levelsToBuy = 1;
-        // Recalculate totalCost for just 1 level
-        for (const res in baseCost) {
-            result.totalCost[res] = 0;
+            result.levelsToBuy = 1;
+            for (const res in baseCost) {
+                result.totalCost[res] = 0;
+            }
+            const levelCost = {};
+            for (const res in baseCost) {
+                const calculatedCost = Math.floor(baseCost[res] * Math.pow(costScale, currentLevel));
+                levelCost[res] = calculatedCost;
+                result.totalCost[res] = calculatedCost;
+            }
         }
-        const levelCost = {};
-        for (const res in baseCost) {
-            const calculatedCost = Math.floor(baseCost[res] * Math.pow(costScale, currentLevel));
-            levelCost[res] = calculatedCost;
-            result.totalCost[res] = calculatedCost;
-        }
-    }
         return result;
     },
 
@@ -296,7 +285,12 @@ const GameLogic = {
             const finalPurchase = GameLogic.calculateMultiBuy(genData.baseCost, genData.costScale, currentLevel, levelsToBuy, genData.maxLevel);
             for (const res in finalPurchase.totalCost) { if (gameState.resources[res] !== undefined) gameState.resources[res] -= finalPurchase.totalCost[res]; else if (gameState.ideas[res] !== undefined) gameState.ideas[res] -= finalPurchase.totalCost[res];}
             gameState.generators[generatorId].level += levelsToBuy;
-            if (typeof UI !== 'undefined') { UI.updateAllUI(); UI.showNotification(`${genData.name} upgraded by +${levelsToBuy} to Lvl ${gameState.generators[generatorId].level}!`, 'success');}
+            // Invalidate generator cache so the card re-renders with the new level
+            if (typeof UI !== 'undefined') {
+                UI._renderCache.generators = null;
+                UI.updateAllUI();
+                UI.showNotification(`${genData.name} upgraded by +${levelsToBuy} to Lvl ${gameState.generators[generatorId].level}!`, 'success');
+            }
         } else { if (typeof UI !== 'undefined') UI.showNotification("Not enough resources!", "error");}
     },
 
@@ -312,12 +306,20 @@ const GameLogic = {
             for (const res in finalPurchase.totalCost) { if (gameState.resources[res] !== undefined) gameState.resources[res] -= finalPurchase.totalCost[res]; else if (gameState.ideas[res] !== undefined) gameState.ideas[res] -= finalPurchase.totalCost[res];}
             if (!gameState.crafters[crafterId]) gameState.crafters[crafterId] = { level: 0 };
             gameState.crafters[crafterId].level += levelsToBuy;
-            if (typeof UI !== 'undefined') { UI.updateAllUI(); UI.showNotification(`${crafterData.name} upgraded by +${levelsToBuy} to Lvl ${gameState.crafters[crafterId].level}!`, 'success');}
+            // Invalidate the relevant crafter cache tier
+            if (typeof UI !== 'undefined') {
+                const prefix = crafterId.split('_')[0]; // 'insight', 'theory', or 'paradigm'
+                UI._renderCache[`${prefix}Crafters`] = null;
+                UI.updateAllUI();
+                UI.showNotification(`${crafterData.name} upgraded by +${levelsToBuy} to Lvl ${gameState.crafters[crafterId].level}!`, 'success');
+            }
         } else { if (typeof UI !== 'undefined') UI.showNotification("Not enough resources for this crafter!", "error");}
     },
 
     attemptCombination() {
-        if (!UI?.elements) return; const inputId1 = UI.elements.forgeSlot1.value; const inputId2 = UI.elements.forgeSlot2.value;
+        if (!UI?.elements) return;
+        const inputId1 = UI.elements.forgeSlot1.value;
+        const inputId2 = UI.elements.forgeSlot2.value;
         if (!inputId1 || !inputId2) { UI.elements.combinationResult.textContent = "Please select two ideas to combine."; UI.elements.combinationResult.className = 'error'; return;}
         const idea1Data = IDEAS_DATA[inputId1]; const idea2Data = IDEAS_DATA[inputId2];
         if (!idea1Data || !idea2Data) { UI.elements.combinationResult.textContent = "Invalid idea selection."; UI.elements.combinationResult.className = 'error'; return;}
@@ -331,9 +333,20 @@ const GameLogic = {
             gameState.ideas[inputId1]--; if (inputId1 !== inputId2) gameState.ideas[inputId2]--;
             GameLogic.gainIdea(foundRecipeOutput.id, 1);
             UI.elements.combinationResult.textContent = `Success! Synthesized: ${foundRecipeOutput.name}!`; UI.elements.combinationResult.className = 'success';
-            if (!gameState.unlockedRecipes.includes(foundRecipeOutput.id)) { gameState.unlockedRecipes.push(foundRecipeOutput.id); if (typeof UI !== 'undefined') UI.updateDiscoveredRecipes();}
+            if (!gameState.unlockedRecipes.includes(foundRecipeOutput.id)) {
+                gameState.unlockedRecipes.push(foundRecipeOutput.id);
+                // Invalidate recipe cache so the new recipe appears
+                if (typeof UI !== 'undefined') {
+                    UI._renderCache.recipes = null;
+                    UI.updateDiscoveredRecipes();
+                }
+            }
             if (foundRecipeOutput.recipe) { foundRecipeOutput.recipe.forEach(ingId => { if (typeof Noosphere !== 'undefined') Noosphere.addEdge(ingId, foundRecipeOutput.id);});}
-            if (typeof UI !== 'undefined') { UI.populateForgeSelectors(); UI.updateResourceDisplay(); }
+            // Repopulate forge selectors after a combination since counts changed
+            if (typeof UI !== 'undefined') {
+                UI.populateForgeSelectors();
+                UI.updateResourceDisplay();
+            }
         } else { UI.elements.combinationResult.textContent = "These ideas don't seem to form a new synthesis... yet."; UI.elements.combinationResult.className = 'info';}
     },
 
@@ -354,20 +367,30 @@ const GameLogic = {
              }
         }
         if (!fromBatch && typeof UI !== 'undefined') {
+            // Repopulate forge selectors when an idea is gained, since the options/counts changed.
+            // This is the correct and only place this should be triggered from the game logic path.
             UI.populateForgeSelectors();
             UI.updateResourceDisplay();
         }
     },
 
      calculateWisdomShardsOnTranscend() {
-        let totalConceptualMass = 0; Object.entries(gameState.ideas).forEach(([id, count]) => { const ideaData = IDEAS_DATA[id]; if (ideaData?.tier > 0 && GameLogic._isValidNumber(count) && count > 0) { const ideaWorth = (ideaData.tier * 10); if(GameLogic._isValidNumber(ideaWorth)){ totalConceptualMass += ideaWorth * count;}}});
+        let totalConceptualMass = 0;
+        Object.entries(gameState.ideas).forEach(([id, count]) => {
+            const ideaData = IDEAS_DATA[id];
+            if (ideaData?.tier > 0 && GameLogic._isValidNumber(count) && count > 0) {
+                const ideaWorth = (ideaData.tier * 10);
+                if(GameLogic._isValidNumber(ideaWorth)){ totalConceptualMass += ideaWorth * count;}
+            }
+        });
         return Math.floor(Math.sqrt(Math.max(0, totalConceptualMass) / 1000)) + (Number(gameState.transcendenceCount) || 0);
     },
 
      transcend() {
         const anyParadigmOwned = Array.from(gameState.discoveredIdeas).some(id => IDEAS_DATA[id]?.tier === 4 && (gameState.ideas[id] || 0) > 0);
         if (!anyParadigmOwned) { if (typeof UI !== 'undefined') UI.showNotification("A Paradigm is required to Transcend.", "error"); return;}
-        const wsGained = GameLogic.calculateWisdomShardsOnTranscend(); if (!GameLogic._isValidNumber(wsGained)) { if (typeof UI !== 'undefined') UI.showNotification("Error calculating Wisdom Shards.", "error"); return;}
+        const wsGained = GameLogic.calculateWisdomShardsOnTranscend();
+        if (!GameLogic._isValidNumber(wsGained)) { if (typeof UI !== 'undefined') UI.showNotification("Error calculating Wisdom Shards.", "error"); return;}
         if (wsGained <= 0 && gameState.transcendenceCount > 0) { if (typeof UI !== 'undefined') UI.showNotification("No new Wisdom to be gained this Transcendence.", "info");}
         if (!confirm(`Transcend and gain ${wsGained} Wisdom Shards? This will reset your current progress (except WS and Transcendence count).`)) return;
 
@@ -382,12 +405,17 @@ const GameLogic = {
         };
         Object.keys(gameState).forEach(key => delete gameState[key]);
         Object.assign(gameState, newBaseGameState);
-        initializeGameState(false); saveGame();
+        initializeGameState(false);
+        saveGame();
 
          if (typeof UI !== 'undefined') {
+            // Invalidate all render caches — the entire game state has changed
+            UI.invalidateAllCaches();
             UI.showNotification(`Successfully Transcended! Gained ${wsGained} Wisdom Shards.`, 'special');
             if (typeof Noosphere !== 'undefined') Noosphere.renderFromGameState();
             UI.updateAllUI();
+            // Also rebuild the forge selectors since discoveredIdeas was reset
+            UI.populateForgeSelectors();
             UI.switchPanel('noosphere-panel', document.querySelector('.nav-button[data-panel="noosphere-panel"]'));
          }
          GameLogic.lastTick = Date.now();
