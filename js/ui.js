@@ -1,688 +1,702 @@
 // js/ui.js
 
 /**
- * Handles all Document Object Model (DOM) interactions and UI updates for the game.
+ * Handles all DOM interactions and UI updates for the game.
+ *
+ * UPDATE PHILOSOPHY
+ * -----------------
+ * Every piece of the UI has exactly one update function. Each function tracks
+ * the last value it rendered and returns immediately (touching zero DOM) if
+ * nothing has changed. The game tick calls UI.tick() which dispatches only to
+ * the functions whose inputs have actually changed since last render.
+ *
+ * As a result:
+ *   - The thought counter updates every tick (it changes every tick).
+ *   - Card grids only rebuild when a purchase is made or affordability flips.
+ *   - The Transcend button only updates when paradigm ownership changes.
+ *   - Nothing touches the DOM "just in case".
+ *
+ * External callers (buyGenerator, gainIdea, etc.) call the specific narrow
+ * update they need rather than the catch-all updateAllUI(). updateAllUI()
+ * still exists but should only be used after wholesale state changes such as
+ * load/reset/transcend where everything genuinely needs to re-render.
  */
 const UI = {
     elements: {
-        ftCount: document.getElementById('ft-count'),
-        ftPerSecCount: document.getElementById('ft-per-sec-count'),
-        wsCount: document.getElementById('ws-count'),
-        sparkButton: document.getElementById('spark-button'),
-        multiplierButton: document.getElementById('multiplier-button'),
-        generatorsList: document.getElementById('generators-list'),
-        forgeSlot1: document.getElementById('forge-slot-1'),
-        forgeSlot2: document.getElementById('forge-slot-2'),
-        combineButton: document.getElementById('combine-button'),
-        combinationResult: document.getElementById('combination-result'),
-        discoveredRecipesList: document.getElementById('discovered-recipes-list'),
-        navButtons: document.querySelectorAll('.nav-button'),
-        panels: document.querySelectorAll('.panel'),
-        selectedIdeaName: document.getElementById('selected-idea-name'),
+        thoughtCount:                 document.getElementById('thought-count'),
+        thoughtsPerSecCount:           document.getElementById('thoughts-per-sec-count'),
+        wsCount:                 document.getElementById('ws-count'),
+        sparkButton:             document.getElementById('spark-button'),
+        multiplierButton:        document.getElementById('multiplier-button'),
+        generatorsList:          document.getElementById('generators-list'),
+        forgeSlot1:              document.getElementById('forge-slot-1'),
+        forgeSlot2:              document.getElementById('forge-slot-2'),
+        combineButton:           document.getElementById('combine-button'),
+        combinationResult:       document.getElementById('combination-result'),
+        discoveredRecipesList:   document.getElementById('discovered-recipes-list'),
+        navButtons:              document.querySelectorAll('.nav-button'),
+        panels:                  document.querySelectorAll('.panel'),
+        selectedIdeaName:        document.getElementById('selected-idea-name'),
         selectedIdeaDescription: document.getElementById('selected-idea-description'),
-        selectedIdeaAttributes: document.getElementById('selected-idea-attributes'),
-        activeConceptsSummary: document.getElementById('active-concepts-summary'),
-        conceptsList: document.getElementById('concepts-list'),
-        insightsList: document.getElementById('insights-list'),
-        insightCraftersList: document.getElementById('insight-crafters-list'),
-        theoriesList: document.getElementById('theories-list'),
-        theoryCraftersList: document.getElementById('theory-crafters-list'),
-        paradigmsList: document.getElementById('paradigms-list'),
-        paradigmCraftersList: document.getElementById('paradigm-crafters-list'),
-        transcendButton: document.getElementById('transcend-button'),
-        wsShopBalance: document.getElementById('ws-shop-balance'),
-        qolUpgrades: document.getElementById('qol-upgrades'),
-        tapUpgrades: document.getElementById('tap-upgrades'),
-        globalUpgrades: document.getElementById('global-upgrades'),
-        offlineUpgrades: document.getElementById('offline-upgrades'),
+        selectedIdeaAttributes:  document.getElementById('selected-idea-attributes'),
+        activeConceptsSummary:   document.getElementById('active-concepts-summary'),
+        conceptsList:            document.getElementById('concepts-list'),
+        insightsList:            document.getElementById('insights-list'),
+        insightCraftersList:     document.getElementById('insight-crafters-list'),
+        theoriesList:            document.getElementById('theories-list'),
+        theoryCraftersList:      document.getElementById('theory-crafters-list'),
+        paradigmsList:           document.getElementById('paradigms-list'),
+        paradigmCraftersList:    document.getElementById('paradigm-crafters-list'),
+        transcendButton:         document.getElementById('transcend-button'),
+        wsShopBalance:           document.getElementById('ws-shop-balance'),
+        qolUpgrades:             document.getElementById('qol-upgrades'),
+        tapUpgrades:             document.getElementById('tap-upgrades'),
+        globalUpgrades:          document.getElementById('global-upgrades'),
+        offlineUpgrades:         document.getElementById('offline-upgrades'),
     },
 
-    // --- Dirty-check cache keys ---
-    // These store fingerprints of the last rendered state for each section.
-    // If the fingerprint hasn't changed, we skip the expensive innerHTML wipe+rebuild.
-    _renderCache: {
-        generators: null,
-        insightCrafters: null,
-        theoryCrafters: null,
-        paradigmCrafters: null,
-        concepts: null,
-        insights: null,
-        theories: null,
-        paradigms: null,
-        wisdomShop: null,
-        recipes: null,
+    // =========================================================================
+    // Per-element last-rendered value cache.
+    // Primitive values (strings, booleans) are stored directly.
+    // Section cache keys are strings — if null the section will always re-render.
+    // =========================================================================
+    _last: {
+        thoughtText:             null,
+        thoughtsPerSecText:       null,
+        wsText:             null,
+        multiplierVisible:  null,
+        multiplierText:     null,
+        tierSummaryKey:     null,
+        transcendDisabled:  null,
+        transcendText:      null,
+        generators:         null,
+        insightCrafters:    null,
+        theoryCrafters:     null,
+        paradigmCrafters:   null,
+        concepts:           null,
+        insights:           null,
+        theories:           null,
+        paradigms:          null,
+        wisdomShop:         null,
+        recipes:            null,
     },
 
+    // =========================================================================
+    // Initialisation
+    // =========================================================================
     init() {
-        this.elements.navButtons.forEach(button => {
-            button.addEventListener('click', () => this.switchPanel(button.dataset.panel, button));
-        });
+        this.elements.navButtons.forEach(btn =>
+            btn.addEventListener('click', () => this.switchPanel(btn.dataset.panel, btn)));
         this.elements.multiplierButton.addEventListener('click', () => this.cycleMultiplier());
         this.elements.generatorsList.addEventListener('click', this.handleBuyGeneratorClick);
         this.elements.insightCraftersList.addEventListener('click', this.handleBuyAutoCrafterClick);
         this.elements.theoryCraftersList.addEventListener('click', this.handleBuyAutoCrafterClick);
         this.elements.paradigmCraftersList.addEventListener('click', this.handleBuyAutoCrafterClick);
         this.elements.discoveredRecipesList.addEventListener('click', this.handleRecipeClick);
-        if (this.elements.qolUpgrades) {
-            this.elements.qolUpgrades.addEventListener('click', this.handleWisdomShopPurchase);
+        if (this.elements.qolUpgrades)     this.elements.qolUpgrades.addEventListener('click', this.handleWisdomShopPurchase);
+        if (this.elements.tapUpgrades)     this.elements.tapUpgrades.addEventListener('click', this.handleWisdomShopPurchase);
+        if (this.elements.globalUpgrades)  this.elements.globalUpgrades.addEventListener('click', this.handleWisdomShopPurchase);
+        if (this.elements.offlineUpgrades) this.elements.offlineUpgrades.addEventListener('click', this.handleWisdomShopPurchase);
+    },
+
+    // =========================================================================
+    // tick() — called by the game loop every 200 ms.
+    //
+    // Checks each logical group independently. Only calls the renderer for a
+    // group when its data has changed since the last tick. No direct DOM writes
+    // happen here — that is delegated to the renderer functions below.
+    // =========================================================================
+    tick() {
+        this._tickCounters();
+        this._tickTierSummary();
+        this._tickTranscendButton();
+        this._tickGenerators();
+        this._tickCrafters();
+        this._tickIdeaLists();
+        this._tickWisdomShop();
+        this._tickRecipes();
+        // Forge selectors and multiplier button are updated imperatively from
+        // the events that change them — not polled here.
+    },
+
+    // =========================================================================
+    // Tick sub-routines
+    // Each one: compute a lightweight key → compare → call renderer only if changed
+    // =========================================================================
+
+    _tickCounters() {
+        const thoughtText = Utils.formatNumber(gameState.resources.thought);
+        if (thoughtText !== this._last.thoughtText) {
+            this.elements.thoughtCount.textContent = thoughtText;
+            this._last.thoughtText = thoughtText;
         }
-        if (this.elements.tapUpgrades) {
-            this.elements.tapUpgrades.addEventListener('click', this.handleWisdomShopPurchase);
+
+        const wsText = Utils.formatNumber(gameState.resources.wisdom_shards);
+        if (wsText !== this._last.wsText) {
+            this.elements.wsCount.textContent = wsText;
+            this._last.wsText = wsText;
         }
-        if (this.elements.globalUpgrades) {
-            this.elements.globalUpgrades.addEventListener('click', this.handleWisdomShopPurchase);
-        }
-        if (this.elements.offlineUpgrades) {
-            this.elements.offlineUpgrades.addEventListener('click', this.handleWisdomShopPurchase);
+
+        const thoughtsPerSecText = Utils.formatNumber(GameLogic.calculateCurrentThoughtsPerSec()) + '/sec';
+        if (thoughtsPerSecText !== this._last.thoughtsPerSecText) {
+            this.elements.thoughtsPerSecCount.textContent = thoughtsPerSecText;
+            this._last.thoughtsPerSecText = thoughtsPerSecText;
         }
     },
 
-    cycleMultiplier() {
-        const multipliers = [1, 10, 100, 'Max'];
-        const currentIndex = multipliers.indexOf(gameState.purchaseMultiplier);
-        const nextIndex = (currentIndex + 1) % multipliers.length;
-        gameState.purchaseMultiplier = multipliers[nextIndex];
-        // Purchasing multiplier affects card button text and affordability — invalidate all card caches
-        this._renderCache.generators = null;
-        this._renderCache.insightCrafters = null;
-        this._renderCache.theoryCrafters = null;
-        this._renderCache.paradigmCrafters = null;
-        this.updateAllUI();
-    },
-
-    updateMultiplierButtonText() {
-        const currentMultiplier = gameState.purchaseMultiplier;
-        this.elements.multiplierButton.textContent = `Buy x${currentMultiplier}`;
-    },
-
-    switchPanel(panelId, clickedButton) {
-        this.elements.panels.forEach(panel => panel.classList.remove('active'));
-        this.elements.navButtons.forEach(btn => btn.classList.remove('active'));
-        const targetPanel = document.getElementById(panelId);
-        if (targetPanel) targetPanel.classList.add('active');
-        if (clickedButton) clickedButton.classList.add('active');
-        if (panelId === 'noosphere-panel' && typeof Noosphere !== 'undefined' && Noosphere.network) {
-             setTimeout(() => { if(Noosphere.network) { Noosphere.network.redraw(); Noosphere.network.fit();}}, 50);
-        }
-    },
-
-    updateResourceDisplay() {
-        this.elements.ftCount.textContent = Utils.formatNumber(gameState.resources.thought);
-        this.elements.wsCount.textContent = Utils.formatNumber(gameState.resources.wisdom_shards);
-        const ftPerSecRate = GameLogic.calculateCurrentFtPerSec();
-        this.elements.ftPerSecCount.textContent = Utils.formatNumber(ftPerSecRate) + "/sec";
-        
-        const multiBuyUnlocked = gameState.wisdomShop.multi_buy_unlock?.level >= 1;
-        if (this.elements.multiplierButton) {
-            this.elements.multiplierButton.style.display = multiBuyUnlocked ? 'block' : 'none';
-        }
-
-        let tierSummaryHTML = '<h3>Idea Tiers</h3><ul class="compact-list">';
-        const tierCounts = { 1: 0, 2: 0, 3: 0, 4: 0 };
-        const totalPerTier = { 1: 0, 2: 0, 3: 0, 4: 0 };
-        Object.values(IDEAS_DATA).forEach(ideaData => {
-            const tier = ideaData.tier;
-            if (tier >= 1 && tier <= 4) {
-                totalPerTier[tier]++;
-                if (gameState.discoveredIdeas.has(ideaData.id) && (gameState.ideas[ideaData.id] || 0) > 0) {
-                    tierCounts[tier]++;
-                }
+    _tickTierSummary() {
+        const counts = { 1: 0, 2: 0, 3: 0, 4: 0 };
+        const totals = { 1: 0, 2: 0, 3: 0, 4: 0 };
+        Object.values(IDEAS_DATA).forEach(d => {
+            const t = d.tier;
+            if (t >= 1 && t <= 4) {
+                totals[t]++;
+                if (gameState.discoveredIdeas.has(d.id) && (gameState.ideas[d.id] || 0) > 0) counts[t]++;
             }
         });
-        tierSummaryHTML += `<li>Concepts (T1): ${tierCounts[1]} / ${totalPerTier[1]}</li>`;
-        tierSummaryHTML += `<li>Insights (T2): ${tierCounts[2]} / ${totalPerTier[2]}</li>`;
-        tierSummaryHTML += `<li>Theories (T3): ${tierCounts[3]} / ${totalPerTier[3]}</li>`;
-        tierSummaryHTML += `<li>Paradigms (T4): ${tierCounts[4]} / ${totalPerTier[4]}</li>`;
-        tierSummaryHTML += '</ul>';
-        this.elements.activeConceptsSummary.innerHTML = tierSummaryHTML;
+        const key = `${counts[1]},${counts[2]},${counts[3]},${counts[4]}`;
+        if (key === this._last.tierSummaryKey) return;
+        this._last.tierSummaryKey = key;
+
+        this.elements.activeConceptsSummary.innerHTML =
+            `<h3>Idea Tiers</h3><ul class="compact-list">` +
+            `<li>Concepts: ${counts[1]} / ${totals[1]}</li>` +
+            `<li>Insights: ${counts[2]} / ${totals[2]}</li>` +
+            `<li>Theories: ${counts[3]} / ${totals[3]}</li>` +
+            `<li>Paradigms: ${counts[4]} / ${totals[4]}</li>` +
+            `</ul>`;
     },
 
-    handleBulkParadigmUpgrade() {
-        const bulkUnlocked = gameState.wisdomShop.paradigm_bulk_manager?.level >= 1;
-        if (!bulkUnlocked) {
-            UI.showNotification('Paradigm Automation upgrade required!', 'error');
-            return;
+    _tickTranscendButton() {
+        const anyParadigm = Array.from(gameState.discoveredIdeas)
+            .some(id => IDEAS_DATA[id]?.tier === 4 && (gameState.ideas[id] || 0) > 0);
+
+        let disabled = true;
+        let text = 'A Paradigm is Required';
+        if (anyParadigm && typeof GameLogic !== 'undefined' && GameLogic.calculateWisdomShardsOnTranscend) {
+            const ws = GameLogic.calculateWisdomShardsOnTranscend();
+            if (GameLogic._isValidNumber(ws)) { disabled = false; text = `Transcend (${ws} WS)`; }
         }
 
-        let upgradesPerformed = 0;
-        let totalCost = { thought: 0 };
-
-        // Calculate total cost for all paradigm crafters
-        Object.keys(CRAFTERS_DATA).forEach(crafterId => {
-            if (crafterId.startsWith('paradigm_')) {
-                const crafterData = CRAFTERS_DATA[crafterId];
-                const currentLevel = gameState.crafters[crafterId]?.level || 0;
-                
-                if (currentLevel < (crafterData.maxLevel || Infinity)) {
-                    const purchaseDetails = GameLogic.calculateMultiBuy(
-                        crafterData.baseCost, 
-                        crafterData.costScale, 
-                        currentLevel, 
-                        gameState.purchaseMultiplier, 
-                        crafterData.maxLevel
-                    );
-                    
-                    if (purchaseDetails.affordableLevels > 0) {
-                        const levelsToBuy = (gameState.purchaseMultiplier === 'Max') ? 
-                            purchaseDetails.affordableLevels : 
-                            Math.min(gameState.purchaseMultiplier, purchaseDetails.affordableLevels);
-                            
-                        if (levelsToBuy > 0) {
-                            const finalPurchase = GameLogic.calculateMultiBuy(
-                                crafterData.baseCost, 
-                                crafterData.costScale, 
-                                currentLevel, 
-                                levelsToBuy, 
-                                crafterData.maxLevel
-                            );
-                            
-                            // Add to total cost
-                            Object.entries(finalPurchase.totalCost).forEach(([res, cost]) => {
-                                totalCost[res] = (totalCost[res] || 0) + cost;
-                            });
-                            upgradesPerformed += levelsToBuy;
-                        }
-                    }
-                }
-            }
-        });
-
-        // Check if we can afford the total cost
-        let canAffordAll = true;
-        Object.entries(totalCost).forEach(([res, cost]) => {
-            const available = gameState.resources[res] || gameState.ideas[res] || 0;
-            if (available < cost) canAffordAll = false;
-        });
-
-        if (!canAffordAll || upgradesPerformed === 0) {
-            UI.showNotification('Cannot afford bulk paradigm upgrade.', 'error');
-            return;
+        if (disabled !== this._last.transcendDisabled) {
+            this.elements.transcendButton.disabled = disabled;
+            this._last.transcendDisabled = disabled;
         }
-
-        // Perform the bulk purchase
-        Object.keys(CRAFTERS_DATA).forEach(crafterId => {
-            if (crafterId.startsWith('paradigm_')) {
-                GameLogic.buyAutoCrafter(crafterId);
-            }
-        });
-
-        UI.showNotification(`Bulk upgraded ${upgradesPerformed} paradigm crafter levels!`, 'success');
-        UI.updateAllUI();
+        if (text !== this._last.transcendText) {
+            this.elements.transcendButton.textContent = text;
+            this._last.transcendText = text;
+        }
     },
 
-    /**
-     * Renders a generic upgrade card with intelligent formatting for output and costs.
-     */
-    renderUpgradeCard(container, itemData, currentLevel, buttonClass, buttonDataAttribute) {
-        const isMaxLevel = currentLevel >= (itemData.maxLevel || Infinity);
-        const purchaseDetails = GameLogic.calculateMultiBuy(itemData.baseCost, itemData.costScale, currentLevel, gameState.purchaseMultiplier, itemData.maxLevel);
-        let canAfford = false;
-        let costToDisplay = {};
-        let levelsToBuyText = "0";
-        if (isMaxLevel) {
-            // No action if maxed
-        } else if (gameState.purchaseMultiplier === 'Max') {
-            canAfford = purchaseDetails.affordableLevels > 0;
-            levelsToBuyText = purchaseDetails.affordableLevels.toString();
-            const costOfAffordable = GameLogic.calculateMultiBuy(itemData.baseCost, itemData.costScale, currentLevel, purchaseDetails.affordableLevels, itemData.maxLevel);
-            costToDisplay = costOfAffordable.totalCost;
-        } else {
-            canAfford = purchaseDetails.affordableLevels >= purchaseDetails.levelsToBuy;
-            costToDisplay = purchaseDetails.totalCost;
-            levelsToBuyText = purchaseDetails.levelsToBuy.toString();
-        }
-        let costString = isMaxLevel ? "N/A" : Object.entries(costToDisplay).map(([res, val]) => `${Utils.formatNumber(val)} ${IDEAS_DATA[res]?.name || Utils.capitalizeFirst(res.replace(/_/g, ' '))}`).join(', ');
-        let buttonText;
-        if (isMaxLevel) {
-            buttonText = "Max Level";
-        } else {
-            let displayAmount;
-            if (gameState.purchaseMultiplier === 'Max') {
-                displayAmount = Math.max(1, purchaseDetails.affordableLevels);
-            } else {
-                displayAmount = gameState.purchaseMultiplier;
-            }
-            buttonText = currentLevel === 0 ? `Build +${displayAmount}` : `Upgrade +${displayAmount}`;
-        }
-
-        const card = document.createElement('div');
-        card.className = 'upgrade-card';
-
-        let outputString = "Effect: ";
-        if (itemData.effect?.ft_per_click) {
-            const effectData = itemData.effect; const scale = itemData.outputScale || 1;
-            const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1);
-            const totalBonus = (effectData.ft_per_click * displayLevel) * (scale ** scalePower);
-            const prefix = currentLevel === 0 ? " (Lvl 1)" : "";
-            outputString = `Effect: +${Utils.formatNumber(totalBonus)} FT per click${prefix}`;
-        } else if (itemData.effect?.global_ft_multiplier_bonus) {
-            const totalBonus = currentLevel * itemData.effect.global_ft_multiplier_bonus * 100;
-            outputString = `Effect: +${totalBonus.toFixed(0)}% to all FT generation`;
-        } else if (itemData.output) {
-            Object.entries(itemData.output).forEach(([outRes, outVal]) => {
-                if (outRes === 'thought') {
-                    const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = itemData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : "";
-                    const ftOutputValue = (outVal * (outputScale ** scalePower) * displayLevel);
-                    outputString += `${Utils.formatNumber(ftOutputValue)} FT/sec${prefix}<br>`;
-                } else if (GameLogic._isValidNumber(outVal)) {
-                    const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = itemData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : "";
-                    const itemsPerSecond = outVal * (outputScale ** scalePower) * displayLevel;
-                    if (itemsPerSecond < 1) {
-                        const secondsPerItem = 1 / itemsPerSecond;
-                        outputString += `1 ${IDEAS_DATA[outRes]?.name || outRes} / ${Utils.formatNumber(secondsPerItem)}s${prefix}<br>`;
-                    } else {
-                        outputString += `${Utils.formatNumber(itemsPerSecond)} ${IDEAS_DATA[outRes]?.name || outRes}/sec${prefix}<br>`;
-                    }
-                }
-            });
-        } else if (itemData.targetIdeaId) {
-            const targetIdea = IDEAS_DATA[itemData.targetIdeaId];
-            const displayLevel = Math.max(1, currentLevel); const scalePower = Math.max(0, displayLevel - 1); const outputScale = itemData.outputScale || 1; const prefix = currentLevel === 0 ? " (Lvl 1)" : "";
-            const craftsPerSecond = (itemData.outputAmount || 0) * (outputScale ** scalePower) * displayLevel;
-            if (craftsPerSecond > 0 && craftsPerSecond < 1) {
-                const secondsPerCraft = 1 / craftsPerSecond;
-                outputString = `Crafts: 1 ${targetIdea.name} / ${Utils.formatNumber(secondsPerCraft)}s${prefix}`;
-            } else {
-                outputString = `Crafts: ${Utils.formatNumber(craftsPerSecond)} ${targetIdea.name}/sec${prefix}`;
-            }
-        }
-        outputString = outputString.replace(/<br>$/, '').trim();
-
-        card.innerHTML = `<h3>${itemData.icon || ''} ${itemData.name} (Lvl ${currentLevel}${isMaxLevel ? ' - MAX' : ''})</h3> <p>${itemData.description || ''}</p> <p class="cost">Cost: ${costString}</p> <p class="output">${outputString || 'Effect: N/A'}</p> <button class="action-button ${buttonClass}" ${buttonDataAttribute}="${itemData.id}" ${!canAfford || isMaxLevel ? 'disabled' : ''}>${buttonText}</button>`;
-        container.appendChild(card);
+    _tickGenerators() {
+        const key = this._generatorsCacheKey();
+        if (key === this._last.generators) return;
+        this._last.generators = key;
+        this.renderGenerators();
     },
 
-    /**
-     * Builds a fingerprint string representing the state that affects generator card rendering.
-     * If this string is the same as last render, we can safely skip the DOM rebuild.
-     */
+    _tickCrafters() {
+        const iKey = this._craftersCacheKey('insight');
+        if (iKey !== this._last.insightCrafters) {
+            this._last.insightCrafters = iKey;
+            this.renderAutoCrafters('insight', this.elements.insightCraftersList);
+        }
+        const tKey = this._craftersCacheKey('theory');
+        if (tKey !== this._last.theoryCrafters) {
+            this._last.theoryCrafters = tKey;
+            this.renderAutoCrafters('theory', this.elements.theoryCraftersList);
+        }
+        const pKey = this._craftersCacheKey('paradigm');
+        if (pKey !== this._last.paradigmCrafters) {
+            this._last.paradigmCrafters = pKey;
+            this.renderAutoCrafters('paradigm', this.elements.paradigmCraftersList);
+        }
+    },
+
+    _tickIdeaLists() {
+        const c = this._ideaListCacheKey(1);
+        if (c !== this._last.concepts)  { this._last.concepts  = c; this.renderTieredIdeaList(1, this.elements.conceptsList); }
+        const i = this._ideaListCacheKey(2);
+        if (i !== this._last.insights)  { this._last.insights  = i; this.renderTieredIdeaList(2, this.elements.insightsList); }
+        const t = this._ideaListCacheKey(3);
+        if (t !== this._last.theories)  { this._last.theories  = t; this.renderTieredIdeaList(3, this.elements.theoriesList); }
+        const p = this._ideaListCacheKey(4);
+        if (p !== this._last.paradigms) { this._last.paradigms = p; this.renderTieredIdeaList(4, this.elements.paradigmsList); }
+    },
+
+    _tickWisdomShop() {
+        const key = this._wisdomShopCacheKey();
+        if (key === this._last.wisdomShop) return;
+        this._last.wisdomShop = key;
+        this._renderWisdomShopNow();
+    },
+
+    _tickRecipes() {
+        const key = this._recipesCacheKey();
+        if (key === this._last.recipes) return;
+        this._last.recipes = key;
+        this._renderRecipesNow();
+    },
+
+    // =========================================================================
+    // Cache key helpers — lightweight strings representing each section's inputs
+    // =========================================================================
+
     _generatorsCacheKey() {
-        const genLevels = Object.keys(GENERATORS_DATA).map(id => `${id}:${gameState.generators[id]?.level || 0}`).join(',');
-        // Round FT to nearest 10 to avoid re-rendering on every single FT gain,
-        // while still updating affordability indicators reasonably promptly.
-        const ftBucket = Math.floor((gameState.resources.thought || 0) / 10);
-        const ideaBucket = Object.entries(gameState.ideas).map(([id, v]) => `${id}:${Math.floor((v||0)/5)}`).join(',');
-        return `${genLevels}|${ftBucket}|${ideaBucket}|${gameState.purchaseMultiplier}`;
+        return Object.values(GENERATORS_DATA).map(gen => {
+            const level = gameState.generators[gen.id]?.level || 0;
+
+            const pd = GameLogic.calculateMultiBuy(
+                gen.baseCost,
+                gen.costScale,
+                level,
+                gameState.purchaseMultiplier,
+                gen.maxLevel
+            );
+
+            const canAfford = pd.affordableLevels > 0;
+
+            return `${level}:${canAfford}`;
+        }).join('|') + `|m:${gameState.purchaseMultiplier}`;
     },
 
     _craftersCacheKey(prefix) {
-        const crafterLevels = Object.keys(CRAFTERS_DATA)
-            .filter(id => id.startsWith(prefix + '_'))
-            .map(id => `${id}:${gameState.crafters[id]?.level || 0}`)
-            .join(',');
-        const ftBucket = Math.floor((gameState.resources.thought || 0) / 10);
-        const ideaBucket = Object.entries(gameState.ideas).map(([id, v]) => `${id}:${Math.floor((v||0)/5)}`).join(',');
-        const bulkUnlocked = gameState.wisdomShop.paradigm_bulk_manager?.level || 0;
-        return `${crafterLevels}|${ftBucket}|${ideaBucket}|${gameState.purchaseMultiplier}|bulk:${bulkUnlocked}`;
+        const levels       = Object.keys(CRAFTERS_DATA).filter(id => id.startsWith(prefix + '_'))
+                                .map(id => gameState.crafters[id]?.level || 0).join(',');
+        const thoughtBucket = Math.floor(gameState.resources.thought || 0);
+        const ideaBucket   = Object.entries(gameState.ideas).map(([, v]) => Math.floor(v || 0)).join(',');
+        const bulk         = gameState.wisdomShop.paradigm_bulk_manager?.level || 0;
+        return `${levels}|${thoughtBucket}|${ideaBucket}|${gameState.purchaseMultiplier}|b:${bulk}`;
     },
 
     _ideaListCacheKey(tier) {
         return Array.from(gameState.discoveredIdeas)
             .filter(id => IDEAS_DATA[id]?.tier === tier)
-            .map(id => `${id}:${gameState.ideas[id] || 0}`)
             .sort()
+            .map(id => `${id}:${gameState.ideas[id] || 0}`)
             .join(',');
     },
 
     _wisdomShopCacheKey() {
-        const levels = Object.keys(WISDOM_SHOP_DATA).map(id => `${id}:${gameState.wisdomShop[id]?.level || 0}`).join(',');
-        const wsBucket = Math.floor((gameState.resources.wisdom_shards || 0));
-        return `${levels}|ws:${wsBucket}|tc:${gameState.transcendenceCount}`;
+        const levels = Object.keys(WISDOM_SHOP_DATA).map(id => gameState.wisdomShop[id]?.level || 0).join(',');
+        return `${levels}|${Math.floor(gameState.resources.wisdom_shards)}|tc:${gameState.transcendenceCount}`;
     },
 
     _recipesCacheKey() {
         return (gameState.unlockedRecipes || []).join(',');
     },
 
-    renderGenerators() {
-        const key = this._generatorsCacheKey();
-        if (this._renderCache.generators === key) return;
-        this._renderCache.generators = key;
+    // =========================================================================
+    // Imperatively triggered updates
+    // Called directly by game logic when a specific thing changes, rather than
+    // relying on the 200 ms polling loop to catch up.
+    // =========================================================================
 
+    /**
+     * Update the Buy multiplier button's visibility and label.
+     * Call after any wisdom shop purchase or multiplier cycle.
+     */
+    updateMultiplierButton() {
+        const visible = (gameState.wisdomShop.multi_buy_unlock?.level || 0) >= 1;
+        if (visible !== this._last.multiplierVisible) {
+            this.elements.multiplierButton.style.display = visible ? 'block' : 'none';
+            this._last.multiplierVisible = visible;
+        }
+        const text = `Buy x${gameState.purchaseMultiplier}`;
+        if (text !== this._last.multiplierText) {
+            this.elements.multiplierButton.textContent = text;
+            this._last.multiplierText = text;
+        }
+    },
+
+    cycleMultiplier() {
+        const opts = [1, 10, 100, 'Max'];
+        gameState.purchaseMultiplier = opts[(opts.indexOf(gameState.purchaseMultiplier) + 1) % opts.length];
+        this.updateMultiplierButton();
+        // Multiplier change affects card button text — invalidate card caches
+        this._last.generators      = null;
+        this._last.insightCrafters = null;
+        this._last.theoryCrafters  = null;
+        this._last.paradigmCrafters = null;
+    },
+
+    switchPanel(panelId, clickedButton) {
+        this.elements.panels.forEach(p => p.classList.remove('active'));
+        this.elements.navButtons.forEach(b => b.classList.remove('active'));
+        const target = document.getElementById(panelId);
+        if (target) target.classList.add('active');
+        if (clickedButton) clickedButton.classList.add('active');
+        if (panelId === 'noosphere-panel' && typeof Noosphere !== 'undefined' && Noosphere.network) {
+            setTimeout(() => { Noosphere.network.redraw(); Noosphere.network.fit(); }, 50);
+        }
+    },
+
+    // =========================================================================
+    // DOM Renderers
+    // These do the actual DOM work. They are called after a dirty-check confirms
+    // something has changed. Never call these directly from the game loop.
+    // =========================================================================
+
+    renderUpgradeCard(container, itemData, currentLevel, buttonClass, buttonDataAttribute) {
+        const isMax = currentLevel >= (itemData.maxLevel || Infinity);
+        const pd    = GameLogic.calculateMultiBuy(itemData.baseCost, itemData.costScale, currentLevel, gameState.purchaseMultiplier, itemData.maxLevel);
+
+        let canAfford = false, costToDisplay = {};
+        if (!isMax) {
+            if (gameState.purchaseMultiplier === 'Max') {
+                canAfford = pd.affordableLevels > 0;
+                const pd2 = GameLogic.calculateMultiBuy(itemData.baseCost, itemData.costScale, currentLevel, pd.affordableLevels, itemData.maxLevel);
+                costToDisplay = pd2.totalCost;
+            } else {
+                canAfford = pd.affordableLevels >= pd.levelsToBuy;
+                costToDisplay = pd.totalCost;
+            }
+        }
+
+        const costStr = isMax ? 'N/A' : Object.entries(costToDisplay)
+            .map(([res, val]) => `${Utils.formatNumber(val)} ${IDEAS_DATA[res]?.name || Utils.capitalizeFirst(res.replace(/_/g, ' '))}`)
+            .join(', ');
+
+        let btnText;
+        if (isMax) {
+            btnText = 'Max Level';
+        } else {
+            const amt = gameState.purchaseMultiplier === 'Max' ? Math.max(1, pd.affordableLevels) : gameState.purchaseMultiplier;
+            btnText = currentLevel === 0 ? `Build +${amt}` : `Upgrade +${amt}`;
+        }
+
+        let outputStr = 'Effect: ';
+        if (itemData.effect?.thought_per_click) {
+            const dl  = Math.max(1, currentLevel);
+            const sc  = itemData.outputScale || 1;
+            const tot = (itemData.effect.thought_per_click * dl) * Math.pow(sc, Math.max(0, dl - 1));
+            outputStr = `Effect: +${Utils.formatNumber(tot)} Thoughts per click${currentLevel === 0 ? ' (Lvl 1)' : ''}`;
+        } else if (itemData.effect?.global_thought_multiplier_bonus) {
+            outputStr = `Effect: +${(currentLevel * itemData.effect.global_thought_multiplier_bonus * 100).toFixed(0)}% to all thought generation`;
+        } else if (itemData.output) {
+            Object.entries(itemData.output).forEach(([res, val]) => {
+                const dl  = Math.max(1, currentLevel);
+                const sc  = itemData.outputScale || 1;
+                const lb  = Math.pow(sc, Math.max(0, dl - 1));
+                const sfx = currentLevel === 0 ? ' (Lvl 1)' : '';
+                if (res === 'thought') {
+                    outputStr += `${Utils.formatNumber(val * lb * dl)} Thought/sec${sfx}<br>`;
+                } else if (GameLogic._isValidNumber(val)) {
+                    const ips = val * lb * dl;
+                    outputStr += ips < 1
+                        ? `1 ${IDEAS_DATA[res]?.name || res} / ${Utils.formatNumber(1/ips)}s${sfx}<br>`
+                        : `${Utils.formatNumber(ips)} ${IDEAS_DATA[res]?.name || res}/sec${sfx}<br>`;
+                }
+            });
+        } else if (itemData.targetIdeaId) {
+            const tgt = IDEAS_DATA[itemData.targetIdeaId];
+            const dl  = Math.max(1, currentLevel);
+            const sc  = itemData.outputScale || 1;
+            const cps = (itemData.outputAmount || 0) * Math.pow(sc, Math.max(0, dl - 1)) * dl;
+            const sfx = currentLevel === 0 ? ' (Lvl 1)' : '';
+            outputStr = cps > 0 && cps < 1
+                ? `Crafts: 1 ${tgt.name} / ${Utils.formatNumber(1/cps)}s${sfx}`
+                : `Crafts: ${Utils.formatNumber(cps)} ${tgt.name}/sec${sfx}`;
+        }
+        outputStr = outputStr.replace(/<br>$/, '').trim();
+
+        const card = document.createElement('div');
+        card.className = 'upgrade-card';
+        card.innerHTML =
+            `<h3>${itemData.icon || ''} ${itemData.name} (Lvl ${currentLevel}${isMax ? ' - MAX' : ''})</h3>` +
+            `<p>${itemData.description || ''}</p>` +
+            `<p class="cost">Cost: ${costStr}</p>` +
+            `<p class="output">${outputStr || 'Effect: N/A'}</p>` +
+            `<button class="action-button ${buttonClass}" ${buttonDataAttribute}="${itemData.id}" ${(!canAfford || isMax) ? 'disabled' : ''}>${btnText}</button>`;
+        container.appendChild(card);
+    },
+
+    renderGenerators() {
         this.elements.generatorsList.innerHTML = '';
         Object.values(GENERATORS_DATA).forEach(genData => {
             let unlocked = true;
             if (genData.unlocksWith) {
                 unlocked = genData.unlocksWith.every(cond => {
-                    let conditionMet = false; const parts = cond.split('_'); const lastPart = parts[parts.length - 1]; const potentialLevel = parseInt(lastPart?.trim(), 10);
-                    if (parts.length > 1 && !isNaN(potentialLevel)) { const genId_cond = parts.slice(0, -1).join('_'); const requiredLevel = potentialLevel; const currentGenState = gameState.generators[genId_cond]; const currentLevel = currentGenState?.level; conditionMet = currentGenState && GameLogic._isValidNumber(currentLevel) && currentLevel >= requiredLevel; }
-                    else { const ideaId_cond = cond; conditionMet = gameState.discoveredIdeas.has(ideaId_cond); }
-                    return conditionMet;
+                    const parts = cond.split('_');
+                    const lvl   = parseInt(parts[parts.length - 1], 10);
+                    if (!isNaN(lvl)) {
+                        const genId = parts.slice(0, -1).join('_');
+                        const cur   = gameState.generators[genId]?.level;
+                        return GameLogic._isValidNumber(cur) && cur >= lvl;
+                    }
+                    return gameState.discoveredIdeas.has(cond);
                 });
             }
             if (unlocked) {
-                const currentLevel = gameState.generators[genData.id]?.level || 0;
-                this.renderUpgradeCard(this.elements.generatorsList, genData, currentLevel, 'buy-generator', 'data-generator-id');
+                this.renderUpgradeCard(this.elements.generatorsList, genData,
+                    gameState.generators[genData.id]?.level || 0, 'buy-generator', 'data-generator-id');
             }
         });
     },
 
-    renderAutoCrafters(crafterTypePrefix, listElement) {
-        const cacheKey = `${crafterTypePrefix}Crafters`;
-        const key = this._craftersCacheKey(crafterTypePrefix);
-        if (this._renderCache[cacheKey] === key) return;
-        this._renderCache[cacheKey] = key;
-
+    renderAutoCrafters(prefix, listElement) {
         listElement.innerHTML = '';
-        let foundAnyCrafters = false;
-        if (crafterTypePrefix === 'paradigm') {
-            const bulkUnlocked = gameState.wisdomShop.paradigm_bulk_manager?.level >= 1;
-            if (bulkUnlocked) {
-                const bulkButton = document.createElement('div');
-                bulkButton.className = 'bulk-upgrade-section';
-                bulkButton.innerHTML = `
-                    <button class="action-button bulk-paradigm-upgrade" style="margin-bottom: 20px;">
-                        🏭 Upgrade All Paradigm Crafters (x${gameState.purchaseMultiplier})
-                    </button>
-                `;
-                bulkButton.addEventListener('click', this.handleBulkParadigmUpgrade);
-                listElement.appendChild(bulkButton);
-            }
+        let found = false;
+
+        if (prefix === 'paradigm' && (gameState.wisdomShop.paradigm_bulk_manager?.level || 0) >= 1) {
+            const bulkDiv = document.createElement('div');
+            bulkDiv.className = 'bulk-upgrade-section';
+            bulkDiv.innerHTML = `<button class="action-button bulk-paradigm-upgrade" style="margin-bottom:20px;">🏭 Upgrade All Paradigm Crafters (x${gameState.purchaseMultiplier})</button>`;
+            bulkDiv.addEventListener('click', this.handleBulkParadigmUpgrade);
+            listElement.appendChild(bulkDiv);
         }
-        Object.values(CRAFTERS_DATA).forEach(crafterData => {
-            if (!crafterData.id.startsWith(crafterTypePrefix + '_')) return;
-            let unlocked = true;
-            if (crafterData.unlocksWith) unlocked = crafterData.unlocksWith.every(cond => gameState.discoveredIdeas.has(cond));
+
+        Object.values(CRAFTERS_DATA).forEach(cd => {
+            if (!cd.id.startsWith(prefix + '_')) return;
+            const unlocked = !cd.unlocksWith || cd.unlocksWith.every(c => gameState.discoveredIdeas.has(c));
             if (unlocked) {
-                foundAnyCrafters = true;
-                const currentLevel = gameState.crafters[crafterData.id]?.level || 0;
-                this.renderUpgradeCard(listElement, crafterData, currentLevel, 'buy-autocrafter', 'data-crafter-id');
+                found = true;
+                this.renderUpgradeCard(listElement, cd, gameState.crafters[cd.id]?.level || 0, 'buy-autocrafter', 'data-crafter-id');
             }
         });
-        if (!foundAnyCrafters) listElement.innerHTML += `<p class="text-muted">Discover an idea of this tier to unlock its auto-crafter.</p>`;
+
+        if (!found) listElement.innerHTML += `<p class="text-muted">Discover an idea of this tier to unlock its auto-crafter.</p>`;
     },
 
     renderTieredIdeaList(tier, listElement) {
-        const cacheKeyMap = { 1: 'concepts', 2: 'insights', 3: 'theories', 4: 'paradigms' };
-        const cacheKey = cacheKeyMap[tier];
-        const key = this._ideaListCacheKey(tier);
-        if (cacheKey && this._renderCache[cacheKey] === key) return;
-        if (cacheKey) this._renderCache[cacheKey] = key;
-
-        listElement.innerHTML = ''; let foundAny = false;
-        Array.from(gameState.discoveredIdeas).map(id => IDEAS_DATA[id]).filter(ideaData => ideaData && ideaData.tier === tier).sort((a, b) => (a.name || '').localeCompare(b.name || '')).forEach(ideaData => {
-                foundAny = true; const li = document.createElement('li'); const ownedCount = gameState.ideas[ideaData.id] || 0; let ftBonusHTML = '';
-                if (ideaData.attributes?.ft_bonus_per_sec && GameLogic._isValidNumber(ownedCount) && ownedCount > 0) { const totalBonus = ideaData.attributes.ft_bonus_per_sec * ownedCount; ftBonusHTML = `<span class="idea-description">Grants ${Utils.formatNumber(totalBonus)} FT/sec total</span>`; }
-                li.innerHTML = `<span class="idea-name">${ideaData.name}</span> <span class="idea-owned">Owned: ${Utils.formatNumber(ownedCount)}</span> <span class="idea-description">${ideaData.description || ''}</span> ${ftBonusHTML}`;
-                li.dataset.ideaId = ideaData.id; listElement.appendChild(li);
-        });
-        if (!foundAny) listElement.innerHTML = `<p class="text-muted">No ideas of this tier discovered yet.</p>`;
-    },
-
-    renderWisdomShopCategory(container, category) {
-        if (!container) return;
-        
-        container.innerHTML = '';
-        
-        const upgrades = Object.values(WISDOM_SHOP_DATA).filter(upgrade => upgrade.category === category);
-        
-        upgrades.forEach(upgrade => {
-            if (!WisdomShop.isUnlocked(upgrade.id)) return;
-            
-            const currentLevel = gameState.wisdomShop[upgrade.id]?.level || 0;
-            const maxLevel = upgrade.maxLevel || 1;
-            const cost = WisdomShop.getCost(upgrade.id);
-            const canAfford = WisdomShop.canAfford(upgrade.id);
-            const isMaxLevel = currentLevel >= maxLevel;
-            const isPurchased = currentLevel > 0;
-            
-            let effectText = '';
-            if (upgrade.getEffectValue) {
-                const nextLevelValue = upgrade.getEffectValue(currentLevel + 1);
-                const currentValue = currentLevel > 0 ? upgrade.getEffectValue(currentLevel) : 0;
-                
-                if (upgrade.id.includes('multiplier')) {
-                    effectText = `+${(nextLevelValue * 100).toFixed(0)}% to all FT generation`;
-                } else if (upgrade.id === 'tap_ft_bonus') {
-                    effectText = `+${nextLevelValue.toFixed(0)}% of FT/sec per manual spark`;
-                } else if (upgrade.id === 'offline_effectiveness') {
-                    effectText = `Offline earns ${nextLevelValue.toFixed(0)}% of online rate`;
-                } else if (upgrade.id === 'offline_time_cap') {
-                    effectText = `Offline cap: ${nextLevelValue}hours`;
-                }
-                
-                if (currentLevel > 0 && !isMaxLevel) {
-                    if (upgrade.id.includes('multiplier')) {
-                        effectText = `Currently: +${(currentValue * 100).toFixed(0)}% → +${(nextLevelValue * 100).toFixed(0)}%`;
-                    } else if (upgrade.id === 'tap_ft_bonus') {
-                        effectText = `Currently: +${currentValue.toFixed(0)}% → +${nextLevelValue.toFixed(0)}%`;
-                    } else if (upgrade.id === 'offline_effectiveness') {
-                        effectText = `Currently: ${currentValue.toFixed(0)}% → ${nextLevelValue.toFixed(0)}%`;
-                    } else if (upgrade.id === 'offline_time_cap') {
-                        effectText = `Currently: ${currentValue}h → ${nextLevelValue}h`;
-                    }
-                }
-            }
-            
-            let buttonText = 'Purchase';
-            let buttonClass = 'shop-upgrade-button';
-            
-            if (isMaxLevel) {
-                buttonText = 'Maxed';
-                buttonClass += ' max-level';
-            } else if (isPurchased) {
-                buttonText = 'Upgrade';
-                buttonClass += ' purchased';
-            }
-            
-            if (!canAfford && !isMaxLevel) {
-                buttonClass += ' disabled';
-            }
-            
-            const card = document.createElement('div');
-            card.className = `shop-upgrade-card ${isPurchased ? 'purchased' : ''} ${isMaxLevel ? 'max-level' : ''}`;
-            
-            card.innerHTML = `
-                <div class="shop-upgrade-header">
-                    <span class="shop-upgrade-icon">${upgrade.icon || '⚡'}</span>
-                    <span class="shop-upgrade-title">${upgrade.name}</span>
-                    <span class="shop-upgrade-level">${currentLevel}/${maxLevel}</span>
-                </div>
-                <div class="shop-upgrade-description">${upgrade.description}</div>
-                ${effectText ? `<div class="shop-upgrade-effect">${effectText}</div>` : ''}
-                <div class="shop-upgrade-footer">
-                    <span class="shop-upgrade-cost">${isMaxLevel ? 'Complete' : `${Utils.formatNumber(cost)} WS`}</span>
-                    <button class="${buttonClass}" data-upgrade-id="${upgrade.id}" ${(!canAfford || isMaxLevel) ? 'disabled' : ''}>
-                        ${buttonText}
-                    </button>
-                </div>
-            `;
-            
-            container.appendChild(card);
-        });
-    },
-
-    handleWisdomShopPurchase(e) {
-        const button = e.target.closest('.shop-upgrade-button');
-        if (button && !button.disabled) {
-            const upgradeId = button.dataset.upgradeId;
-            if (WisdomShop.purchase(upgradeId)) {
-                // Invalidate wisdom shop cache so it re-renders with new level
-                UI._renderCache.wisdomShop = null;
-                UI.updateWisdomShop();
-                UI.updateResourceDisplay();
-                UI.showNotification(`Purchased ${WISDOM_SHOP_DATA[upgradeId].name}!`, 'success');
-            } else {
-                UI.showNotification('Cannot purchase this upgrade.', 'error');
-            }
-        }
-    },
-
-    handleBuyGeneratorClick(e) {
-        const button = e.target.closest('.buy-generator');
-        if (button && typeof GameLogic !== 'undefined' && GameLogic.buyGenerator) {
-            GameLogic.buyGenerator(button.dataset.generatorId);
-        }
-    },
-
-    handleBuyAutoCrafterClick(e) {
-        const button = e.target.closest('.buy-autocrafter');
-        if (button && typeof GameLogic !== 'undefined' && GameLogic.buyAutoCrafter) {
-            GameLogic.buyAutoCrafter(button.dataset.crafterId);
-        }
-    },
-
-    /**
-     * Rebuilds the forge <select> dropdowns.
-     * 
-     * IMPORTANT: This must NOT be called from the tick-driven updateAllUI() path.
-     * Rebuilding the <select> elements every 200ms closes any open dropdown the player
-     * is actively interacting with, making it impossible to select an option.
-     * 
-     * This should only be called when the set of available forge options actually changes,
-     * i.e. from gainIdea() and attemptCombination() — both of which already do so.
-     */
-    populateForgeSelectors() {
-        const currentSelection1 = this.elements.forgeSlot1.value;
-        const currentSelection2 = this.elements.forgeSlot2.value;
-        const optionsHTML = ['<option value="">Select...</option>'];
-        const sortedForgeableIdeas = Array.from(gameState.discoveredIdeas)
+        listElement.innerHTML = '';
+        let found = false;
+        Array.from(gameState.discoveredIdeas)
             .map(id => IDEAS_DATA[id])
-            .filter(ideaData => ideaData && (ideaData.tier >= 1 && ideaData.tier <= 3) && GameLogic._isValidNumber(gameState.ideas[ideaData.id]) && gameState.ideas[ideaData.id] > 0)
-            .sort((a,b) => {
-                if (a.tier !== b.tier) return (a.tier||0)-(b.tier||0);
-                return (a.name||'').localeCompare(b.name||'');
-            });
-        sortedForgeableIdeas.forEach(ideaData => {
-            optionsHTML.push(`<option value="${ideaData.id}">${ideaData.name} (${Utils.formatNumber(gameState.ideas[ideaData.id])})</option>`);
-        });
-        this.elements.forgeSlot1.innerHTML = optionsHTML.join('');
-        this.elements.forgeSlot2.innerHTML = optionsHTML.join('');
-        if (sortedForgeableIdeas.find(i=>i.id===currentSelection1)) this.elements.forgeSlot1.value = currentSelection1;
-        if (sortedForgeableIdeas.find(i=>i.id===currentSelection2)) this.elements.forgeSlot2.value = currentSelection2;
-    },
-
-    updateDiscoveredRecipes() {
-        const key = this._recipesCacheKey();
-        if (this._renderCache.recipes === key) return;
-        this._renderCache.recipes = key;
-
-        this.elements.discoveredRecipesList.innerHTML = '';
-        if (!Array.isArray(gameState.unlockedRecipes)) return;
-        gameState.unlockedRecipes.forEach(recipeOutputId => {
-            const outputData = IDEAS_DATA[recipeOutputId];
-            if(outputData?.recipe) {
-                const inputNames = outputData.recipe.map(inputId => IDEAS_DATA[inputId]?.name || `(Unknown)`).join(' + ');
+            .filter(d => d && d.tier === tier)
+            .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+            .forEach(d => {
+                found = true;
+                const owned = gameState.ideas[d.id] || 0;
+                let ftHTML = '';
+                if (d.attributes?.thought_bonus_per_sec && GameLogic._isValidNumber(owned) && owned > 0) {
+                    ftHTML = `<span class="idea-description">Grants ${Utils.formatNumber(d.attributes.thought_bonus_per_sec * owned)} thoughts/sec total</span>`;
+                }
                 const li = document.createElement('li');
-                li.textContent = `${inputNames} = ${outputData.name || '(Unknown)'}`;
-                li.dataset.input1 = outputData.recipe[0];
-                li.dataset.input2 = outputData.recipe[1];
-                this.elements.discoveredRecipesList.appendChild(li);
-            }
+                li.innerHTML = `<span class="idea-name">${d.name}</span> <span class="idea-owned">Owned: ${Utils.formatNumber(owned)}</span> <span class="idea-description">${d.description || ''}</span>${ftHTML}`;
+                li.dataset.ideaId = d.id;
+                listElement.appendChild(li);
+            });
+        if (!found) listElement.innerHTML = `<p class="text-muted">No ideas of this tier discovered yet.</p>`;
+    },
+
+    _renderRecipesNow() {
+        this.elements.discoveredRecipesList.innerHTML = '';
+        (gameState.unlockedRecipes || []).forEach(outId => {
+            const out = IDEAS_DATA[outId];
+            if (!out?.recipe) return;
+            const li = document.createElement('li');
+            li.textContent = `${out.recipe.map(id => IDEAS_DATA[id]?.name || '(Unknown)').join(' + ')} = ${out.name || '(Unknown)'}`;
+            li.dataset.input1 = out.recipe[0];
+            li.dataset.input2 = out.recipe[1];
+            this.elements.discoveredRecipesList.appendChild(li);
         });
     },
 
-    handleRecipeClick(e) {
-        const listItem = e.target.closest('li');
-        if (listItem?.dataset.input1 && listItem.dataset.input2) {
-            UI.elements.forgeSlot1.value = listItem.dataset.input1;
-            UI.elements.forgeSlot2.value = listItem.dataset.input2;
-            UI.elements.combinationResult.textContent = "Recipe loaded into forge.";
-            UI.elements.combinationResult.className = 'info';
-        }
-    },
-
-    updateWisdomShop() {
-        const key = this._wisdomShopCacheKey();
-        if (this._renderCache.wisdomShop === key) return;
-        this._renderCache.wisdomShop = key;
-
+    _renderWisdomShopNow() {
         if (this.elements.wsShopBalance) {
             this.elements.wsShopBalance.textContent = Utils.formatNumber(gameState.resources.wisdom_shards);
         }
-        
-        this.renderWisdomShopCategory(this.elements.qolUpgrades, 'quality_of_life');
-        this.renderWisdomShopCategory(this.elements.tapUpgrades, 'tap_bonuses');
-        this.renderWisdomShopCategory(this.elements.globalUpgrades, 'global_multipliers');
-        this.renderWisdomShopCategory(this.elements.offlineUpgrades, 'offline');
+        this._renderWisdomShopCategory(this.elements.qolUpgrades,    'quality_of_life');
+        this._renderWisdomShopCategory(this.elements.tapUpgrades,    'tap_bonuses');
+        this._renderWisdomShopCategory(this.elements.globalUpgrades, 'global_multipliers');
+        this._renderWisdomShopCategory(this.elements.offlineUpgrades, 'offline');
     },
+
+    _renderWisdomShopCategory(container, category) {
+        if (!container) return;
+        container.innerHTML = '';
+        Object.values(WISDOM_SHOP_DATA)
+            .filter(u => u.category === category && WisdomShop.isUnlocked(u.id))
+            .forEach(upgrade => {
+                const level     = gameState.wisdomShop[upgrade.id]?.level || 0;
+                const maxLevel  = upgrade.maxLevel || 1;
+                const cost      = WisdomShop.getCost(upgrade.id);
+                const canAfford = WisdomShop.canAfford(upgrade.id);
+                const isMax     = level >= maxLevel;
+                const isBought  = level > 0;
+
+                let effectText = '';
+                if (upgrade.getEffectValue) {
+                    const next = upgrade.getEffectValue(level + 1);
+                    const cur  = level > 0 ? upgrade.getEffectValue(level) : 0;
+                    if (upgrade.id.includes('multiplier'))          effectText = `+${(next * 100).toFixed(0)}% to all thought generation`;
+                    else if (upgrade.id === 'tap_thought_bonus')         effectText = `+${next.toFixed(0)}% of thought/sec per spark`;
+                    else if (upgrade.id === 'offline_effectiveness') effectText = `Offline earns ${next.toFixed(0)}% of online rate`;
+                    else if (upgrade.id === 'offline_time_cap')      effectText = `Offline cap: ${next}h`;
+                    if (level > 0 && !isMax) {
+                        if (upgrade.id.includes('multiplier'))          effectText = `Currently: +${(cur*100).toFixed(0)}% → +${(next*100).toFixed(0)}%`;
+                        else if (upgrade.id === 'tap_thought_bonus')         effectText = `Currently: +${cur.toFixed(0)}% → +${next.toFixed(0)}%`;
+                        else if (upgrade.id === 'offline_effectiveness') effectText = `Currently: ${cur.toFixed(0)}% → ${next.toFixed(0)}%`;
+                        else if (upgrade.id === 'offline_time_cap')      effectText = `Currently: ${cur}h → ${next}h`;
+                    }
+                }
+
+                const btnClass = 'shop-upgrade-button' +
+                    (isMax ? ' max-level' : isBought ? ' purchased' : '') +
+                    (!canAfford && !isMax ? ' disabled' : '');
+                const btnText = isMax ? 'Maxed' : isBought ? 'Upgrade' : 'Purchase';
+
+                const card = document.createElement('div');
+                card.className = `shop-upgrade-card${isBought ? ' purchased' : ''}${isMax ? ' max-level' : ''}`;
+                card.innerHTML =
+                    `<div class="shop-upgrade-header">` +
+                    `<span class="shop-upgrade-icon">${upgrade.icon || '⚡'}</span>` +
+                    `<span class="shop-upgrade-title">${upgrade.name}</span>` +
+                    `<span class="shop-upgrade-level">${level}/${maxLevel}</span>` +
+                    `</div>` +
+                    `<div class="shop-upgrade-description">${upgrade.description}</div>` +
+                    (effectText ? `<div class="shop-upgrade-effect">${effectText}</div>` : '') +
+                    `<div class="shop-upgrade-footer">` +
+                    `<span class="shop-upgrade-cost">${isMax ? 'Complete' : `${Utils.formatNumber(cost)} WS`}</span>` +
+                    `<button class="${btnClass}" data-upgrade-id="${upgrade.id}" ${(!canAfford || isMax) ? 'disabled' : ''}>${btnText}</button>` +
+                    `</div>`;
+                container.appendChild(card);
+            });
+    },
+
+    /**
+     * Rebuilds both forge <select> elements.
+     * Must NOT be called from tick() — rebuilding closes any open dropdown.
+     * Call only from gainIdea() and attemptCombination().
+     */
+    populateForgeSelectors() {
+        const s1  = this.elements.forgeSlot1.value;
+        const s2  = this.elements.forgeSlot2.value;
+        const opts = ['<option value="">Select...</option>'];
+        Array.from(gameState.discoveredIdeas)
+            .map(id => IDEAS_DATA[id])
+            .filter(d => d && d.tier >= 1 && d.tier <= 3 && GameLogic._isValidNumber(gameState.ideas[d.id]) && gameState.ideas[d.id] > 0)
+            .sort((a, b) => a.tier !== b.tier ? a.tier - b.tier : (a.name||'').localeCompare(b.name||''))
+            .forEach(d => opts.push(`<option value="${d.id}">${d.name} (${Utils.formatNumber(gameState.ideas[d.id])})</option>`));
+        this.elements.forgeSlot1.innerHTML = opts.join('');
+        this.elements.forgeSlot2.innerHTML = opts.join('');
+        if (this.elements.forgeSlot1.querySelector(`option[value="${s1}"]`)) this.elements.forgeSlot1.value = s1;
+        if (this.elements.forgeSlot2.querySelector(`option[value="${s2}"]`)) this.elements.forgeSlot2.value = s2;
+    },
+
+    // =========================================================================
+    // Event handlers
+    // =========================================================================
+
+    handleBuyGeneratorClick(e) {
+        const btn = e.target.closest('.buy-generator');
+        if (btn && typeof GameLogic !== 'undefined') GameLogic.buyGenerator(btn.dataset.generatorId);
+    },
+
+    handleBuyAutoCrafterClick(e) {
+        const btn = e.target.closest('.buy-autocrafter');
+        if (btn && typeof GameLogic !== 'undefined') GameLogic.buyAutoCrafter(btn.dataset.crafterId);
+    },
+
+    handleRecipeClick(e) {
+        const li = e.target.closest('li');
+        if (li?.dataset.input1 && li.dataset.input2) {
+            UI.elements.forgeSlot1.value = li.dataset.input1;
+            UI.elements.forgeSlot2.value = li.dataset.input2;
+            UI.elements.combinationResult.textContent = 'Recipe loaded into forge.';
+            UI.elements.combinationResult.className   = 'info';
+        }
+    },
+
+    handleWisdomShopPurchase(e) {
+        const btn = e.target.closest('.shop-upgrade-button');
+        if (!btn || btn.disabled) return;
+        const id = btn.dataset.upgradeId;
+        if (WisdomShop.purchase(id)) {
+            UI._last.wisdomShop = null;   // force re-render on next tick
+            UI.updateMultiplierButton();  // multi_buy_unlock may have just changed
+            UI.showNotification(`Purchased ${WISDOM_SHOP_DATA[id].name}!`, 'success');
+        } else {
+            UI.showNotification('Cannot purchase this upgrade.', 'error');
+        }
+    },
+
+    handleBulkParadigmUpgrade() {
+        if (!(gameState.wisdomShop.paradigm_bulk_manager?.level >= 1)) {
+            UI.showNotification('Paradigm Automation upgrade required!', 'error'); return;
+        }
+        let performed = 0;
+        const totalCost = {};
+        Object.keys(CRAFTERS_DATA).filter(id => id.startsWith('paradigm_')).forEach(crafterId => {
+            const cd  = CRAFTERS_DATA[crafterId];
+            const cur = gameState.crafters[crafterId]?.level || 0;
+            if (cur >= (cd.maxLevel || Infinity)) return;
+            const pd = GameLogic.calculateMultiBuy(cd.baseCost, cd.costScale, cur, gameState.purchaseMultiplier, cd.maxLevel);
+            const n  = gameState.purchaseMultiplier === 'Max' ? pd.affordableLevels : Math.min(gameState.purchaseMultiplier, pd.affordableLevels);
+            if (n <= 0) return;
+            const fp = GameLogic.calculateMultiBuy(cd.baseCost, cd.costScale, cur, n, cd.maxLevel);
+            Object.entries(fp.totalCost).forEach(([r, c]) => { totalCost[r] = (totalCost[r] || 0) + c; });
+            performed += n;
+        });
+        const canAfford = Object.entries(totalCost).every(([r, c]) => (gameState.resources[r] || gameState.ideas[r] || 0) >= c);
+        if (!canAfford || performed === 0) { UI.showNotification('Cannot afford bulk paradigm upgrade.', 'error'); return; }
+        Object.keys(CRAFTERS_DATA).filter(id => id.startsWith('paradigm_')).forEach(id => GameLogic.buyAutoCrafter(id));
+        UI.showNotification(`Bulk upgraded ${performed} paradigm crafter levels!`, 'success');
+    },
+
+    // =========================================================================
+    // Details panel — driven by node selection events, not the tick loop
+    // =========================================================================
 
     updateDetailsView(ideaData) {
-         if (!ideaData || ideaData.id === 'thought') {
-             this.elements.selectedIdeaName.textContent = 'Nothing Selected';
-             this.elements.selectedIdeaDescription.textContent = 'Click an idea node in the Noosphere.';
-             this.elements.selectedIdeaAttributes.innerHTML = '';
-             return;
-         }
-        this.elements.selectedIdeaName.textContent = ideaData.name || 'Unnamed Idea';
+        if (!ideaData || ideaData.id === 'thought') {
+            this.elements.selectedIdeaName.textContent        = 'Nothing Selected';
+            this.elements.selectedIdeaDescription.textContent = 'Click an idea node in the Noosphere.';
+            this.elements.selectedIdeaAttributes.innerHTML    = '';
+            return;
+        }
+        this.elements.selectedIdeaName.textContent        = ideaData.name || 'Unnamed Idea';
         this.elements.selectedIdeaDescription.textContent = ideaData.description || 'No description available.';
-        let attributesHTML = '';
-        if (ideaData.tier) attributesHTML += `<p><strong>Tier:</strong> ${ideaData.tier}</p>`;
-        const currentCount = gameState.ideas[ideaData.id];
-        if (GameLogic._isValidNumber(currentCount)) attributesHTML += `<p><strong>Owned:</strong> ${Utils.formatNumber(currentCount)}</p>`;
-        if (ideaData.attributes && typeof ideaData.attributes === 'object') {
-             Object.entries(ideaData.attributes).forEach(([key, value]) => {
-                attributesHTML += `<p><strong>${Utils.capitalizeFirst(key.replace(/_/g, ' '))}:</strong> ${value}</p>`;
-             });
+        let html = '';
+        if (ideaData.tier) html += `<p><strong>Tier:</strong> ${ideaData.tier}</p>`;
+        const count = gameState.ideas[ideaData.id];
+        if (GameLogic._isValidNumber(count)) html += `<p><strong>Owned:</strong> ${Utils.formatNumber(count)}</p>`;
+        if (ideaData.attributes) Object.entries(ideaData.attributes).forEach(([k, v]) => {
+            html += `<p><strong>${Utils.capitalizeFirst(k.replace(/_/g, ' '))}:</strong> ${v}</p>`;
+        });
+        if (ideaData.recipe?.length) {
+            html += `<p><strong>Derived From:</strong> ${ideaData.recipe.map(id => IDEAS_DATA[id]?.name || '(Unknown)').join(', ')}</p>`;
         }
-        if(ideaData.recipe?.length > 0) {
-            const inputNames = ideaData.recipe.map(id => IDEAS_DATA[id]?.name || `(Unknown)`).join(', ');
-            attributesHTML += `<p><strong>Derived From:</strong> ${inputNames}</p>`;
-        }
-        this.elements.selectedIdeaAttributes.innerHTML = attributesHTML;
+        this.elements.selectedIdeaAttributes.innerHTML = html;
     },
 
+    // =========================================================================
+    // Notifications
+    // =========================================================================
+
     showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `game-notification ${type}`;
-        notification.textContent = message;
-        document.body.appendChild(notification);
+        const el = document.createElement('div');
+        el.className   = `game-notification ${type}`;
+        el.textContent = message;
+        document.body.appendChild(el);
         setTimeout(() => {
-            notification.classList.add('exiting');
-            notification.addEventListener('transitionend', () => notification.remove(), { once: true });
-            setTimeout(() => notification.remove(), 600);
+            el.classList.add('exiting');
+            el.addEventListener('transitionend', () => el.remove(), { once: true });
+            setTimeout(() => el.remove(), 600);
         }, 3000);
     },
 
-    /**
-     * Full UI refresh. Each sub-render has its own dirty-check and will no-op if
-     * nothing relevant to it has changed — avoiding unnecessary DOM thrashing.
-     * 
-     * NOTE: populateForgeSelectors() is intentionally excluded here.
-     * The forge dropdowns are only rebuilt when the idea inventory actually changes
-     * (handled directly in GameLogic.gainIdea and GameLogic.attemptCombination).
-     * Rebuilding them here would close open dropdowns every 200ms.
-     */
-    updateAllUI() {
-        this.updateResourceDisplay();
-        this.renderGenerators();
-        this.renderTieredIdeaList(1, this.elements.conceptsList);
-        this.renderTieredIdeaList(2, this.elements.insightsList);
-        this.renderTieredIdeaList(3, this.elements.theoriesList);
-        this.renderTieredIdeaList(4, this.elements.paradigmsList);
-        this.renderAutoCrafters('insight', this.elements.insightCraftersList);
-        this.renderAutoCrafters('theory', this.elements.theoryCraftersList);
-        this.renderAutoCrafters('paradigm', this.elements.paradigmCraftersList);
-        // populateForgeSelectors() deliberately omitted — see JSDoc above
-        this.updateDiscoveredRecipes();
-        this.updateTranscendButton();
-        this.updateMultiplierButtonText();
-        this.updateWisdomShop();
-    },
+    // =========================================================================
+    // Full refresh — only for wholesale state changes (load / reset / transcend)
+    // =========================================================================
 
     /**
-     * Clears all render caches, forcing a full rebuild on the next updateAllUI() call.
-     * Use this after a transcendence, game reset, or load — events where the entire
-     * game state changes at once.
+     * Resets all cached last-values so the next tick() re-renders everything.
+     * Does NOT itself touch the DOM.
      */
     invalidateAllCaches() {
-        Object.keys(this._renderCache).forEach(k => { this._renderCache[k] = null; });
+        Object.keys(this._last).forEach(k => { this._last[k] = null; });
     },
 
-     updateTranscendButton() {
-         let canTranscend = false; let wsToGain = 0;
-         const anyParadigmOwned = Array.from(gameState.discoveredIdeas).some(id => IDEAS_DATA[id]?.tier === 4 && (gameState.ideas[id] || 0) > 0);
-         if (anyParadigmOwned) {
-             if (typeof GameLogic !== 'undefined' && GameLogic.calculateWisdomShardsOnTranscend) {
-                  canTranscend = true;
-                  wsToGain = GameLogic.calculateWisdomShardsOnTranscend();
-                  if (!GameLogic._isValidNumber(wsToGain)) {
-                      canTranscend = false;
-                      wsToGain = 0;
-                  }
-             }
-         }
-         this.elements.transcendButton.disabled = !canTranscend;
-         this.elements.transcendButton.textContent = canTranscend ? `Transcend (${wsToGain} WS)` : 'A Paradigm is Required';
-     }
+    /**
+     * Immediately renders everything from scratch.
+     * Use only after load, reset, or transcend.
+     */
+    updateAllUI() {
+        this.invalidateAllCaches();
+        this.tick();
+        this.updateMultiplierButton();
+        this.populateForgeSelectors();
+    },
 };

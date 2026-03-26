@@ -48,8 +48,8 @@ const WISDOM_SHOP_DATA = {
     // Enhanced Focus — Tap/Click Bonuses
     // =========================================================================
 
-    tap_ft_bonus: {
-        id: 'tap_ft_bonus',
+    tap_thoughts_bonus: {
+        id: 'tap_thoughts_bonus',
         name: 'Deep Contemplation',
         description: 'Each deliberate spark of thought draws on your passive mental output, earning bonus Thoughts equal to a percentage of your Thoughts/sec.',
         baseCost: 10,
@@ -65,11 +65,11 @@ const WISDOM_SHOP_DATA = {
     },
 
     // =========================================================================
-    // Cognitive Enhancements — Global FT Multipliers
+    // Cognitive Enhancements — Global thought Multipliers
     // =========================================================================
 
-    global_ft_multiplier_25: {
-        id: 'global_ft_multiplier_25',
+    global_thought_multiplier_25: {
+        id: 'global_thought_multiplier_25',
         name: 'School of Thought I',
         description: 'Establishes a coherent intellectual tradition, increasing all Thought generation by 25%.',
         cost: 25,
@@ -83,54 +83,54 @@ const WISDOM_SHOP_DATA = {
         }
     },
 
-    global_ft_multiplier_50: {
-        id: 'global_ft_multiplier_50',
+    global_thought_multiplier_50: {
+        id: 'global_thought_multiplier_50',
         name: 'School of Thought II',
         description: 'Expands the intellectual tradition into a broader academy, increasing all Thought generation by a further 50%.',
         cost: 50,
         maxLevel: 1,
         category: 'global_multipliers',
         icon: '🎓',
-        unlockCondition: () => gameState.wisdomShop.global_ft_multiplier_25?.level >= 1,
+        unlockCondition: () => gameState.wisdomShop.global_thought_multiplier_25?.level >= 1,
         getEffectValue: () => 0.50,
         applyEffect: () => {}
     },
 
-    global_ft_multiplier_75: {
-        id: 'global_ft_multiplier_75',
+    global_thought_multiplier_75: {
+        id: 'global_thought_multiplier_75',
         name: 'School of Thought III',
         description: 'The academy grows into a renowned institute, increasing all Thought generation by a further 75%.',
         cost: 100,
         maxLevel: 1,
         category: 'global_multipliers',
         icon: '🎓',
-        unlockCondition: () => gameState.wisdomShop.global_ft_multiplier_50?.level >= 1,
+        unlockCondition: () => gameState.wisdomShop.global_thought_multiplier_50?.level >= 1,
         getEffectValue: () => 0.75,
         applyEffect: () => {}
     },
 
-    global_ft_multiplier_100: {
-        id: 'global_ft_multiplier_100',
+    global_thought_multiplier_100: {
+        id: 'global_thought_multiplier_100',
         name: 'School of Thought IV',
         description: 'The institute achieves international recognition, doubling all Thought generation (+100%).',
         cost: 200,
         maxLevel: 1,
         category: 'global_multipliers',
         icon: '🎓',
-        unlockCondition: () => gameState.wisdomShop.global_ft_multiplier_75?.level >= 1,
+        unlockCondition: () => gameState.wisdomShop.global_thought_multiplier_75?.level >= 1,
         getEffectValue: () => 1.0,
         applyEffect: () => {}
     },
 
-    global_ft_multiplier_150: {
-        id: 'global_ft_multiplier_150',
+    global_thought_multiplier_150: {
+        id: 'global_thought_multiplier_150',
         name: 'School of Thought V',
         description: 'A paradigm-shifting intellectual movement, increasing all Thought generation by a further 150%.',
         cost: 400,
         maxLevel: 1,
         category: 'global_multipliers',
         icon: '🎓',
-        unlockCondition: () => gameState.wisdomShop.global_ft_multiplier_100?.level >= 1,
+        unlockCondition: () => gameState.wisdomShop.global_thought_multiplier_100?.level >= 1,
         getEffectValue: () => 1.5,
         applyEffect: () => {}
     },

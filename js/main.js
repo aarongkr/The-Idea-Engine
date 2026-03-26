@@ -41,7 +41,7 @@ function main() {
     // Start the tutorial if it's not completed
     if (typeof Tutorial !== 'undefined') Tutorial.start();
 
-    // Start the game loop
+    // Start the game loop (100 ms physics tick; UI has its own 200 ms throttle inside)
     gameLoopInterval = setInterval(GameLogic.tick, 100);
 
     console.log("The Idea Engine Initialized and Running.");

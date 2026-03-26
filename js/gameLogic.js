@@ -13,7 +13,7 @@ const GameLogic = {
     tick() {
         const now = Date.now();
         if (!GameLogic._isValidNumber(GameLogic.lastTick) || GameLogic.lastTick <= 0 || GameLogic.lastTick > now) {
-             GameLogic.lastTick = now - 100;
+            GameLogic.lastTick = now - 100;
         }
         const delta = Math.max(0, (now - GameLogic.lastTick) / 1000);
         GameLogic.lastTick = now;
@@ -23,402 +23,396 @@ const GameLogic = {
         }
 
         if (!GameLogic._isValidNumber(gameState.resources.thought)) {
-             gameState.resources.thought = 0;
+            gameState.resources.thought = 0;
         }
 
-        const baseFtPerSec = GameLogic.calculateCurrentFtPerSec() / GameLogic.calculateGlobalFtMultiplier();
-        const finalFtPerSec = baseFtPerSec * GameLogic.calculateGlobalFtMultiplier();
+        // Apply passive thoughts gain
+        const thoughtsPerSec = GameLogic.calculateCurrentThoughtsPerSec();
+        gameState.resources.thought += thoughtsPerSec * delta;
 
-        gameState.resources.thought += finalFtPerSec * delta;
-
-
-        // --- Concept Generation ---
+        // --- Concept generation from generators ---
         Object.entries(gameState.generators).forEach(([genId, genState]) => {
             const genData = GENERATORS_DATA[genId];
-            if (genData && genState.level > 0 && genData.output) {
-                Object.entries(genData.output).forEach(([outputIdeaId, baseChance]) => {
-                    if (outputIdeaId !== 'thought' && GameLogic._isValidNumber(baseChance)) {
-                        const currentLevel = genState.level; const scale = genData.outputScale || 1;
-                        const levelBonus = Math.pow(scale, Math.max(0, currentLevel - 1));
-                        const chancePerSecond = (baseChance * currentLevel) * levelBonus;
-                        if (GameLogic._isValidNumber(chancePerSecond) && delta > 0 && Math.random() < chancePerSecond * delta) {
-                            GameLogic.gainIdea(outputIdeaId, 1);
-                        }
-                    }
-                });
-            }
-        });
-
-        // --- Auto-Crafter Logic ---
-        Object.entries(gameState.crafters).forEach(([crafterId, crafterState]) => {
-            const crafterData = CRAFTERS_DATA[crafterId];
-            const currentLevel = crafterState?.level;
-            if (crafterData && GameLogic._isValidNumber(currentLevel) && currentLevel > 0) {
-                const targetIdeaData = IDEAS_DATA[crafterData.targetIdeaId];
-                if (!targetIdeaData?.recipe) return;
-                const outputScale = crafterData.outputScale || 1;
-                const baseOutputAmount = crafterData.outputAmount || 0;
-                if (!GameLogic._isValidNumber(baseOutputAmount)) return;
-                const levelBonus = Math.pow(outputScale, Math.max(0, currentLevel - 1));
-                const craftsPerSecond = (baseOutputAmount * currentLevel) * levelBonus;
-                const potentialCraftsThisTick = craftsPerSecond * delta;
-                let craftsAttempted = Math.floor(potentialCraftsThisTick) + (Math.random() < (potentialCraftsThisTick % 1) ? 1 : 0);
-                for (let i = 0; i < craftsAttempted; i++) {
-                    let canAffordIngredients = targetIdeaData.recipe.every(ingId => (gameState.ideas[ingId] || 0) >= 1);
-                    if (canAffordIngredients) {
-                        targetIdeaData.recipe.forEach(ingId => gameState.ideas[ingId]--);
-                        GameLogic.gainIdea(crafterData.targetIdeaId, 1, true);
-                    } else {
-                        break;
-                    }
+            if (!genData || genState.level <= 0 || !genData.output) return;
+            Object.entries(genData.output).forEach(([outputId, baseChance]) => {
+                if (outputId === 'thought' || !GameLogic._isValidNumber(baseChance)) return;
+                const level     = genState.level;
+                const levelBonus = Math.pow(genData.outputScale || 1, Math.max(0, level - 1));
+                const chance    = baseChance * level * levelBonus;
+                if (delta > 0 && Math.random() < chance * delta) {
+                    GameLogic.gainIdea(outputId, 1);
                 }
+            });
+        });
+
+        // --- Auto-crafter logic ---
+        Object.entries(gameState.crafters).forEach(([crafterId, crafterState]) => {
+            const cd    = CRAFTERS_DATA[crafterId];
+            const level = crafterState?.level;
+            if (!cd || !GameLogic._isValidNumber(level) || level <= 0) return;
+            const targetData = IDEAS_DATA[cd.targetIdeaId];
+            if (!targetData?.recipe) return;
+            const levelBonus     = Math.pow(cd.outputScale || 1, Math.max(0, level - 1));
+            const craftsPerSec   = (cd.outputAmount || 0) * level * levelBonus;
+            const potentialCrafts = craftsPerSec * delta;
+            let attempts = Math.floor(potentialCrafts) + (Math.random() < (potentialCrafts % 1) ? 1 : 0);
+            for (let i = 0; i < attempts; i++) {
+                if (!targetData.recipe.every(ingId => (gameState.ideas[ingId] || 0) >= 1)) break;
+                targetData.recipe.forEach(ingId => gameState.ideas[ingId]--);
+                GameLogic.gainIdea(cd.targetIdeaId, 1, true);
             }
         });
 
-        // --- UI Update Throttle ---
-        if (now - (gameState.lastUIRefresh || 0) > 200 && (typeof Tutorial === 'undefined' || !Tutorial.isActive)) {
-            if (typeof UI !== 'undefined' && UI.updateAllUI) {
-                 UI.updateAllUI();
+        // --- Hand off to the UI tick (throttled to 200 ms) ---
+        if (now - (gameState.lastUIRefresh || 0) > 200) {
+            if (typeof UI !== 'undefined' && UI.tick) {
+                UI.tick();
             }
             gameState.lastUIRefresh = now;
         }
     },
 
     calculateOfflineProgress(timeOfflineMs) {
-        const offlineGains = { ftGained: 0, ideasGained: {} };
-        if (!GameLogic._isValidNumber(timeOfflineMs) || timeOfflineMs <= 1000) return offlineGains;
+        const gains = { thoughtsGained: 0, ideasGained: {} };
+        if (!GameLogic._isValidNumber(timeOfflineMs) || timeOfflineMs <= 1000) return gains;
         const secondsOffline = timeOfflineMs / 1000;
-        
-        // Calculate offline effectiveness from wisdom shop
-        let offlineEffectiveness = 1.0;
-        const offlineEffectivenessLevel = gameState.wisdomShop.offline_effectiveness?.level || 0;
-        if (offlineEffectivenessLevel > 0) {
-            offlineEffectiveness = WISDOM_SHOP_DATA.offline_effectiveness.getEffectValue(offlineEffectivenessLevel) / 100;
-        }
 
-        // Calculate time cap from wisdom shop
-        let maxOfflineHours = 24;
-        const offlineTimeCapLevel = gameState.wisdomShop.offline_time_cap?.level || 0;
-        if (offlineTimeCapLevel > 0) {
-            maxOfflineHours = WISDOM_SHOP_DATA.offline_time_cap.getEffectValue(offlineTimeCapLevel);
-        }
+        // Offline effectiveness from wisdom shop
+        let effectiveness = 1.0;
+        const effLevel = gameState.wisdomShop.offline_effectiveness?.level || 0;
+        if (effLevel > 0) effectiveness = WISDOM_SHOP_DATA.offline_effectiveness.getEffectValue(effLevel) / 100;
 
-        const maxOfflineSeconds = Math.min(secondsOffline, maxOfflineHours * 3600);
-        const effectiveOfflineSeconds = maxOfflineSeconds * offlineEffectiveness;
-        
-        const baseFtPerSec = GameLogic.calculateCurrentFtPerSec() / GameLogic.calculateGlobalFtMultiplier();
-        const finalFtPerSec = baseFtPerSec * GameLogic.calculateGlobalFtMultiplier();
-        offlineGains.ftGained = finalFtPerSec * effectiveOfflineSeconds;
+        // Time cap from wisdom shop
+        let maxHours = 24;
+        const capLevel = gameState.wisdomShop.offline_time_cap?.level || 0;
+        if (capLevel > 0) maxHours = WISDOM_SHOP_DATA.offline_time_cap.getEffectValue(capLevel);
 
-        let globalMultiplier = 1;
-        const methodicalApproachLevel = gameState.generators.methodical_approach?.level || 0;
-        if (methodicalApproachLevel > 0) {
-            const methodicalApproachData = GENERATORS_DATA.methodical_approach;
-            globalMultiplier += methodicalApproachLevel * methodicalApproachData.effect.global_ft_multiplier_bonus;
-        }
-        offlineGains.ftGained = baseFtPerSec * globalMultiplier * secondsOffline;
-        
+        const cappedSeconds    = Math.min(secondsOffline, maxHours * 3600);
+        const effectiveSeconds = cappedSeconds * effectiveness;
+
+        // thought gains
+        const baseThoughtsPerSec = GameLogic.calculateCurrentThoughtsPerSec() / GameLogic.calculateGlobalThoughtsMultiplier();
+        gains.thoughtsGained = baseThoughtsPerSec * GameLogic.calculateGlobalThoughtsMultiplier() * effectiveSeconds;
+        if (!GameLogic._isValidNumber(gains.thoughtsGained)) gains.thoughtsGained = 0;
+
+        // Concept gains from generators
         Object.entries(gameState.generators).forEach(([genId, genState]) => {
-            const genData = GENERATORS_DATA[genId];
-            if (genData && genState.level > 0 && genData.output) {
-                 Object.entries(genData.output).forEach(([outputIdeaId, baseChance]) => {
-                    if (outputIdeaId !== 'thought' && GameLogic._isValidNumber(baseChance)) {
-                        const currentLevel = genState.level; const scale = genData.outputScale || 1;
-                        const levelBonus = Math.pow(scale, Math.max(0, currentLevel - 1));
-                        const expectedCount = (baseChance * currentLevel) * levelBonus * secondsOffline;
-                        const numGenerated = Math.floor(expectedCount) + (Math.random() < (expectedCount % 1) ? 1 : 0);
-                        if (numGenerated > 0) offlineGains.ideasGained[outputIdeaId] = (offlineGains.ideasGained[outputIdeaId] || 0) + numGenerated;
-                    }
-                });
-            }
+            const gd = GENERATORS_DATA[genId];
+            if (!gd || genState.level <= 0 || !gd.output) return;
+            Object.entries(gd.output).forEach(([outId, baseChance]) => {
+                if (outId === 'thought' || !GameLogic._isValidNumber(baseChance)) return;
+                const lb       = Math.pow(gd.outputScale || 1, Math.max(0, genState.level - 1));
+                const expected = baseChance * genState.level * lb * secondsOffline;
+                const n        = Math.floor(expected) + (Math.random() < (expected % 1) ? 1 : 0);
+                if (n > 0) gains.ideasGained[outId] = (gains.ideasGained[outId] || 0) + n;
+            });
         });
+
+        // Idea gains from crafters
         Object.entries(gameState.crafters).forEach(([crafterId, crafterState]) => {
-            const crafterData = CRAFTERS_DATA[crafterId];
-            if (crafterData && crafterState.level > 0) {
-                const currentLevel = crafterState.level; const baseOutputAmount = crafterData.outputAmount || 0; const outputScale = crafterData.outputScale || 1;
-                const levelBonus = Math.pow(outputScale, Math.max(0, currentLevel - 1));
-                const craftsPerSecond = (baseOutputAmount * currentLevel) * levelBonus;
-                const numCraftedOffline = Math.floor(craftsPerSecond * secondsOffline);
-                if (numCraftedOffline > 0) {
-                    offlineGains.ideasGained[crafterData.targetIdeaId] = (offlineGains.ideasGained[crafterData.targetIdeaId] || 0) + numCraftedOffline;
-                }
-            }
+            const cd = CRAFTERS_DATA[crafterId];
+            if (!cd || crafterState.level <= 0) return;
+            const lb  = Math.pow(cd.outputScale || 1, Math.max(0, crafterState.level - 1));
+            const cps = (cd.outputAmount || 0) * crafterState.level * lb;
+            const n   = Math.floor(cps * secondsOffline);
+            if (n > 0) gains.ideasGained[cd.targetIdeaId] = (gains.ideasGained[cd.targetIdeaId] || 0) + n;
         });
-        if (!GameLogic._isValidNumber(offlineGains.ftGained)) offlineGains.ftGained = 0;
-        return offlineGains;
+
+        return gains;
     },
 
-    /**
-     * Handles the manual click action, now with a bonus from the 'Focused Intent' upgrade.
-     */
     sparkThought() {
         if (!GameLogic._isValidNumber(gameState.resources.thought)) gameState.resources.thought = 0;
-        
-        let wisdomShardsBonus = 0;
-        if (GameLogic._isValidNumber(gameState.resources.wisdom_shards)) wisdomShardsBonus = gameState.resources.wisdom_shards * 0.1;
-        
+
+        // Base 1 Thought + bonus from wisdom shards (minor passive synergy)
+        const wsBonus = GameLogic._isValidNumber(gameState.resources.wisdom_shards)
+            ? gameState.resources.wisdom_shards * 0.1 : 0;
+
+        // Bonus from Focused Intent generator
         let clickBonus = 0;
-        const focusedIntentLevel = gameState.generators.focused_intent?.level || 0;
-        if (focusedIntentLevel > 0) {
-            const focusedIntentData = GENERATORS_DATA.focused_intent;
-            const baseBonus = focusedIntentData.effect.ft_per_click;
-            const scale = focusedIntentData.outputScale || 1;
-            const levelBonus = Math.pow(scale, Math.max(0, focusedIntentLevel - 1));
-            clickBonus = (baseBonus * focusedIntentLevel) * levelBonus;
+        const fiLevel = gameState.generators.focused_intent?.level || 0;
+        if (fiLevel > 0) {
+            const fi = GENERATORS_DATA.focused_intent;
+            clickBonus = fi.effect.thought_per_click * fiLevel * Math.pow(fi.outputScale || 1, Math.max(0, fiLevel - 1));
         }
 
-        let wisdomTapBonus = 0;
-        const tapBonusLevel = gameState.wisdomShop.tap_ft_bonus?.level || 0;
-        if (tapBonusLevel > 0) {
-            const currentFtPerSec = GameLogic.calculateCurrentFtPerSec();
-            const bonusPercentage = WISDOM_SHOP_DATA.tap_ft_bonus.getEffectValue(tapBonusLevel) / 100;
-            wisdomTapBonus = currentFtPerSec * bonusPercentage;
+        // Bonus from Wisdom Shop: Deep Contemplation tap bonus
+        let tapBonus = 0;
+        const tapLevel = gameState.wisdomShop.tap_thoughts_bonus?.level || 0;
+        if (tapLevel > 0) {
+            tapBonus = GameLogic.calculateCurrentThoughtsPerSec() * (WISDOM_SHOP_DATA.tap_thoughts_bonus.getEffectValue(tapLevel) / 100);
         }
 
-        const ftGained = 1 + wisdomShardsBonus + clickBonus;
-        gameState.resources.thought += ftGained;
-        
-        if (typeof UI !== 'undefined') UI.updateResourceDisplay();
+        gameState.resources.thought += 1 + wsBonus + clickBonus + tapBonus;
+
+        // Only the counters need to update — no card rebuilds required
+        if (typeof UI !== 'undefined') UI._tickCounters();
     },
 
-    calculateCurrentFtPerSec() {
-        let totalFtPerSec = 0;
-        
+    calculateCurrentThoughtsPerSec() {
+        let total = 0;
+
+        // From base generators
         Object.entries(gameState.generators).forEach(([genId, genState]) => {
-            const genData = GENERATORS_DATA[genId];
-            if (genData && genState.level > 0 && genData.output?.thought) {
-                const currentLevel = genState.level;
-                const baseOutput = genData.output.thought;
-                const scale = genData.outputScale || 1;
-                const levelBonus = Math.pow(scale, Math.max(0, currentLevel - 1));
-                totalFtPerSec += (baseOutput * currentLevel) * levelBonus;
-            }
+            const gd = GENERATORS_DATA[genId];
+            if (!gd || genState.level <= 0 || !gd.output?.thought) return;
+            const lb = Math.pow(gd.outputScale || 1, Math.max(0, genState.level - 1));
+            total += gd.output.thought * genState.level * lb;
         });
-        
+
+        // From owned ideas
         Object.entries(gameState.ideas).forEach(([ideaId, count]) => {
-            const ideaData = IDEAS_DATA[ideaId];
-            if (ideaData?.attributes?.ft_bonus_per_sec && GameLogic._isValidNumber(count) && count > 0) {
-                totalFtPerSec += ideaData.attributes.ft_bonus_per_sec * count;
+            const d = IDEAS_DATA[ideaId];
+            if (d?.attributes?.thoughts_bonus_per_sec && GameLogic._isValidNumber(count) && count > 0) {
+                total += d.attributes.thoughts_bonus_per_sec * count;
             }
         });
 
-        return totalFtPerSec * GameLogic.calculateGlobalFtMultiplier();
+        return total * GameLogic.calculateGlobalThoughtsMultiplier();
     },
 
-    calculateGlobalFtMultiplier() {
-        let globalMultiplier = 1;
-        
-        const methodicalApproachLevel = gameState.generators.methodical_approach?.level || 0;
-        if (methodicalApproachLevel > 0) {
-            const methodicalApproachData = GENERATORS_DATA.methodical_approach;
-            globalMultiplier += methodicalApproachLevel * methodicalApproachData.effect.global_ft_multiplier_bonus;
+    calculateGlobalThoughtsMultiplier() {
+        let multiplier = 1;
+
+        // Methodical Approach generator bonus
+        const maLevel = gameState.generators.methodical_approach?.level || 0;
+        if (maLevel > 0) {
+            multiplier += maLevel * GENERATORS_DATA.methodical_approach.effect.global_thought_multiplier_bonus;
         }
 
-        const wisdomMultipliers = [
-            'global_ft_multiplier_25', 'global_ft_multiplier_50', 'global_ft_multiplier_75', 
-            'global_ft_multiplier_100', 'global_ft_multiplier_150'
-        ];
-
-        wisdomMultipliers.forEach(upgradeid => {
-            const level = gameState.wisdomShop[upgradeid]?.level || 0;
-            if (level > 0) {
-                const upgrade = WISDOM_SHOP_DATA[upgradeid];
-                globalMultiplier += upgrade.getEffectValue();
+        // Wisdom shop global multipliers
+        ['global_thoughts_multiplier_25', 'global_thoughts_multiplier_50', 'global_thoughts_multiplier_75',
+         'global_thoughts_multiplier_100', 'global_thoughts_multiplier_150'].forEach(id => {
+            if ((gameState.wisdomShop[id]?.level || 0) > 0) {
+                multiplier += WISDOM_SHOP_DATA[id].getEffectValue();
             }
         });
 
-        return globalMultiplier;
+        return multiplier;
     },
 
     calculateMultiBuy(baseCost, costScale, currentLevel, multiplier, maxLevel) {
         const result = { levelsToBuy: 0, totalCost: {}, affordableLevels: 0 };
-        for (const res in baseCost) { result.totalCost[res] = 0; }
-        const maxPossibleBuy = maxLevel - currentLevel;
-        if (maxPossibleBuy <= 0) return result;
-        result.levelsToBuy = (multiplier === 'Max') ? Math.max(1, maxPossibleBuy) : Math.max(1, Math.min(multiplier, maxPossibleBuy));
-        let tempOwnedResources = {};
-        Object.keys(gameState.resources).forEach(key => tempOwnedResources[key] = gameState.resources[key]);
-        Object.keys(gameState.ideas).forEach(key => tempOwnedResources[key] = gameState.ideas[key]);
+        for (const res in baseCost) result.totalCost[res] = 0;
+
+        const maxPossible = maxLevel - currentLevel;
+        if (maxPossible <= 0) return result;
+
+        result.levelsToBuy = multiplier === 'Max'
+            ? Math.max(1, maxPossible)
+            : Math.max(1, Math.min(multiplier, maxPossible));
+
+        // Simulate spending to find how many levels are actually affordable
+        const owned = {};
+        Object.keys(gameState.resources).forEach(k => owned[k] = gameState.resources[k]);
+        Object.keys(gameState.ideas).forEach(k => owned[k] = gameState.ideas[k]);
+
         for (let i = 0; i < result.levelsToBuy; i++) {
-            const levelToBuy = currentLevel + i;
-            let levelCost = {};
-            let canAffordThisLevel = true;
+            const lvl = currentLevel + i;
+            const levelCost = {};
+            let affordable = true;
             for (const res in baseCost) {
-                const calculatedCost = Math.floor(baseCost[res] * Math.pow(costScale, levelToBuy));
-                levelCost[res] = calculatedCost;
-                result.totalCost[res] += calculatedCost;
-                if ((tempOwnedResources[res] || 0) < levelCost[res]) {
-                    canAffordThisLevel = false;
-                }
+                const c = Math.floor(baseCost[res] * Math.pow(costScale, lvl));
+                levelCost[res] = c;
+                result.totalCost[res] += c;
+                if ((owned[res] || 0) < c) affordable = false;
             }
-            if (canAffordThisLevel) {
-                for (const res in levelCost) {
-                    tempOwnedResources[res] -= levelCost[res];
-                }
+            if (affordable) {
+                for (const res in levelCost) owned[res] -= levelCost[res];
                 result.affordableLevels++;
             }
         }
 
+        // If Max mode and nothing is affordable, show cost for next single level
         if (multiplier === 'Max' && result.affordableLevels === 0) {
             result.levelsToBuy = 1;
+            for (const res in baseCost) result.totalCost[res] = 0;
             for (const res in baseCost) {
-                result.totalCost[res] = 0;
-            }
-            const levelCost = {};
-            for (const res in baseCost) {
-                const calculatedCost = Math.floor(baseCost[res] * Math.pow(costScale, currentLevel));
-                levelCost[res] = calculatedCost;
-                result.totalCost[res] = calculatedCost;
+                result.totalCost[res] = Math.floor(baseCost[res] * Math.pow(costScale, currentLevel));
             }
         }
+
         return result;
     },
 
     buyGenerator(generatorId) {
-        const genData = GENERATORS_DATA[generatorId]; if (!genData) return;
-        const currentLevel = gameState.generators[generatorId]?.level || 0;
-        if (currentLevel >= (genData.maxLevel || Infinity)) { if (typeof UI !== 'undefined') UI.showNotification("Already at max level!", "info"); return; }
-        const purchaseDetails = GameLogic.calculateMultiBuy(genData.baseCost, genData.costScale, currentLevel, gameState.purchaseMultiplier, genData.maxLevel);
-        const levelsToBuy = (gameState.purchaseMultiplier === 'Max') ? purchaseDetails.affordableLevels : purchaseDetails.levelsToBuy;
-        if (purchaseDetails.affordableLevels < levelsToBuy) { if (typeof UI !== 'undefined') UI.showNotification(`Not enough resources to buy x${gameState.purchaseMultiplier}!`, "error"); return; }
-        if (levelsToBuy > 0) {
-            const finalPurchase = GameLogic.calculateMultiBuy(genData.baseCost, genData.costScale, currentLevel, levelsToBuy, genData.maxLevel);
-            for (const res in finalPurchase.totalCost) { if (gameState.resources[res] !== undefined) gameState.resources[res] -= finalPurchase.totalCost[res]; else if (gameState.ideas[res] !== undefined) gameState.ideas[res] -= finalPurchase.totalCost[res];}
-            gameState.generators[generatorId].level += levelsToBuy;
-            // Invalidate generator cache so the card re-renders with the new level
-            if (typeof UI !== 'undefined') {
-                UI._renderCache.generators = null;
-                UI.updateAllUI();
-                UI.showNotification(`${genData.name} upgraded by +${levelsToBuy} to Lvl ${gameState.generators[generatorId].level}!`, 'success');
-            }
-        } else { if (typeof UI !== 'undefined') UI.showNotification("Not enough resources!", "error");}
+        const gd = GENERATORS_DATA[generatorId];
+        if (!gd) return;
+        const level = gameState.generators[generatorId]?.level || 0;
+        if (level >= (gd.maxLevel || Infinity)) { UI?.showNotification('Already at max level!', 'info'); return; }
+
+        const pd       = GameLogic.calculateMultiBuy(gd.baseCost, gd.costScale, level, gameState.purchaseMultiplier, gd.maxLevel);
+        const toBuy    = gameState.purchaseMultiplier === 'Max' ? pd.affordableLevels : pd.levelsToBuy;
+        if (pd.affordableLevels < toBuy) { UI?.showNotification(`Not enough resources to buy x${gameState.purchaseMultiplier}!`, 'error'); return; }
+        if (toBuy <= 0) { UI?.showNotification('Not enough resources!', 'error'); return; }
+
+        const final = GameLogic.calculateMultiBuy(gd.baseCost, gd.costScale, level, toBuy, gd.maxLevel);
+        for (const res in final.totalCost) {
+            if (gameState.resources[res] !== undefined)  gameState.resources[res] -= final.totalCost[res];
+            else if (gameState.ideas[res] !== undefined) gameState.ideas[res]     -= final.totalCost[res];
+        }
+        gameState.generators[generatorId].level += toBuy;
+
+        if (typeof UI !== 'undefined') {
+            // Invalidate only the generator cache — nothing else changed
+            UI._last.generators = null;
+            UI.showNotification(`${gd.name} upgraded by +${toBuy} to Lvl ${gameState.generators[generatorId].level}!`, 'success');
+        }
     },
 
     buyAutoCrafter(crafterId) {
-        const crafterData = CRAFTERS_DATA[crafterId]; if (!crafterData) return;
-        const currentLevel = gameState.crafters[crafterId]?.level || 0;
-        if (currentLevel >= (crafterData.maxLevel || Infinity)) { if (typeof UI !== 'undefined') UI.showNotification("Crafter already at max level!", "info"); return; }
-        const purchaseDetails = GameLogic.calculateMultiBuy(crafterData.baseCost, crafterData.costScale, currentLevel, gameState.purchaseMultiplier, crafterData.maxLevel);
-        const levelsToBuy = (gameState.purchaseMultiplier === 'Max') ? purchaseDetails.affordableLevels : purchaseDetails.levelsToBuy;
-        if (purchaseDetails.affordableLevels < levelsToBuy) { if (typeof UI !== 'undefined') UI.showNotification(`Not enough resources for this crafter!`, "error"); return; }
-        if (levelsToBuy > 0) {
-            const finalPurchase = GameLogic.calculateMultiBuy(crafterData.baseCost, crafterData.costScale, currentLevel, levelsToBuy, crafterData.maxLevel);
-            for (const res in finalPurchase.totalCost) { if (gameState.resources[res] !== undefined) gameState.resources[res] -= finalPurchase.totalCost[res]; else if (gameState.ideas[res] !== undefined) gameState.ideas[res] -= finalPurchase.totalCost[res];}
-            if (!gameState.crafters[crafterId]) gameState.crafters[crafterId] = { level: 0 };
-            gameState.crafters[crafterId].level += levelsToBuy;
-            // Invalidate the relevant crafter cache tier
-            if (typeof UI !== 'undefined') {
-                const prefix = crafterId.split('_')[0]; // 'insight', 'theory', or 'paradigm'
-                UI._renderCache[`${prefix}Crafters`] = null;
-                UI.updateAllUI();
-                UI.showNotification(`${crafterData.name} upgraded by +${levelsToBuy} to Lvl ${gameState.crafters[crafterId].level}!`, 'success');
-            }
-        } else { if (typeof UI !== 'undefined') UI.showNotification("Not enough resources for this crafter!", "error");}
+        const cd = CRAFTERS_DATA[crafterId];
+        if (!cd) return;
+        const level = gameState.crafters[crafterId]?.level || 0;
+        if (level >= (cd.maxLevel || Infinity)) { UI?.showNotification('Crafter already at max level!', 'info'); return; }
+
+        const pd    = GameLogic.calculateMultiBuy(cd.baseCost, cd.costScale, level, gameState.purchaseMultiplier, cd.maxLevel);
+        const toBuy = gameState.purchaseMultiplier === 'Max' ? pd.affordableLevels : pd.levelsToBuy;
+        if (pd.affordableLevels < toBuy) { UI?.showNotification('Not enough resources for this crafter!', 'error'); return; }
+        if (toBuy <= 0) { UI?.showNotification('Not enough resources for this crafter!', 'error'); return; }
+
+        const final = GameLogic.calculateMultiBuy(cd.baseCost, cd.costScale, level, toBuy, cd.maxLevel);
+        for (const res in final.totalCost) {
+            if (gameState.resources[res] !== undefined)  gameState.resources[res] -= final.totalCost[res];
+            else if (gameState.ideas[res] !== undefined) gameState.ideas[res]     -= final.totalCost[res];
+        }
+        if (!gameState.crafters[crafterId]) gameState.crafters[crafterId] = { level: 0 };
+        gameState.crafters[crafterId].level += toBuy;
+
+        if (typeof UI !== 'undefined') {
+            // Invalidate only the relevant crafter tier cache
+            const prefix = crafterId.startsWith('paradigm_') ? 'paradigmCrafters'
+                         : crafterId.startsWith('theory_')   ? 'theoryCrafters'
+                         : 'insightCrafters';
+            UI._last[prefix] = null;
+            UI.showNotification(`${cd.name} upgraded by +${toBuy} to Lvl ${gameState.crafters[crafterId].level}!`, 'success');
+        }
     },
 
     attemptCombination() {
         if (!UI?.elements) return;
-        const inputId1 = UI.elements.forgeSlot1.value;
-        const inputId2 = UI.elements.forgeSlot2.value;
-        if (!inputId1 || !inputId2) { UI.elements.combinationResult.textContent = "Please select two ideas to combine."; UI.elements.combinationResult.className = 'error'; return;}
-        const idea1Data = IDEAS_DATA[inputId1]; const idea2Data = IDEAS_DATA[inputId2];
-        if (!idea1Data || !idea2Data) { UI.elements.combinationResult.textContent = "Invalid idea selection."; UI.elements.combinationResult.className = 'error'; return;}
-        const count1 = gameState.ideas[inputId1]; const count2 = gameState.ideas[inputId2];
-        if (!GameLogic._isValidNumber(count1) || (inputId1 !== inputId2 && !GameLogic._isValidNumber(count2))) { UI.elements.combinationResult.textContent = "Error reading idea counts."; UI.elements.combinationResult.className = 'error'; return;}
-        if (inputId1 === inputId2 && count1 < 2) { UI.elements.combinationResult.textContent = `Need 2x ${idea1Data.name} to combine with itself.`; UI.elements.combinationResult.className = 'error'; return;}
-        if (count1 < 1 || (inputId1 !== inputId2 && count2 < 1) ) { UI.elements.combinationResult.textContent = "Not enough of the selected ideas."; UI.elements.combinationResult.className = 'error'; return;}
-        let foundRecipeOutput = null;
-        for (const outputId in IDEAS_DATA) { const outputData = IDEAS_DATA[outputId]; if (outputData.recipe?.length === 2) { if ((outputData.recipe[0] === inputId1 && outputData.recipe[1] === inputId2) || (outputData.recipe[0] === inputId2 && outputData.recipe[1] === inputId1)) { foundRecipeOutput = outputData; break;}}}
-        if (foundRecipeOutput) {
-            gameState.ideas[inputId1]--; if (inputId1 !== inputId2) gameState.ideas[inputId2]--;
-            GameLogic.gainIdea(foundRecipeOutput.id, 1);
-            UI.elements.combinationResult.textContent = `Success! Synthesized: ${foundRecipeOutput.name}!`; UI.elements.combinationResult.className = 'success';
-            if (!gameState.unlockedRecipes.includes(foundRecipeOutput.id)) {
-                gameState.unlockedRecipes.push(foundRecipeOutput.id);
-                // Invalidate recipe cache so the new recipe appears
-                if (typeof UI !== 'undefined') {
-                    UI._renderCache.recipes = null;
-                    UI.updateDiscoveredRecipes();
-                }
+        const id1 = UI.elements.forgeSlot1.value;
+        const id2 = UI.elements.forgeSlot2.value;
+        if (!id1 || !id2) { UI.elements.combinationResult.textContent = 'Please select two ideas to combine.'; UI.elements.combinationResult.className = 'error'; return; }
+
+        const d1 = IDEAS_DATA[id1], d2 = IDEAS_DATA[id2];
+        if (!d1 || !d2) { UI.elements.combinationResult.textContent = 'Invalid idea selection.'; UI.elements.combinationResult.className = 'error'; return; }
+
+        const c1 = gameState.ideas[id1], c2 = gameState.ideas[id2];
+        if (!GameLogic._isValidNumber(c1) || (id1 !== id2 && !GameLogic._isValidNumber(c2))) { UI.elements.combinationResult.textContent = 'Error reading idea counts.'; UI.elements.combinationResult.className = 'error'; return; }
+        if (id1 === id2 && c1 < 2) { UI.elements.combinationResult.textContent = `Need 2x ${d1.name} to combine with itself.`; UI.elements.combinationResult.className = 'error'; return; }
+        if (c1 < 1 || (id1 !== id2 && c2 < 1)) { UI.elements.combinationResult.textContent = 'Not enough of the selected ideas.'; UI.elements.combinationResult.className = 'error'; return; }
+
+        let found = null;
+        for (const outId in IDEAS_DATA) {
+            const out = IDEAS_DATA[outId];
+            if (out.recipe?.length === 2 &&
+                ((out.recipe[0] === id1 && out.recipe[1] === id2) ||
+                 (out.recipe[0] === id2 && out.recipe[1] === id1))) {
+                found = out; break;
             }
-            if (foundRecipeOutput.recipe) { foundRecipeOutput.recipe.forEach(ingId => { if (typeof Noosphere !== 'undefined') Noosphere.addEdge(ingId, foundRecipeOutput.id);});}
-            // Repopulate forge selectors after a combination since counts changed
-            if (typeof UI !== 'undefined') {
-                UI.populateForgeSelectors();
-                UI.updateResourceDisplay();
+        }
+
+        if (found) {
+            gameState.ideas[id1]--;
+            if (id1 !== id2) gameState.ideas[id2]--;
+            GameLogic.gainIdea(found.id, 1);
+            UI.elements.combinationResult.textContent = `Success! Synthesised: ${found.name}!`;
+            UI.elements.combinationResult.className   = 'success';
+
+            if (!gameState.unlockedRecipes.includes(found.id)) {
+                gameState.unlockedRecipes.push(found.id);
+                // Invalidate recipe cache — a new recipe was added
+                UI._last.recipes = null;
             }
-        } else { UI.elements.combinationResult.textContent = "These ideas don't seem to form a new synthesis... yet."; UI.elements.combinationResult.className = 'info';}
+
+            if (found.recipe) {
+                found.recipe.forEach(ingId => { if (typeof Noosphere !== 'undefined') Noosphere.addEdge(ingId, found.id); });
+            }
+            // Repopulate forge selectors since counts changed
+            UI.populateForgeSelectors();
+        } else {
+            UI.elements.combinationResult.textContent = "These ideas don't seem to form a new synthesis... yet.";
+            UI.elements.combinationResult.className   = 'info';
+        }
     },
 
     gainIdea(ideaId, amount = 1, fromBatch = false) {
         if (!IDEAS_DATA[ideaId] || ideaId === 'thought' || !GameLogic._isValidNumber(amount) || amount <= 0) return;
-        const wasFirstDiscovery = !gameState.discoveredIdeas.has(ideaId);
-        let currentCount = gameState.ideas[ideaId] || 0;
-        if (!GameLogic._isValidNumber(currentCount)) currentCount = 0;
-        gameState.ideas[ideaId] = currentCount + amount;
+        const wasNew = !gameState.discoveredIdeas.has(ideaId);
+        gameState.ideas[ideaId] = (GameLogic._isValidNumber(gameState.ideas[ideaId]) ? gameState.ideas[ideaId] : 0) + amount;
         gameState.discoveredIdeas.add(ideaId);
-        if (wasFirstDiscovery) {
-             if (typeof UI !== 'undefined') UI.showNotification(`New Discovery: ${IDEAS_DATA[ideaId].name}!`, 'special');
-             if (!fromBatch && typeof Noosphere !== 'undefined') {
-                Noosphere.addNode(ideaId); const ideaData = IDEAS_DATA[ideaId];
-                 if (ideaData.recipe) { ideaData.recipe.forEach(ingId => { if (gameState.discoveredIdeas.has(ingId)) Noosphere.addEdge(ingId, ideaId);});}
-                 Object.values(IDEAS_DATA).forEach(pIdea => { if (pIdea.id === 'thought' || pIdea.id === ideaId) return; if (pIdea.recipe?.includes(ideaId) && gameState.discoveredIdeas.has(pIdea.id)) { if (pIdea.recipe.every(ing => gameState.discoveredIdeas.has(ing))) {pIdea.recipe.forEach(ing_id => Noosphere.addEdge(ing_id, pIdea.id));}}});
+
+        if (wasNew) {
+            UI?.showNotification(`New Discovery: ${IDEAS_DATA[ideaId].name}!`, 'special');
+            if (!fromBatch && typeof Noosphere !== 'undefined') {
+                Noosphere.addNode(ideaId);
+                const d = IDEAS_DATA[ideaId];
+                if (d.recipe) d.recipe.forEach(ingId => { if (gameState.discoveredIdeas.has(ingId)) Noosphere.addEdge(ingId, ideaId); });
+                Object.values(IDEAS_DATA).forEach(pd => {
+                    if (pd.id === 'thought' || pd.id === ideaId) return;
+                    if (pd.recipe?.includes(ideaId) && gameState.discoveredIdeas.has(pd.id) && pd.recipe.every(ing => gameState.discoveredIdeas.has(ing))) {
+                        pd.recipe.forEach(ing => Noosphere.addEdge(ing, pd.id));
+                    }
+                });
                 Noosphere.focusOnNode(ideaId);
-             }
+            }
         }
+
         if (!fromBatch && typeof UI !== 'undefined') {
-            // Repopulate forge selectors when an idea is gained, since the options/counts changed.
-            // This is the correct and only place this should be triggered from the game logic path.
+            // Forge selectors need to know about the new idea / updated count
             UI.populateForgeSelectors();
-            UI.updateResourceDisplay();
+            // Counter update (Thoughts/sec may have changed from idea's thoughts_bonus_per_sec)
+            UI._tickCounters();
         }
     },
 
-     calculateWisdomShardsOnTranscend() {
-        let totalConceptualMass = 0;
+    calculateWisdomShardsOnTranscend() {
+        let mass = 0;
         Object.entries(gameState.ideas).forEach(([id, count]) => {
-            const ideaData = IDEAS_DATA[id];
-            if (ideaData?.tier > 0 && GameLogic._isValidNumber(count) && count > 0) {
-                const ideaWorth = (ideaData.tier * 10);
-                if(GameLogic._isValidNumber(ideaWorth)){ totalConceptualMass += ideaWorth * count;}
+            const d = IDEAS_DATA[id];
+            if (d?.tier > 0 && GameLogic._isValidNumber(count) && count > 0) {
+                const worth = d.tier * 10;
+                if (GameLogic._isValidNumber(worth)) mass += worth * count;
             }
         });
-        return Math.floor(Math.sqrt(Math.max(0, totalConceptualMass) / 1000)) + (Number(gameState.transcendenceCount) || 0);
+        return Math.floor(Math.sqrt(Math.max(0, mass) / 1000)) + (Number(gameState.transcendenceCount) || 0);
     },
 
-     transcend() {
-        const anyParadigmOwned = Array.from(gameState.discoveredIdeas).some(id => IDEAS_DATA[id]?.tier === 4 && (gameState.ideas[id] || 0) > 0);
-        if (!anyParadigmOwned) { if (typeof UI !== 'undefined') UI.showNotification("A Paradigm is required to Transcend.", "error"); return;}
-        const wsGained = GameLogic.calculateWisdomShardsOnTranscend();
-        if (!GameLogic._isValidNumber(wsGained)) { if (typeof UI !== 'undefined') UI.showNotification("Error calculating Wisdom Shards.", "error"); return;}
-        if (wsGained <= 0 && gameState.transcendenceCount > 0) { if (typeof UI !== 'undefined') UI.showNotification("No new Wisdom to be gained this Transcendence.", "info");}
-        if (!confirm(`Transcend and gain ${wsGained} Wisdom Shards? This will reset your current progress (except WS and Transcendence count).`)) return;
+    transcend() {
+        const hasParadigm = Array.from(gameState.discoveredIdeas).some(id => IDEAS_DATA[id]?.tier === 4 && (gameState.ideas[id] || 0) > 0);
+        if (!hasParadigm) { UI?.showNotification('A Paradigm is required to Transcend.', 'error'); return; }
 
-        const currentWS = Number(gameState.resources.wisdom_shards) || 0;
-        const currentTranscendCount = Number(gameState.transcendenceCount) || 0;
-        const newBaseGameState = {
-            lastUpdate: Date.now(), resources: { thought: 0, wisdom_shards: currentWS + wsGained }, ideas: {},
-            generators: {}, crafters: {}, unlockedRecipes: [], noosphereState: { nodes: [], edges: [] },
-            discoveredIdeas: new Set(['thought']), transcendenceCount: currentTranscendCount + 1, tutorialCompleted: true,
+        const ws = GameLogic.calculateWisdomShardsOnTranscend();
+        if (!GameLogic._isValidNumber(ws)) { UI?.showNotification('Error calculating Wisdom Shards.', 'error'); return; }
+        if (ws <= 0 && gameState.transcendenceCount > 0) UI?.showNotification('No new Wisdom to be gained this Transcendence.', 'info');
+        if (!confirm(`Transcend and gain ${ws} Wisdom Shards? This will reset your current progress (except WS and Transcendence count).`)) return;
+
+        const newState = {
+            lastUpdate: Date.now(),
+            resources: { thought: 0, wisdom_shards: (Number(gameState.resources.wisdom_shards) || 0) + ws },
+            ideas: {}, generators: {}, crafters: {}, unlockedRecipes: [],
+            noosphereState: { nodes: [], edges: [] },
+            discoveredIdeas: new Set(['thought']),
+            transcendenceCount: (Number(gameState.transcendenceCount) || 0) + 1,
+            tutorialCompleted: true,
             purchaseMultiplier: gameState.purchaseMultiplier,
             gameVersion: gameState.gameVersion
         };
-        Object.keys(gameState).forEach(key => delete gameState[key]);
-        Object.assign(gameState, newBaseGameState);
+        Object.keys(gameState).forEach(k => delete gameState[k]);
+        Object.assign(gameState, newState);
         initializeGameState(false);
         saveGame();
 
-         if (typeof UI !== 'undefined') {
-            // Invalidate all render caches — the entire game state has changed
+        if (typeof UI !== 'undefined') {
+            // Full reset — everything must re-render
             UI.invalidateAllCaches();
-            UI.showNotification(`Successfully Transcended! Gained ${wsGained} Wisdom Shards.`, 'special');
+            UI.showNotification(`Successfully Transcended! Gained ${ws} Wisdom Shards.`, 'special');
             if (typeof Noosphere !== 'undefined') Noosphere.renderFromGameState();
             UI.updateAllUI();
-            // Also rebuild the forge selectors since discoveredIdeas was reset
-            UI.populateForgeSelectors();
             UI.switchPanel('noosphere-panel', document.querySelector('.nav-button[data-panel="noosphere-panel"]'));
-         }
-         GameLogic.lastTick = Date.now();
-         gameState.lastUIRefresh = 0;
+        }
+        GameLogic.lastTick = Date.now();
+        gameState.lastUIRefresh = 0;
     }
 };

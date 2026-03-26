@@ -6,7 +6,7 @@
  * Naming philosophy:
  *   - Each name should evoke what it does and feel at home in a game about
  *     accumulating and refining ideas.
- *   - FT generators are named after mental disciplines or cognitive practices.
+ *   - Thought generators are named after mental disciplines or cognitive practices.
  *   - Click/multiplier upgrades are named after sharpened intentional focus.
  *   - Concept generators are named after the intellectual process of refinement.
  */
@@ -22,7 +22,7 @@ const GENERATORS_DATA = {
         description: 'Constructs a vivid internal memory theatre, passively generating a steady stream of Thoughts.',
         baseCost: { thought: 20 },
         costScale: 1.15,
-        output: { thought: 0.1 },   // FT/sec per level
+        output: { thought: 0.1 },   // Thought/sec per level
         outputScale: 1.1,
         maxLevel: 200,
         icon: '🏛️'
@@ -38,7 +38,7 @@ const GENERATORS_DATA = {
         description: 'Trains deliberate concentration, amplifying the Thoughts produced by each manual spark of insight.',
         baseCost: { thought: 50 },
         costScale: 1.15,
-        effect: { ft_per_click: 0.2 },       // +0.2 FT per click per level
+        effect: { thought_per_click: 0.2 },
         outputScale: 1.1,
         maxLevel: 100,
         unlocksWith: ['mind_palace_1'],
@@ -46,7 +46,7 @@ const GENERATORS_DATA = {
     },
 
     /**
-     * Global FT multiplier — represents systematic rigour applied to all thinking.
+     * Global thought multiplier — represents systematic rigour applied to all thinking.
      */
     methodical_approach: {
         id: 'methodical_approach',
@@ -54,7 +54,7 @@ const GENERATORS_DATA = {
         description: 'Cultivates a systematic habit of thought, granting a +1% global bonus to all Thought generation per level.',
         baseCost: { thought: 1000 },
         costScale: 1.5,
-        effect: { global_ft_multiplier_bonus: 0.01 },   // +1% per level
+        effect: { global_thought_multiplier_bonus: 0.01 },   // +1% per level
         maxLevel: 50,
         unlocksWith: ['logical_filter_1'],
         icon: '📐'

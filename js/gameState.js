@@ -15,7 +15,7 @@ let gameState = {
     transcendenceCount: 0,
     tutorialCompleted: false,
     purchaseMultiplier: 1,
-    gameVersion: "0.1.4", // wisdom shop update
+    gameVersion: "0.1.6", // wisdom shop update
     wisdomShop: {}
 };
 
@@ -34,7 +34,7 @@ function initializeGameState(isNewGame = false) {
         gameState.transcendenceCount = 0;
         gameState.tutorialCompleted = false;
         gameState.purchaseMultiplier = 1;
-        gameState.gameVersion = "0.1.3";
+        gameState.gameVersion = "0.1.6";
         gameState.noosphereState = { nodes: [], edges: [] };
         gameState.wisdomShop = {};
     }
@@ -192,11 +192,11 @@ function loadGame() {
     if (timeOffline > 1000 && typeof GameLogic !== 'undefined' && GameLogic.calculateOfflineProgress) {
         const offlineGains = GameLogic.calculateOfflineProgress(timeOffline);
         if (offlineGains) {
-            if (GameLogic._isValidNumber(offlineGains.ftGained)) { if(!GameLogic._isValidNumber(gameState.resources.thought)) gameState.resources.thought = 0; gameState.resources.thought += offlineGains.ftGained; }
+            if (GameLogic._isValidNumber(offlineGains.thoughtsGained)) { if(!GameLogic._isValidNumber(gameState.resources.thought)) gameState.resources.thought = 0; gameState.resources.thought += offlineGains.thoughtsGained; }
             if (offlineGains.ideasGained) { Object.entries(offlineGains.ideasGained).forEach(([ideaId, count]) => { if (GameLogic._isValidNumber(count) && count > 0) { if(!GameLogic._isValidNumber(gameState.ideas[ideaId])) gameState.ideas[ideaId] = 0; gameState.ideas[ideaId] += count; gameState.discoveredIdeas.add(ideaId); } }); }
-            if (offlineGains.ftGained > 0.1 || Object.keys(offlineGains.ideasGained || {}).length > 0) {
+            if (offlineGains.thoughtsGained > 0.1 || Object.keys(offlineGains.ideasGained || {}).length > 0) {
                  const secondsOfflineForNotification = timeOffline / 1000;
-                 let offlineSummary = `Offline gains (${Utils.formatTime(Math.floor(secondsOfflineForNotification))}): +${Utils.formatNumber(offlineGains.ftGained)} FT. `;
+                 let offlineSummary = `Offline gains (${Utils.formatTime(Math.floor(secondsOfflineForNotification))}): +${Utils.formatNumber(offlineGains.thoughtsGained)} Thoughts. `;
                  Object.entries(offlineGains.ideasGained || {}).forEach(([id, count]) => { offlineSummary += `+${Utils.formatNumber(count)} ${IDEAS_DATA[id]?.name || id}. `; });
                  if (typeof UI !== 'undefined' && UI.showNotification) { UI.showNotification(offlineSummary, 'success'); }
             }
@@ -216,10 +216,11 @@ function resetGameConfirm(isError = false) {
         localStorage.removeItem('ideaEngineSave'); initializeGameState(true); saveGame();
         if (typeof GameLogic !== 'undefined') GameLogic.lastTick = Date.now(); gameState.lastUIRefresh = 0;
         if (typeof Noosphere !== 'undefined') Noosphere.renderFromGameState();
-        if (typeof UI !== 'undefined') UI.invalidateAllCaches();
-        if (typeof UI !== 'undefined') UI.populateForgeSelectors();
-        if (typeof UI !== 'undefined') UI.updateAllUI();
-        if (typeof UI !== 'undefined') UI.switchPanel('noosphere-panel', document.querySelector('.nav-button[data-panel="noosphere-panel"]'));
+        if (typeof UI !== 'undefined') {
+            UI.invalidateAllCaches();
+            UI.updateAllUI();
+            UI.switchPanel('noosphere-panel', document.querySelector('.nav-button[data-panel="noosphere-panel"]'));
+        }
         console.log("Game reset to initial state."); if (typeof UI !== 'undefined' && UI.showNotification) { UI.showNotification("Game has been reset.", "info"); }
     }
 }
